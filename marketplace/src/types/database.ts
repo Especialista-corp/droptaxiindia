@@ -36,6 +36,15 @@ export type ProviderProfilesRow = {
   documento_url: string | null;
   selfie_url: string | null;
   comprovante_endereco_url: string | null;
+  certidao_negativa_url: string | null;
+  documentos_prazo_em: string | null;
+  cep: string | null;
+  endereco: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  estado: string | null;
   raio_km: number;
   nota_media: number;
   total_avaliacoes: number;

@@ -8,6 +8,7 @@ import {
   cadastroPrestadorSchema,
   loginSchema,
 } from "@/lib/validations";
+import { PROVIDER_DOCS_DEADLINE_DAYS } from "@/lib/constants";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -77,6 +78,13 @@ export async function cadastroPrestadorAction(
     email: formData.get("email"),
     telefone: formData.get("telefone"),
     senha: formData.get("senha"),
+    cep: formData.get("cep"),
+    endereco: formData.get("endereco"),
+    numero: formData.get("numero"),
+    complemento: formData.get("complemento") || undefined,
+    bairro: formData.get("bairro") || undefined,
+    cidade: formData.get("cidade") || undefined,
+    estado: formData.get("estado") || undefined,
     raioKm: formData.get("raioKm"),
     veiculoTipo: formData.get("veiculoTipo"),
     veiculoCor: formData.get("veiculoCor"),
@@ -107,9 +115,25 @@ export async function cadastroPrestadorAction(
   // está disponível neste request (confirmação de e-mail pendente).
   const admin = createAdminClient();
 
+  // Aprovação automática: o prestador já pode receber pedidos, mas tem
+  // PROVIDER_DOCS_DEADLINE_DAYS para enviar comprovante de endereço e certidão
+  // negativa de antecedentes criminais — senão o cron o suspende.
+  const prazoDocumentos = new Date(
+    Date.now() + PROVIDER_DOCS_DEADLINE_DAYS * 24 * 3_600_000,
+  ).toISOString();
+
   const { error: profileError } = await admin.from("provider_profiles").insert({
     user_id: userId,
-    status: "pendente",
+    status: "aprovado",
+    aprovado_em: new Date().toISOString(),
+    documentos_prazo_em: prazoDocumentos,
+    cep: parsed.data.cep,
+    endereco: parsed.data.endereco,
+    numero: parsed.data.numero,
+    complemento: parsed.data.complemento ?? null,
+    bairro: parsed.data.bairro ?? null,
+    cidade: parsed.data.cidade ?? null,
+    estado: parsed.data.estado ?? null,
     raio_km: parsed.data.raioKm,
     veiculo_tipo: parsed.data.veiculoTipo,
     veiculo_cor: parsed.data.veiculoCor,
@@ -125,7 +149,13 @@ export async function cadastroPrestadorAction(
   );
   if (categoriasError) return { error: categoriasError.message };
 
-  redirect("/prestador/cadastro-pendente");
+  await admin.from("notifications").insert({
+    user_id: userId,
+    tipo: "documentos_prazo",
+    payload: { prazo: prazoDocumentos },
+  });
+
+  redirect("/prestador/documentos");
 }
 
 export async function logoutAction() {

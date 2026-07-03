@@ -10,6 +10,13 @@ export const cadastroClienteSchema = z.object({
 });
 
 export const cadastroPrestadorSchema = cadastroClienteSchema.extend({
+  cep: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
+  endereco: z.string().min(3, "Informe o endereço"),
+  numero: z.string().min(1, "Informe o número"),
+  complemento: z.string().max(100).optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  estado: z.string().max(2).optional(),
   raioKm: z.coerce.number().min(1).max(100).default(10),
   veiculoTipo: z.enum(["moto", "carro", "pickup", "caminhao"]),
   veiculoCor: z.string().min(1, "Selecione a cor do veículo"),

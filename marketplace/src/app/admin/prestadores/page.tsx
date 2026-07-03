@@ -17,7 +17,7 @@ export default async function AdminPrestadoresPage() {
   const { data: prestadores } = await admin
     .from("provider_profiles")
     .select(
-      "user_id, status, raio_km, veiculo_tipo, veiculo_cor, veiculo_porte, strikes, documento_url, selfie_url, comprovante_endereco_url, users(nome, email, telefone)",
+      "user_id, status, raio_km, veiculo_tipo, veiculo_cor, veiculo_porte, strikes, documento_url, selfie_url, comprovante_endereco_url, certidao_negativa_url, documentos_prazo_em, cep, endereco, numero, complemento, bairro, cidade, estado, users(nome, email, telefone)",
     )
     .order("criado_em", { ascending: false });
 
@@ -27,9 +27,10 @@ export default async function AdminPrestadoresPage() {
       <div className="flex flex-col gap-3">
         {(prestadores ?? []).map((prestador) => {
           const usuario = Array.isArray(prestador.users) ? prestador.users[0] : prestador.users;
-          const documentosCompletos = Boolean(
-            prestador.documento_url && prestador.selfie_url && prestador.comprovante_endereco_url,
+          const obrigatoriosOk = Boolean(
+            prestador.comprovante_endereco_url && prestador.certidao_negativa_url,
           );
+          const identificacaoOk = Boolean(prestador.documento_url && prestador.selfie_url);
           return (
             <Card key={prestador.user_id} className="flex items-center justify-between gap-4">
               <div>
@@ -38,11 +39,20 @@ export default async function AdminPrestadoresPage() {
                   {usuario?.email} · {usuario?.telefone}
                 </p>
                 <p className="text-sm text-[#545454]">
+                  {prestador.endereco
+                    ? `${prestador.endereco}, ${prestador.numero ?? "s/n"}${prestador.complemento ? ` (${prestador.complemento})` : ""} — ${prestador.bairro ?? ""}, ${prestador.cidade ?? ""}/${prestador.estado ?? ""} · CEP ${prestador.cep ?? "—"}`
+                    : "Endereço não informado"}
+                </p>
+                <p className="text-sm text-[#545454]">
                   {prestador.veiculo_tipo} {prestador.veiculo_cor} · raio {prestador.raio_km}km
                   {prestador.strikes > 0 && ` · ${prestador.strikes} strike(s)`}
                 </p>
                 <p className="text-sm text-[#545454]">
-                  Documentos: {documentosCompletos ? "enviados" : "pendentes"}
+                  Comprovante + certidão: {obrigatoriosOk ? "✓ enviados" : "pendentes"} · RG/selfie:{" "}
+                  {identificacaoOk ? "✓" : "pendentes"}
+                  {!obrigatoriosOk &&
+                    prestador.documentos_prazo_em &&
+                    ` · prazo ${new Date(prestador.documentos_prazo_em).toLocaleDateString("pt-BR")}`}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-2">
@@ -56,8 +66,7 @@ export default async function AdminPrestadoresPage() {
                   >
                     <button
                       type="submit"
-                      disabled={!documentosCompletos}
-                      className="rounded-lg bg-[#127A3E] px-4 py-2 text-sm font-bold text-white disabled:opacity-40"
+                      className="rounded-lg bg-[#127A3E] px-4 py-2 text-sm font-bold text-white"
                     >
                       Aprovar
                     </button>

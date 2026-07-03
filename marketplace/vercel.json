@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/auto-release",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/documentos-vencidos",
+      "schedule": "0 8 * * *"
     }
   ]
 }

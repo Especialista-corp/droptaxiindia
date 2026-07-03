@@ -37,6 +37,16 @@ export const LATE_CANCELLATION_FEE_PERCENT = 30;
 /** Número de strikes por no-show até a suspensão automática do prestador. */
 export const MAX_NO_SHOW_STRIKES = 3;
 
+/**
+ * O prestador é aprovado automaticamente no cadastro, mas tem este prazo para
+ * enviar comprovante de endereço e certidão negativa de antecedentes criminais.
+ */
+export const PROVIDER_DOCS_DEADLINE_DAYS = 7;
+
+/** Emissão gratuita da certidão negativa de antecedentes criminais (Polícia Federal / gov.br). */
+export const CERTIDAO_ANTECEDENTES_URL =
+  "https://www.gov.br/pt-br/servicos/emitir-certidao-de-antecedentes-criminais";
+
 export const VEHICLE_TYPES = ["moto", "carro", "pickup", "caminhao"] as const;
 export type VehicleType = (typeof VEHICLE_TYPES)[number];
 

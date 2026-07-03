@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logoutAction } from "../../../(auth)/actions";
 import { Button } from "@/components/ui/button";
@@ -51,6 +53,13 @@ export default async function PrestadorPerfilPage() {
           <p className="text-sm text-[#BB032A]">{provider?.strikes} strike(s) de no-show</p>
         )}
       </Card>
+      <Link
+        href="/prestador/documentos"
+        className="mb-4 flex items-center justify-between rounded-xl border border-[#E2E2E2] bg-white p-4"
+      >
+        <span className="font-medium">Meus documentos</span>
+        <ChevronRight size={20} className="text-[#545454]" />
+      </Link>
       <div className="mb-4">
         <AtivarNotificacoesButton />
       </div>

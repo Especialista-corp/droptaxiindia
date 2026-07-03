@@ -1,4 +1,4 @@
-const CACHE_NAME = "montaja-shell-v1";
+const CACHE_NAME = "montaja-shell-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -23,6 +23,9 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
+  // Só intercepta requisições do próprio app; APIs externas (ViaCEP, Maps,
+  // Supabase) e as rotas /api/ passam direto pela rede.
+  if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
 
   event.respondWith(

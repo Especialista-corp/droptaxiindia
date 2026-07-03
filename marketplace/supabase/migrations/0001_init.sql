@@ -110,6 +110,17 @@ create table public.provider_profiles (
   documento_url text,
   selfie_url text,
   comprovante_endereco_url text,
+  certidao_negativa_url text,
+  -- Aprovação é automática no cadastro; o prestador tem até este prazo (7 dias)
+  -- para enviar comprovante de endereço + certidão negativa, senão é suspenso.
+  documentos_prazo_em timestamptz,
+  cep text,
+  endereco text,
+  numero text,
+  complemento text,
+  bairro text,
+  cidade text,
+  estado text,
   raio_km numeric(5, 1) not null default 10,
   nota_media numeric(3, 2) not null default 0,
   total_avaliacoes integer not null default 0,

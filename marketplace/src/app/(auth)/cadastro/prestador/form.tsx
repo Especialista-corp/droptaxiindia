@@ -14,6 +14,34 @@ export function PrestadorSignupForm({
 }) {
   const [state, formAction, pending] = useActionState(cadastroPrestadorAction, undefined);
   const [veiculoTipo, setVeiculoTipo] = useState<VehicleType>("carro");
+  const [endereco, setEndereco] = useState({ endereco: "", bairro: "", cidade: "", estado: "" });
+  const [buscandoCep, setBuscandoCep] = useState(false);
+  const [cepErro, setCepErro] = useState<string>();
+
+  async function buscarCep(valor: string) {
+    const cep = valor.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    setBuscandoCep(true);
+    setCepErro(undefined);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await response.json();
+      if (data.erro) {
+        setCepErro("CEP não encontrado — preencha o endereço manualmente.");
+        return;
+      }
+      setEndereco({
+        endereco: data.logradouro ?? "",
+        bairro: data.bairro ?? "",
+        cidade: data.localidade ?? "",
+        estado: data.uf ?? "",
+      });
+    } catch {
+      setCepErro("Não foi possível consultar o CEP — preencha o endereço manualmente.");
+    } finally {
+      setBuscandoCep(false);
+    }
+  }
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -34,6 +62,65 @@ export function PrestadorSignupForm({
         minLength={8}
         autoComplete="new-password"
       />
+
+      <div className="flex flex-col gap-1.5">
+        <Input
+          label="CEP"
+          name="cep"
+          inputMode="numeric"
+          placeholder="00000-000"
+          required
+          onBlur={(event) => buscarCep(event.target.value)}
+          onChange={(event) => {
+            if (event.target.value.replace(/\D/g, "").length === 8) {
+              buscarCep(event.target.value);
+            }
+          }}
+        />
+        {buscandoCep && <span className="text-sm text-[#545454]">Buscando endereço…</span>}
+        {cepErro && <span className="text-sm text-[#BB032A]">{cepErro}</span>}
+      </div>
+
+      <Input
+        label="Endereço"
+        name="endereco"
+        required
+        value={endereco.endereco}
+        onChange={(event) => setEndereco((prev) => ({ ...prev, endereco: event.target.value }))}
+      />
+      <div className="flex gap-3">
+        <Input label="Número" name="numero" required className="flex-1" />
+        <Input
+          label="Complemento (apto, bloco…)"
+          name="complemento"
+          className="flex-1"
+          placeholder="Apto 42"
+        />
+      </div>
+      <Input
+        label="Bairro"
+        name="bairro"
+        value={endereco.bairro}
+        onChange={(event) => setEndereco((prev) => ({ ...prev, bairro: event.target.value }))}
+      />
+      <div className="flex gap-3">
+        <Input
+          label="Cidade"
+          name="cidade"
+          className="flex-1"
+          value={endereco.cidade}
+          onChange={(event) => setEndereco((prev) => ({ ...prev, cidade: event.target.value }))}
+        />
+        <Input
+          label="UF"
+          name="estado"
+          maxLength={2}
+          className="w-20"
+          value={endereco.estado}
+          onChange={(event) => setEndereco((prev) => ({ ...prev, estado: event.target.value }))}
+        />
+      </div>
+
       <Input
         label="Raio de atuação (km)"
         name="raioKm"
