@@ -1,0 +1,20 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/requeue-sinal-vencido",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/cron/d1-confirmacao",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/d1-realocacao",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/auto-release",
+      "schedule": "0 * * * *"
+    }
+  ]
+}
