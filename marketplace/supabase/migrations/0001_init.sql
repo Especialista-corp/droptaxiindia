@@ -129,16 +129,46 @@ create table public.provider_profiles (
   dados_bancarios jsonb,
   lat_base double precision,
   lng_base double precision,
-  veiculo_tipo vehicle_type,
-  veiculo_cor text,
-  veiculo_porte truck_size,
   aprovado_em timestamptz,
   aprovado_por uuid references public.users (id),
-  criado_em timestamptz not null default now(),
-  constraint veiculo_porte_apenas_caminhao check (
-    veiculo_porte is null or veiculo_tipo = 'caminhao'
-  )
+  criado_em timestamptz not null default now()
 );
+
+-- Veículos do prestador (até 2 por conta — ex.: moto para serviços rápidos e
+-- carro/pickup para os maiores). O veículo com em_uso = true é o exibido no
+-- mapa de rastreamento do cliente.
+create table public.provider_vehicles (
+  id uuid primary key default gen_random_uuid(),
+  provider_id uuid not null references public.provider_profiles (user_id) on delete cascade,
+  tipo vehicle_type not null,
+  cor text not null,
+  porte truck_size,
+  placa text not null,
+  em_uso boolean not null default false,
+  criado_em timestamptz not null default now(),
+  constraint porte_apenas_caminhao check (porte is null or tipo = 'caminhao'),
+  constraint placa_formato check (placa ~ '^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$')
+);
+
+create index provider_vehicles_provider_id_idx on public.provider_vehicles (provider_id);
+-- Apenas um veículo "em uso" por prestador.
+create unique index provider_vehicles_em_uso_unico
+  on public.provider_vehicles (provider_id) where em_uso;
+
+-- Máximo de 2 veículos por prestador.
+create function public.check_max_vehicles()
+returns trigger language plpgsql as $$
+begin
+  if (select count(*) from public.provider_vehicles where provider_id = new.provider_id) >= 2 then
+    raise exception 'Máximo de 2 veículos por prestador';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger provider_vehicles_max_2
+  before insert on public.provider_vehicles
+  for each row execute procedure public.check_max_vehicles();
 
 -- Categorias e itens que o prestador atende.
 create table public.provider_service_categories (
@@ -325,6 +355,7 @@ create trigger payments_set_updated_at before update on public.payments
 -- ============================================================================
 alter table public.users enable row level security;
 alter table public.provider_profiles enable row level security;
+alter table public.provider_vehicles enable row level security;
 alter table public.provider_service_categories enable row level security;
 alter table public.service_categories enable row level security;
 alter table public.service_items enable row level security;
@@ -353,6 +384,19 @@ create policy "provider_profiles_owner_all" on public.provider_profiles
   with check (user_id = auth.uid() or public.is_admin());
 create policy "provider_profiles_select_approved" on public.provider_profiles
   for select using (status = 'aprovado');
+
+-- provider_vehicles: dono e admin gerenciam; cliente com pedido atribuído ao
+-- prestador pode ler (para exibir o veículo correto no mapa de rastreamento).
+create policy "provider_vehicles_owner_all" on public.provider_vehicles
+  for all using (provider_id = auth.uid() or public.is_admin())
+  with check (provider_id = auth.uid() or public.is_admin());
+create policy "provider_vehicles_select_cliente" on public.provider_vehicles
+  for select using (
+    exists (
+      select 1 from public.orders o
+      where o.prestador_id = provider_vehicles.provider_id and o.cliente_id = auth.uid()
+    )
+  );
 
 create policy "provider_service_categories_owner" on public.provider_service_categories
   for all using (
@@ -519,9 +563,10 @@ select
   pp.nota_media,
   pp.total_avaliacoes,
   pp.selo_verificado,
-  pp.veiculo_tipo,
-  pp.veiculo_cor,
-  pp.veiculo_porte
+  pv.tipo as veiculo_tipo,
+  pv.cor as veiculo_cor,
+  pv.porte as veiculo_porte
 from public.provider_profiles pp
 join public.users u on u.id = pp.user_id
+left join public.provider_vehicles pv on pv.provider_id = pp.user_id and pv.em_uso
 where pp.status = 'aprovado';

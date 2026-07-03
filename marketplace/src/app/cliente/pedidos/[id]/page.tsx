@@ -54,13 +54,14 @@ export default async function ClientePedidoDetalhePage({
       ? await supabase.from("completion_photos").select("url").eq("order_id", order.id)
       : { data: [] };
 
-  const { data: prestadorVeiculo } =
+  const { data: veiculoEmUso } =
     order.status === "em_deslocamento" && order.prestador_id
       ? await supabase
-          .from("provider_profiles")
-          .select("veiculo_tipo, veiculo_cor, veiculo_porte")
-          .eq("user_id", order.prestador_id)
-          .single()
+          .from("provider_vehicles")
+          .select("tipo, cor, porte, placa")
+          .eq("provider_id", order.prestador_id)
+          .eq("em_uso", true)
+          .maybeSingle()
       : { data: null };
 
   const { data: minhaAvaliacao } =
@@ -122,15 +123,18 @@ export default async function ClientePedidoDetalhePage({
         </Card>
       )}
 
-      {order.status === "em_deslocamento" && prestadorVeiculo?.veiculo_tipo && order.lat && order.lng && (
+      {order.status === "em_deslocamento" && veiculoEmUso && order.lat && order.lng && (
         <Card className="mb-4 overflow-hidden p-0">
           <LiveMap
             orderId={order.id}
             destino={{ lat: order.lat, lng: order.lng }}
-            veiculoTipo={prestadorVeiculo.veiculo_tipo}
-            veiculoCor={prestadorVeiculo.veiculo_cor ?? "preto"}
-            veiculoPorte={prestadorVeiculo.veiculo_porte}
+            veiculoTipo={veiculoEmUso.tipo}
+            veiculoCor={veiculoEmUso.cor}
+            veiculoPorte={veiculoEmUso.porte}
           />
+          <p className="px-4 py-2 text-sm text-[#545454]">
+            {veiculoEmUso.tipo} {veiculoEmUso.cor} · placa {veiculoEmUso.placa}
+          </p>
         </Card>
       )}
 

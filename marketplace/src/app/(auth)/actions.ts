@@ -86,9 +86,24 @@ export async function cadastroPrestadorAction(
     cidade: formData.get("cidade") || undefined,
     estado: formData.get("estado") || undefined,
     raioKm: formData.get("raioKm"),
-    veiculoTipo: formData.get("veiculoTipo"),
-    veiculoCor: formData.get("veiculoCor"),
-    veiculoPorte: formData.get("veiculoPorte") || undefined,
+    veiculos: [
+      {
+        tipo: formData.get("veiculo1Tipo"),
+        cor: formData.get("veiculo1Cor"),
+        porte: formData.get("veiculo1Porte") || undefined,
+        placa: formData.get("veiculo1Placa"),
+      },
+      ...(formData.get("temSegundoVeiculo")
+        ? [
+            {
+              tipo: formData.get("veiculo2Tipo"),
+              cor: formData.get("veiculo2Cor"),
+              porte: formData.get("veiculo2Porte") || undefined,
+              placa: formData.get("veiculo2Placa"),
+            },
+          ]
+        : []),
+    ],
     categoriaIds: formData.getAll("categoriaIds"),
   });
   if (!parsed.success) {
@@ -135,11 +150,21 @@ export async function cadastroPrestadorAction(
     cidade: parsed.data.cidade ?? null,
     estado: parsed.data.estado ?? null,
     raio_km: parsed.data.raioKm,
-    veiculo_tipo: parsed.data.veiculoTipo,
-    veiculo_cor: parsed.data.veiculoCor,
-    veiculo_porte: parsed.data.veiculoPorte ?? null,
   });
   if (profileError) return { error: profileError.message };
+
+  // O primeiro veículo entra como "em uso" — é o exibido no mapa do cliente.
+  const { error: veiculosError } = await admin.from("provider_vehicles").insert(
+    parsed.data.veiculos.map((veiculo, index) => ({
+      provider_id: userId,
+      tipo: veiculo.tipo,
+      cor: veiculo.cor,
+      porte: veiculo.tipo === "caminhao" ? (veiculo.porte ?? null) : null,
+      placa: veiculo.placa,
+      em_uso: index === 0,
+    })),
+  );
+  if (veiculosError) return { error: veiculosError.message };
 
   const { error: categoriasError } = await admin.from("provider_service_categories").insert(
     parsed.data.categoriaIds.map((categoryId) => ({

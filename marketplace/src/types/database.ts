@@ -53,11 +53,19 @@ export type ProviderProfilesRow = {
   dados_bancarios: Record<string, unknown> | null;
   lat_base: number | null;
   lng_base: number | null;
-  veiculo_tipo: VehicleType | null;
-  veiculo_cor: string | null;
-  veiculo_porte: TruckSize | null;
   aprovado_em: string | null;
   aprovado_por: string | null;
+  criado_em: string;
+};
+
+export type ProviderVehiclesRow = {
+  id: string;
+  provider_id: string;
+  tipo: VehicleType;
+  cor: string;
+  porte: TruckSize | null;
+  placa: string;
+  em_uso: boolean;
   criado_em: string;
 };
 
@@ -251,6 +259,18 @@ export type Database = {
             isOneToOne: true;
             referencedRelation: "users";
             referencedColumns: ["id"];
+          },
+        ]
+      >;
+      provider_vehicles: TableDef<
+        ProviderVehiclesRow,
+        [
+          {
+            foreignKeyName: "provider_vehicles_provider_id_fkey";
+            columns: ["provider_id"];
+            isOneToOne: false;
+            referencedRelation: "provider_profiles";
+            referencedColumns: ["user_id"];
           },
         ]
       >;

@@ -9,6 +9,19 @@ export const cadastroClienteSchema = z.object({
   senha: z.string().min(8, "A senha deve ter ao menos 8 caracteres"),
 });
 
+/** Placa brasileira: formato antigo (ABC1234) ou Mercosul (ABC1D23). */
+const placaRegex = /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/;
+
+export const veiculoSchema = z.object({
+  tipo: z.enum(["moto", "carro", "pickup", "caminhao"]),
+  cor: z.string().min(1, "Selecione a cor do veículo"),
+  porte: z.enum(["vuc", "3_4", "toco"]).optional(),
+  placa: z
+    .string()
+    .transform((valor) => valor.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+    .pipe(z.string().regex(placaRegex, "Placa inválida (use ABC1234 ou ABC1D23)")),
+});
+
 export const cadastroPrestadorSchema = cadastroClienteSchema.extend({
   cep: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
   endereco: z.string().min(3, "Informe o endereço"),
@@ -18,9 +31,10 @@ export const cadastroPrestadorSchema = cadastroClienteSchema.extend({
   cidade: z.string().optional(),
   estado: z.string().max(2).optional(),
   raioKm: z.coerce.number().min(1).max(100).default(10),
-  veiculoTipo: z.enum(["moto", "carro", "pickup", "caminhao"]),
-  veiculoCor: z.string().min(1, "Selecione a cor do veículo"),
-  veiculoPorte: z.enum(["vuc", "3_4", "toco"]).optional(),
+  veiculos: z
+    .array(veiculoSchema)
+    .min(1, "Cadastre ao menos um veículo")
+    .max(2, "Máximo de 2 veículos"),
   categoriaIds: z.array(z.string().uuid()).min(1, "Selecione ao menos uma categoria"),
 });
 

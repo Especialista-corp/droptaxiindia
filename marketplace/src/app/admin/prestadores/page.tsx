@@ -17,7 +17,7 @@ export default async function AdminPrestadoresPage() {
   const { data: prestadores } = await admin
     .from("provider_profiles")
     .select(
-      "user_id, status, raio_km, veiculo_tipo, veiculo_cor, veiculo_porte, strikes, documento_url, selfie_url, comprovante_endereco_url, certidao_negativa_url, documentos_prazo_em, cep, endereco, numero, complemento, bairro, cidade, estado, users(nome, email, telefone)",
+      "user_id, status, raio_km, strikes, documento_url, selfie_url, comprovante_endereco_url, certidao_negativa_url, documentos_prazo_em, cep, endereco, numero, complemento, bairro, cidade, estado, users(nome, email, telefone), provider_vehicles(tipo, cor, porte, placa, em_uso)",
     )
     .order("criado_em", { ascending: false });
 
@@ -44,7 +44,13 @@ export default async function AdminPrestadoresPage() {
                     : "Endereço não informado"}
                 </p>
                 <p className="text-sm text-[#545454]">
-                  {prestador.veiculo_tipo} {prestador.veiculo_cor} · raio {prestador.raio_km}km
+                  {(prestador.provider_vehicles ?? [])
+                    .map(
+                      (veiculo) =>
+                        `${veiculo.tipo} ${veiculo.cor} (${veiculo.placa})${veiculo.em_uso ? " ✓" : ""}`,
+                    )
+                    .join(" · ") || "sem veículo"}{" "}
+                  · raio {prestador.raio_km}km
                   {prestador.strikes > 0 && ` · ${prestador.strikes} strike(s)`}
                 </p>
                 <p className="text-sm text-[#545454]">

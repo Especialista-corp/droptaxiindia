@@ -13,7 +13,9 @@ export function PrestadorSignupForm({
   categorias: { id: string; nome: string }[];
 }) {
   const [state, formAction, pending] = useActionState(cadastroPrestadorAction, undefined);
-  const [veiculoTipo, setVeiculoTipo] = useState<VehicleType>("carro");
+  const [veiculo1Tipo, setVeiculo1Tipo] = useState<VehicleType>("carro");
+  const [veiculo2Tipo, setVeiculo2Tipo] = useState<VehicleType>("moto");
+  const [temSegundoVeiculo, setTemSegundoVeiculo] = useState(false);
   const [endereco, setEndereco] = useState({ endereco: "", bairro: "", cidade: "", estado: "" });
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [cepErro, setCepErro] = useState<string>();
@@ -148,54 +150,32 @@ export function PrestadorSignupForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-black">Veículo</span>
-        <select
-          name="veiculoTipo"
-          value={veiculoTipo}
-          onChange={(event) => setVeiculoTipo(event.target.value as VehicleType)}
-          className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
-        >
-          {VEHICLE_TYPES.map((tipo) => (
-            <option key={tipo} value={tipo}>
-              {tipo === "moto" && "Moto"}
-              {tipo === "carro" && "Carro"}
-              {tipo === "pickup" && "Pickup / Fiorino"}
-              {tipo === "caminhao" && "Caminhão"}
-            </option>
-          ))}
-        </select>
-      </div>
+      <VeiculoFields indice={1} tipo={veiculo1Tipo} onTipoChange={setVeiculo1Tipo} />
 
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-black">Cor do veículo</span>
-        <select
-          name="veiculoCor"
-          className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+      {!temSegundoVeiculo ? (
+        <button
+          type="button"
+          onClick={() => setTemSegundoVeiculo(true)}
+          className="text-left text-sm font-bold text-black underline"
         >
-          {VEHICLE_COLORS[veiculoTipo].map((cor) => (
-            <option key={cor} value={cor}>
-              {cor}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {veiculoTipo === "caminhao" && (
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-black">Porte do caminhão</span>
-          <select
-            name="veiculoPorte"
-            className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
-          >
-            {TRUCK_SIZES.map((porte) => (
-              <option key={porte} value={porte}>
-                {TRUCK_SIZE_LABELS[porte]}
-              </option>
-            ))}
-          </select>
-        </div>
+          + Adicionar segundo veículo (opcional)
+        </button>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-black">Segundo veículo</span>
+            <button
+              type="button"
+              onClick={() => setTemSegundoVeiculo(false)}
+              className="text-sm font-medium text-[#BB032A]"
+            >
+              Remover
+            </button>
+          </div>
+          <VeiculoFields indice={2} tipo={veiculo2Tipo} onTipoChange={setVeiculo2Tipo} />
+        </>
       )}
+      <input type="hidden" name="temSegundoVeiculo" value={temSegundoVeiculo ? "1" : ""} />
 
       {state?.error && <p className="text-sm text-[#BB032A]">{state.error}</p>}
 
@@ -210,5 +190,80 @@ export function PrestadorSignupForm({
         </Link>
       </p>
     </form>
+  );
+}
+
+function VeiculoFields({
+  indice,
+  tipo,
+  onTipoChange,
+}: {
+  indice: 1 | 2;
+  tipo: VehicleType;
+  onTipoChange: (tipo: VehicleType) => void;
+}) {
+  const prefixo = `veiculo${indice}`;
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-[#E2E2E2] p-4">
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-black">
+          {indice === 1 ? "Veículo principal" : "Tipo do segundo veículo"}
+        </span>
+        <select
+          name={`${prefixo}Tipo`}
+          value={tipo}
+          onChange={(event) => onTipoChange(event.target.value as VehicleType)}
+          className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+        >
+          {VEHICLE_TYPES.map((tipoOpcao) => (
+            <option key={tipoOpcao} value={tipoOpcao}>
+              {tipoOpcao === "moto" && "Moto"}
+              {tipoOpcao === "carro" && "Carro"}
+              {tipoOpcao === "pickup" && "Pickup / Fiorino"}
+              {tipoOpcao === "caminhao" && "Caminhão"}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-black">Cor</span>
+        <select
+          name={`${prefixo}Cor`}
+          className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+        >
+          {VEHICLE_COLORS[tipo].map((cor) => (
+            <option key={cor} value={cor}>
+              {cor}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {tipo === "caminhao" && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-black">Porte do caminhão</span>
+          <select
+            name={`${prefixo}Porte`}
+            className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+          >
+            {TRUCK_SIZES.map((porte) => (
+              <option key={porte} value={porte}>
+                {TRUCK_SIZE_LABELS[porte]}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <Input
+        label="Placa"
+        name={`${prefixo}Placa`}
+        placeholder="ABC1D23"
+        maxLength={8}
+        required
+        className="uppercase"
+      />
+    </div>
   );
 }
