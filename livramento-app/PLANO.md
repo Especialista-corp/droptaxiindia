@@ -56,11 +56,13 @@ Estas 4 regras entram no design desde o dia 1:
 ## 4. Mapa de telas
 
 ```
-[Splash] → [Home: Contador] ─┬→ [Urna do Dia] → [Card Anti-13 (se 13)] → [Resultado + Cupom]
-                             ├→ [Atrapalhada do Dia]
-                             ├→ [Minhas Conquistas / Streak]
-                             ├→ [Compartilhar]
-                             └→ [Configurações]
+[Splash] → [Home: Contador + Feirão do Dia] ─┬→ [Urna do Dia] → [Card Anti-13 (se 13)] → [Resultado + Desbloqueio de Cupons]
+                                             ├→ [Feirão do Livramento (vitrine de ofertas)]
+                                             ├→ [Carteira do Patriota (meus cupons)]
+                                             ├→ [Atrapalhada do Dia]
+                                             ├→ [Minhas Conquistas / Streak]
+                                             ├→ [Compartilhar]
+                                             └→ [Configurações]
 ```
 
 ### 4.1 Splash (2s)
@@ -76,7 +78,8 @@ Logo + mascote + frase aleatória de abertura ("Segura firme, patriota, já esta
   - Modo novela: "faltam X capítulos de novela"
 - **Termômetro do Livramento**: barra de progresso do mandato inteiro → quanto já passou, quanto falta (ex.: "Você já sobreviveu a 91%. Aguenta mais um pouco.")
 - Botão principal: **"VOTAR AGORA NA URNA DO POVO"** (pulsando).
-- Selo do **patrocinador do dia** ("Hoje quem paga a conta é a Havan 🇧🇷") — clicável.
+- **Faixa do Feirão do Dia**: carrossel horizontal com os logos das empresas que estão dando desconto HOJE ("🔥 Hoje tem: Havan 15% · Loja X R$50 OFF · Site Y frete grátis…") — visível ANTES de votar, para criar o desejo. Tocar leva ao Feirão completo (seção 7).
+- Selo do **Patrocinador Master do dia** ("Hoje quem paga a conta é a Havan 🇧🇷") — a marca em destaque máximo, clicável.
 - Toggle secreto nas configurações: contar até o 2º turno (25/10/2026) **ou** até a posse (01/01/2027) — "para os pessimistas de plantão".
 
 ### 4.3 Urna do Povo (o coração do app)
@@ -127,7 +130,7 @@ Quando o usuário aperta 13, ANTES do confirma, aparece um card flutuante sobre 
 
 ### 4.5 Tela de Resultado + Cupom
 - Votou na direita (qualquer um): fogos, hino em 8-bit, frase de parabéns variável (*"Você é realmente um brasileiro de verdade. A pátria te observa com orgulho. 🇧🇷"* — banco com dezenas de variações).
-- **Cupom do patrocinador do dia** aparece para TODO participante (regra de ouro nº 2): *"A Havan liberou seu código: BRASIL-XY7K. Válido até 23h59."*
+- **Desbloqueio dos cupons do dia** para TODO participante (regra de ouro nº 2): abre a vitrine do Feirão para o usuário escolher até 3 ofertas e guardar na Carteira do Patriota (sistema completo na seção 7).
 - Botão **Compartilhar**: gera imagem-card com o candidato escolhido, a contagem do dia e o link do app.
 - Estatística local divertida: *"Você já votou 14 dias seguidos. Streak de patriota! 🔥"*
 
@@ -188,11 +191,98 @@ Mobile-first com 3 layouts:
 
 ---
 
-## 7. Monetização (desenhada na v1, ativada na v2)
+## 7. Sistema de Cupons — "Feirão do Livramento" 🛍️
 
-- **Patrocinador do Dia:** 1 marca por dia, presença em 4 pontos (selo na Home, urna, tela de cupom, notificação diária). Exclusividade diária = inventário escasso = valor.
-- **Cupom-token:** na v1 (sem backend) o código é estático por campanha. Na v2, o backend gera tokens únicos por aparelho e dá ao anunciante um painel com métricas de resgate (é isso que ele paga para ver).
-- Espaços extras futuros: card patrocinado no compartilhamento ("oferecido por…"), conquista patrocinada.
+O motor de monetização do app. Várias empresas por dia oferecem benefícios; o usuário vê a vitrine ANTES de votar, participa da brincadeira do dia e desbloqueia cupons que ficam guardados na **Carteira do Patriota**, dentro do próprio aparelho.
+
+### 7.1 Tipos de benefício
+
+| Tipo | Exemplo | Visual do card |
+|---|---|---|
+| **% de desconto** | "15% OFF em todo o site" | Selo circular com o número gigante |
+| **R$ de desconto** | "R$ 50 OFF acima de R$ 299" | Estilo cédula/dinheiro |
+| **Voucher** | "Frete grátis", "Brinde na loja", "Combo em dobro" | Estilo ticket picotado |
+
+Cada oferta declara o **canal**: 🌐 online (código para colar no checkout), 🏬 loja física (código/QR para mostrar no caixa) ou ambos.
+
+### 7.2 A regra dos 2 dias (urgência é o produto)
+
+- Todo cupom expira em **no máximo 48h** a partir do resgate: `expiraEm = min(resgate + 48h, fim da campanha)`.
+- Cada card mostra **contagem regressiva viva** ("⏳ morre em 31h 12min") — sim, um mini-contador regressivo dentro do app de contador regressivo. É a assinatura do produto: **aqui tudo tem prazo, inclusive o PT.**
+- Push de resgate: *"Seu cupom da Havan está na UTI: 3h de vida. Corre, patriota!"*
+- Cupom expirado não some na hora: vira uma **lápide cômica** na carteira por 24h — *"🪦 Aqui jazem 15% OFF. Você deixou morrer. O PT agradece a sua indecisão."* — culpa engraçada que ensina o usuário a resgatar rápido da próxima vez.
+
+### 7.3 Fluxo do usuário
+
+```
+Abre o app → Home mostra Feirão do Dia (todas as empresas de hoje)
+   → toca "VOTAR" → brincadeira da urna → resultado
+   → "🎁 Cupons do dia desbloqueados! Escolha os seus."
+   → escolhe até 3 ofertas → vão para a Carteira do Patriota
+   → na hora de usar: copia o código / mostra QR / abre o site com desconto aplicado
+```
+
+**Por que "escolha até 3" e não "leve todos":** escassez. O usuário decide o que quer de verdade (dado valioso para o anunciante na fase 2: taxa de escolha por marca), os cupons escolhidos têm mais chance de resgate real, e as marcas competem por atenção na vitrine. *(Importante: é escolha do usuário, não sorteio/roleta — distribuição por sorte de prêmios exige autorização da SECAP; escolha direta de desconto não.)*
+
+### 7.4 Carteira do Patriota (tela de cupons)
+
+- Abas: **Vivos** (com countdown), **Usados** (histórico com "R$ economizados no total" — número que cresce e vira orgulho/compartilhamento: *"Já economizei R$ 340 esperando o livramento"*), **Lápides** (expirados).
+- Card aberto mostra:
+  - Código em fonte gigante + botão **📋 COPIAR** (Clipboard API; vibração + mini-confete ao copiar);
+  - Botão **"🌐 Usar no site"**: abre a loja já com o cupom aplicado quando a loja suporta (padrão de URL — ex. Shopify aceita `loja.com/discount/CODIGO`; VTEX/Nuvemshop têm `?coupon=`) e, de garantia, copia o código para a área de transferência antes de abrir;
+  - Botão **"🏬 Mostrar na loja"**: modo tela cheia com brilho no máximo, QR Code + código em texto grande + código de barras (Code128) para caixas com leitor;
+  - Regras resumidas ("acima de R$ 99, exceto eletro").
+- Badge com contagem de cupons vivos no ícone da aba — puxa o usuário de volta.
+
+### 7.5 Onde os cupons ficam gravados (arquitetura)
+
+**No aparelho (v1):** os cupons resgatados ficam em **IndexedDB** (mais robusto que localStorage para PWA — mais espaço e melhor para objetos) com este modelo:
+
+```json
+{
+  "id": "havan-2026-07-05-a",
+  "sponsor": { "nome": "Havan", "logo": "havan.png" },
+  "tipo": "percent | reais | voucher",
+  "valor": 15,
+  "titulo": "15% OFF em todo o site",
+  "codigo": "LIVRA15-HAVAN",
+  "canal": "online | loja | ambos",
+  "urlResgate": "https://loja.com/discount/LIVRA15-HAVAN",
+  "regras": "Compras acima de R$ 99",
+  "resgatadoEm": "2026-07-05T10:30:00-03:00",
+  "expiraEm": "2026-07-07T10:30:00-03:00",
+  "usadoEm": null
+}
+```
+
+Estados do cupom: `disponível → resgatado → usado | expirado` (o "usado" é marcado pelo próprio usuário — "já usei ✓" — na v1).
+
+**De onde vêm as ofertas do dia — o pulo do gato da v1:** o app busca um arquivo estático `ofertas.json` hospedado junto do site (Vercel/Netlify, custo zero). Ou seja: **dá para trocar as ofertas todos os dias sem backend e sem atualizar o app** — é só publicar o JSON novo. O service worker guarda a última versão em cache, então funciona até offline. Isso adianta para a v1 uma capacidade que parecia exigir servidor.
+
+**Limite honesto da v1:** dados locais somem se o usuário limpar os dados do navegador; e os códigos são estáticos por campanha (todo mundo do dia recebe o mesmo código — que pode vazar/ser compartilhado). Para campanha de desconto isso costuma ser aceitável (cupom compartilhado ainda gera venda para o anunciante); quando precisar de código único por pessoa, é a deixa da fase 2.
+
+### 7.6 Os 3 níveis de integração com anunciantes (escadinha comercial)
+
+| Nível | Como funciona | Precisa de |
+|---|---|---|
+| **1 — Código de campanha** | Anunciante cria "LIVRA15" na própria plataforma (Shopify, VTEX, Nuvemshop, PDV) e nos passa o código | Nada além do `ofertas.json` (v1, já funciona) |
+| **2 — Lote de códigos únicos** | Anunciante envia CSV com N códigos pré-gerados; nosso backend entrega 1 por aparelho | Backend fase 2 |
+| **3 — Integração via API** | Emissão em tempo real + webhook de confirmação de resgate → métricas exatas de conversão no painel do anunciante | Backend fase 2 + painel |
+
+O nível 3 é o produto premium: o anunciante vê no painel "1.240 resgates, 312 compras confirmadas, R$ 41 mil em vendas originadas" — e é isso que justifica preço alto pelo dia de exposição.
+
+### 7.7 Ideias criativas extras (aprovar/descartar)
+
+- **Cupom em dobro do patriota**: compartilhou o card do app hoje → desbloqueia um 4º slot de cupom no dia.
+- **Hora do Livramento (happy hour)**: todo dia às 13h13, por 13 minutos, aparece um cupom-relâmpago extra — piada com o número + pico de acesso diário previsível (ótimo para vender ao anunciante).
+- **Cupom-streak**: 7 dias seguidos de participação → os anunciantes "premium" liberam ofertas melhores para você ("nível Patriota Raiz").
+- **Modo mutirão**: "se 10 mil pessoas participarem hoje, a oferta da Havan sobe de 10% para 20%" — meta coletiva exibida com barra de progresso (fase 2, precisa do contador agregado).
+- **Selo "salvou o cupom da UTI"**: conquista para quem usa um cupom com menos de 1h de vida.
+
+### 7.8 Outros espaços de receita
+
+- Card patrocinado no compartilhamento ("oferecido por…"), conquista patrocinada, skin da urna patrocinada.
+- Exclusividade: só o **Patrocinador Master** aparece na urna e na notificação diária; o Feirão comporta várias marcas menores.
 
 ---
 
@@ -201,8 +291,8 @@ Mobile-first com 3 layouts:
 ```
 livramento-app/
 ├─ src/
-│  ├─ components/    → Countdown, Urna, CandidateCard, FloatingCard, CouponCard, ShareCard…
-│  ├─ screens/       → Home, Voting, Result, DailyGaffe, Achievements, Settings
+│  ├─ components/    → Countdown, Urna, CandidateCard, FloatingCard, CouponCard, WalletCard, QRDisplay, ShareCard…
+│  ├─ screens/       → Home, Voting, Result, Feirao, Wallet, DailyGaffe, Achievements, Settings
 │  ├─ content/       → os JSONs do humor (seção 5)
 │  ├─ engine/        → countdown.ts, phraseEngine.ts (sorteio sem reposição), streak.ts
 │  ├─ services/      → coupon.ts, sponsor.ts, phrases.ts  ← na v1 leem JSON local;
