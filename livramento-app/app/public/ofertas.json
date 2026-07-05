@@ -1,0 +1,68 @@
+{
+  "atualizadoEm": "2026-07-05",
+  "patrocinadorMaster": "Havan",
+  "maxEscolhasPorDia": 3,
+  "validadeMaxHoras": 48,
+  "ofertas": [
+    {
+      "id": "havan-15",
+      "sponsor": "Havan",
+      "logoEmoji": "🗽",
+      "tipo": "percent",
+      "valor": 15,
+      "titulo": "15% OFF em todo o site",
+      "codigo": "LIVRA15-HAVAN",
+      "canal": "ambos",
+      "urlResgate": "https://www.havan.com.br",
+      "regras": "Compras acima de R$ 99. Não cumulativo."
+    },
+    {
+      "id": "topeletro-50",
+      "sponsor": "TopEletro",
+      "logoEmoji": "🔌",
+      "tipo": "reais",
+      "valor": 50,
+      "titulo": "R$ 50 OFF acima de R$ 299",
+      "codigo": "LIVRA50-TOP",
+      "canal": "online",
+      "urlResgate": "https://example.com/topeletro",
+      "regras": "Válido para eletroportáteis."
+    },
+    {
+      "id": "megagrill-frete",
+      "sponsor": "MegaGrill",
+      "logoEmoji": "🍖",
+      "tipo": "voucher",
+      "valor": 0,
+      "titulo": "Frete grátis no kit churrasco",
+      "codigo": "LIVRAFRETE-GRILL",
+      "canal": "online",
+      "urlResgate": "https://example.com/megagrill",
+      "regras": "Kit churrasco patriota, qualquer valor."
+    },
+    {
+      "id": "cafebrasil-10",
+      "sponsor": "CafeBrasil",
+      "logoEmoji": "☕",
+      "tipo": "reais",
+      "valor": 10,
+      "titulo": "R$ 10 OFF no café do patriota",
+      "codigo": "LIVRA10-CAFE",
+      "canal": "loja",
+      "urlResgate": "",
+      "regras": "Apresente o código no caixa."
+    },
+    {
+      "id": "zapmodas-20",
+      "sponsor": "ZapModas",
+      "logoEmoji": "👕",
+      "tipo": "percent",
+      "valor": 20,
+      "titulo": "20% OFF na camisa verde-amarela",
+      "codigo": "LIVRA20-ZAP",
+      "canal": "ambos",
+      "urlResgate": "https://example.com/zapmodas",
+      "regras": "Linha Brasil, exceto promoções."
+    }
+  ]
+}

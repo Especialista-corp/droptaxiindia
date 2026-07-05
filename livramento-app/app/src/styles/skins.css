@@ -1,0 +1,119 @@
+/* Os 6 visuais viram skins: um atributo data-skin no <html> troca a "roupa" inteira do app. */
+
+:root, [data-skin="v1"] {
+  /* V1 · Urna Oficial */
+  --sk-bg: #F5F7F4;
+  --sk-surface: #FFFFFF;
+  --sk-ink: #12291B;
+  --sk-muted: #54685B;
+  --sk-line: #CFDACF;
+  --sk-accent: #0C5B30;
+  --sk-accent-ink: #F3C300;
+  --sk-accent2: #F3C300;
+  --sk-cta: #F3C300;
+  --sk-cta-ink: #12291B;
+  --sk-digit-bg: #0C5B30;
+  --sk-digit-ink: #FFFFFF;
+  --sk-digit-accent: #F3C300;
+  --sk-radius: 10px;
+  --sk-font: Arial, Helvetica, sans-serif;
+}
+
+[data-skin="v2"] {
+  /* V2 · Placar Neon */
+  --sk-bg: #0B0F0A;
+  --sk-surface: #111A10;
+  --sk-ink: #D8FFE3;
+  --sk-muted: #7FA98A;
+  --sk-line: #2C4A26;
+  --sk-accent: #8DFF6A;
+  --sk-accent-ink: #0B0F0A;
+  --sk-accent2: #FFE94A;
+  --sk-cta: #FFE94A;
+  --sk-cta-ink: #1E1A00;
+  --sk-digit-bg: #111A10;
+  --sk-digit-ink: #8DFF6A;
+  --sk-digit-accent: #FFE94A;
+  --sk-radius: 8px;
+  --sk-font: ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+[data-skin="v3"] {
+  /* V3 · Zap Raiz */
+  --sk-bg: #0E8C3A;
+  --sk-surface: #FFFFFF;
+  --sk-ink: #0A5C26;
+  --sk-muted: #4C6B54;
+  --sk-line: #BFE3C8;
+  --sk-accent: #D42B5E;
+  --sk-accent-ink: #FFFFFF;
+  --sk-accent2: #FFDD00;
+  --sk-cta: #FF3D71;
+  --sk-cta-ink: #FFFFFF;
+  --sk-digit-bg: #FFFFFF;
+  --sk-digit-ink: #0A5C26;
+  --sk-digit-accent: #FFDD00;
+  --sk-radius: 14px;
+  --sk-font: "Comic Sans MS", "Chalkboard SE", cursive, sans-serif;
+}
+[data-skin="v3"] body { color: #fff; }
+[data-skin="v3"] .app-title { color: #FFDD00; }
+[data-skin="v3"] .faltam, [data-skin="v3"] .thermo-label, [data-skin="v3"] .selo { color: #EAFBEF; }
+[data-skin="v3"] .modo-frase { color: #FFDD00; }
+
+[data-skin="v4"] {
+  /* V4 · Tabloide Urgente */
+  --sk-bg: #F1EBDD;
+  --sk-surface: #FFFFFF;
+  --sk-ink: #191512;
+  --sk-muted: #6B5E4A;
+  --sk-line: #C8BCA2;
+  --sk-accent: #C21807;
+  --sk-accent-ink: #F1EBDD;
+  --sk-accent2: #191512;
+  --sk-cta: #C21807;
+  --sk-cta-ink: #F1EBDD;
+  --sk-digit-bg: #191512;
+  --sk-digit-ink: #F1EBDD;
+  --sk-digit-accent: #C21807;
+  --sk-radius: 4px;
+  --sk-font: Georgia, "Times New Roman", serif;
+}
+
+[data-skin="v5"] {
+  /* V5 · Arquibancada */
+  --sk-bg: #FFD700;
+  --sk-surface: #FFFFFF;
+  --sk-ink: #0B3D2E;
+  --sk-muted: #4C6B54;
+  --sk-line: #D9B900;
+  --sk-accent: #0B3D2E;
+  --sk-accent-ink: #FFD700;
+  --sk-accent2: #0B3D2E;
+  --sk-cta: #0B3D2E;
+  --sk-cta-ink: #FFD700;
+  --sk-digit-bg: #08281E;
+  --sk-digit-ink: #FFD700;
+  --sk-digit-accent: #17563F;
+  --sk-radius: 12px;
+  --sk-font: "Arial Black", Arial, sans-serif;
+}
+
+[data-skin="v6"] {
+  /* V6 · Fintech Patriota */
+  --sk-bg: #0F1115;
+  --sk-surface: #171A20;
+  --sk-ink: #F2F3F5;
+  --sk-muted: #9BA1AB;
+  --sk-line: #23272F;
+  --sk-accent: #35D07F;
+  --sk-accent-ink: #0F1115;
+  --sk-accent2: #E8C13A;
+  --sk-cta: #35D07F;
+  --sk-cta-ink: #0F1115;
+  --sk-digit-bg: #171A20;
+  --sk-digit-ink: #F2F3F5;
+  --sk-digit-accent: #35D07F;
+  --sk-radius: 14px;
+  --sk-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

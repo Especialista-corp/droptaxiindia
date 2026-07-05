@@ -1,0 +1,40 @@
+{
+  "esquerda": {
+    "numero": 13,
+    "nome": "Bandeira do PT",
+    "emoji": "🚩",
+    "descricao": "(sozinha)"
+  },
+  "direita": [
+    {
+      "numero": 22,
+      "nome": "O Sério",
+      "emoji": "🕴️",
+      "slogan": "Qualquer um serve. Literalmente.",
+      "obs": "vaga do candidato humano — retrato definitivo pendente"
+    },
+    {
+      "numero": 77,
+      "nome": "Cachorro Caramelo",
+      "emoji": "🐕",
+      "slogan": "Fiel, leal e nunca roubou nem um osso."
+    },
+    {
+      "numero": 51,
+      "nome": "Capivara Patriota",
+      "emoji": "🦫",
+      "slogan": "Calma, ordem e progresso. Roeu a esquerda."
+    },
+    {
+      "numero": 88,
+      "nome": "Picanha Liberal",
+      "emoji": "🥩",
+      "slogan": "A única promessa que você mesmo pode cumprir na churrasqueira."
+    }
+  ],
+  "rodape": {
+    "eq": "Não importa em quem da direita você vai votar — o que importa é o PT sair!",
+    "ac": "Escolha qualquer um da direita. É como pizza: todo sabor serve — menos o de mortadela.",
+    "pa": "VOTA EM QUALQUER UM DA DIREITA! Até no cachorro! MENOS NO 13, PELO AMOR!"
+  }
+}

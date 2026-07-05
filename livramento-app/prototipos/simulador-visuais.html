@@ -1,0 +1,463 @@
+<title>Contador do Livramento — Simulador de Visuais</title>
+<style>
+  :root{
+    --bg:#F4F3EC; --card:#FFFFFF; --ink:#20241F; --muted:#6A7065;
+    --line:#DDDCD2; --accent:#1E7A46; --gold:#C79A12;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141613; --card:#1D201C; --ink:#ECEBE3; --muted:#9AA093;
+           --line:#2C302A; --accent:#4CBB7F; --gold:#E5C24A; }
+  }
+  :root[data-theme="dark"]{ --bg:#141613; --card:#1D201C; --ink:#ECEBE3; --muted:#9AA093;
+           --line:#2C302A; --accent:#4CBB7F; --gold:#E5C24A; }
+  :root[data-theme="light"]{ --bg:#F4F3EC; --card:#FFFFFF; --ink:#20241F; --muted:#6A7065;
+           --line:#DDDCD2; --accent:#1E7A46; --gold:#C79A12; }
+
+  body{ background:var(--bg); color:var(--ink); margin:0; padding:26px 16px 70px;
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.5; }
+  .wrap{ max-width:1100px; margin:0 auto; }
+  .eyebrow{ text-transform:uppercase; letter-spacing:.14em; font-size:12px; font-weight:700; color:var(--accent); }
+  h1{ font-size:clamp(22px,3.6vw,34px); font-weight:800; margin:.25em 0 .15em; text-wrap:balance; }
+  .lede{ color:var(--muted); max-width:66ch; margin:0; font-size:14.5px; }
+
+  .ctl-label{ font-size:11px; text-transform:uppercase; letter-spacing:.14em; font-weight:800;
+              color:var(--muted); margin:18px 0 6px; }
+  .tabs{ display:flex; flex-wrap:wrap; gap:7px; }
+  .tab{ border:1px solid var(--line); background:var(--card); color:var(--ink);
+        border-radius:999px; padding:7px 13px; font-size:13px; font-weight:700; cursor:pointer; }
+  .tab small{ display:block; font-size:10.5px; font-weight:600; color:var(--muted); }
+  .tab.on{ border-color:var(--accent); box-shadow:inset 0 0 0 1.5px var(--accent); }
+  .tab:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+  .mood{ background:var(--card); border:1px solid var(--line); border-radius:12px;
+         padding:12px 16px; margin:16px 0 20px; font-size:14px; }
+  .mood b{ color:var(--accent); }
+
+  .stage{ display:flex; flex-wrap:wrap; gap:26px; justify-content:center; }
+  .col{ display:flex; flex-direction:column; align-items:center; gap:10px; }
+  .plane{ font-size:11.5px; text-transform:uppercase; letter-spacing:.14em; color:var(--muted); font-weight:700; }
+  .sim13{ border:1px solid var(--line); background:var(--card); color:var(--ink); border-radius:8px;
+          padding:8px 14px; font-size:13px; font-weight:700; cursor:pointer; }
+  .sim13:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+  /* ================= PHONE (estrutura comum) ================= */
+  .phone{ width:272px; aspect-ratio:9/18.2; border-radius:30px; overflow:hidden; position:relative;
+          display:flex; flex-direction:column; border:6px solid #101210;
+          box-shadow:0 14px 34px rgba(0,0,0,.22); }
+  .scr{ flex:1; display:flex; flex-direction:column; padding:14px 13px; gap:9px; min-height:0; }
+  .app{ font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; padding-bottom:6px; }
+  .tone-strip{ font-size:10px; font-weight:700; border-radius:7px; padding:6px 8px; line-height:1.35; }
+  .faltam{ font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; opacity:.85; }
+  .board{ display:flex; flex-direction:column; gap:8px; border-radius:10px; }
+  .digits{ display:flex; gap:5px; }
+  .cell{ flex:1; text-align:center; border-radius:7px; padding:7px 0 5px; }
+  .cell b{ display:block; font-size:22px; line-height:1.05; font-variant-numeric:tabular-nums; }
+  .cell span{ font-size:8.5px; text-transform:uppercase; letter-spacing:.09em; opacity:.75; }
+  .thermo{ height:8px; border-radius:99px; overflow:hidden; }
+  .thermo i{ display:block; height:100%; width:91%; }
+  .thermo-label{ font-size:9.5px; margin-top:-3px; opacity:.85; }
+  .feirao{ font-size:9.5px; border-radius:7px; padding:7px 8px; line-height:1.4; }
+  .feirao b{ display:block; font-size:8.5px; text-transform:uppercase; letter-spacing:.12em; }
+  .cta{ border:none; border-radius:9px; padding:11px 8px; font-weight:800; font-size:12px;
+        letter-spacing:.03em; margin-top:auto; text-transform:uppercase; cursor:default; }
+  .selo{ font-size:7.5px; text-transform:uppercase; letter-spacing:.13em; text-align:center; opacity:.7; }
+
+  .urna-title{ font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; text-align:center; }
+  .urna-grid{ display:flex; gap:7px; flex:1; min-height:0; }
+  .lado{ border-radius:9px; padding:7px; display:flex; flex-direction:column; gap:6px; }
+  .lado h4{ margin:0; font-size:8.5px; text-transform:uppercase; letter-spacing:.12em; text-align:center; }
+  .lado-esq{ flex:1; }
+  .pt-card{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+            gap:4px; text-align:center; font-size:9px; }
+  .pt-flag{ font-size:30px; }
+  .num-badge{ font-weight:800; font-size:10px; background:#C21807; color:#fff; border-radius:5px; padding:1px 7px; }
+  .lado-dir{ flex:1.55; }
+  .cand{ border-radius:7px; padding:5px 6px; display:flex; gap:6px; align-items:center; }
+  .cand .av{ font-size:17px; }
+  .cand .nm{ font-size:9px; font-weight:800; line-height:1.15; }
+  .cand .sg{ font-size:7.6px; line-height:1.2; opacity:.8; }
+  .cand .nb{ margin-left:auto; font-weight:800; font-size:9.5px; border-radius:5px; padding:1px 5px; }
+  .urna-footer{ font-size:9px; font-weight:700; text-align:center; line-height:1.35;
+                border-radius:7px; padding:6px 7px; }
+  .urna-btns{ display:flex; gap:6px; }
+  .urna-btns button{ flex:1; border:none; border-radius:7px; padding:8px 4px; font-weight:800;
+                     font-size:10px; text-transform:uppercase; cursor:default; }
+  .b-corrige{ background:#C21807; color:#fff; }
+  .b-confirma{ background:#0C5B30; color:#fff; }
+
+  .overlay{ position:absolute; inset:0; background:rgba(8,12,9,.6); display:none;
+            align-items:center; justify-content:center; padding:14px; }
+  .overlay.show{ display:flex; }
+  .card13{ border-radius:12px; padding:13px 12px; width:100%;
+           border-top:6px solid #C21807; display:flex; flex-direction:column; gap:8px; background:#fff; }
+  .card13 .alert{ font-size:10px; font-weight:800; color:#C21807; text-transform:uppercase; letter-spacing:.06em; }
+  .card13 .frase{ font-size:10.5px; font-style:italic; line-height:1.45; color:#33291F; }
+  .card13 .btns{ display:flex; flex-direction:column; gap:5px; }
+  .card13 .btns button{ border:none; border-radius:7px; padding:8px 6px; font-weight:800; font-size:9.5px; cursor:pointer; }
+  .b-volta{ background:#0C5B30; color:#fff; }
+  .b-teima{ background:#EFE9DC; color:#6B5E4A; }
+
+  /* ================= V1 · URNA OFICIAL ================= */
+  .v1{ background:#F5F7F4; }
+  .v1 .scr{ color:#12291B; font-family:Arial,Helvetica,sans-serif; }
+  .v1 .app{ color:#0C5B30; border-bottom:3px solid #F3C300; }
+  .v1 .cell{ background:#0C5B30; color:#fff; border-bottom:3px solid #F3C300; }
+  .v1 .thermo{ background:#D9E2DA; } .v1 .thermo i{ background:#0C5B30; }
+  .v1 .feirao{ background:#fff; border:1px solid #CFDACF; color:#33463A; }
+  .v1 .feirao b{ color:#0C5B30; }
+  .v1 .cta{ background:#F3C300; color:#12291B; }
+  .v1 .selo{ color:#5E6E62; }
+  .v1 .urna-title{ color:#0C5B30; }
+  .v1 .lado-esq{ background:#FCEDEA; border:1px dashed #C21807; } .v1 .lado-esq h4{ color:#C21807; }
+  .v1 .pt-card{ color:#7A2C22; }
+  .v1 .lado-dir{ background:#EAF3EC; border:1px solid #9FC4A8; } .v1 .lado-dir h4{ color:#0C5B30; }
+  .v1 .cand{ background:#fff; border:1px solid #CFDACF; }
+  .v1 .cand .nm{ color:#12291B; } .v1 .cand .sg{ color:#54685B; }
+  .v1 .cand .nb{ background:#0C5B30; color:#F3C300; }
+
+  /* ================= V2 · PLACAR NEON ================= */
+  .v2{ background:#0B0F0A; }
+  .v2 .scr{ color:#D8FFE3; font-family:ui-monospace,"Cascadia Mono",Menlo,Consolas,monospace; }
+  .v2 .app{ color:#8DFF6A; text-shadow:0 0 10px rgba(141,255,106,.7); border-bottom:1px solid #2C4A26; }
+  .v2 .cell{ background:#111A10; border:1px solid #2C4A26; color:#8DFF6A;
+             text-shadow:0 0 12px rgba(141,255,106,.8); }
+  .v2 .cell span{ color:#FFE94A; text-shadow:none; }
+  .v2 .thermo{ background:#16240F; border:1px solid #2C4A26; }
+  .v2 .thermo i{ background:#8DFF6A; box-shadow:0 0 10px rgba(141,255,106,.9); }
+  .v2 .feirao{ background:#111A10; border:1px dashed #2C4A26; color:#B9E8C2; }
+  .v2 .feirao b{ color:#FFE94A; }
+  .v2 .cta{ background:transparent; color:#FFE94A; border:2px solid #FFE94A; }
+  .v2 .selo{ color:#6C8A72; }
+  .v2 .urna-title{ color:#8DFF6A; text-shadow:0 0 8px rgba(141,255,106,.6); }
+  .v2 .lado-esq{ background:#200D0D; border:1px dashed #7A2C22; } .v2 .lado-esq h4{ color:#E08A7E; }
+  .v2 .pt-card{ color:#E08A7E; }
+  .v2 .lado-dir{ background:#0F1A10; border:1px solid #2C4A26; } .v2 .lado-dir h4{ color:#8DFF6A; }
+  .v2 .cand{ background:#111A10; border:1px solid #2C4A26; }
+  .v2 .cand .nm{ color:#D8FFE3; } .v2 .cand .sg{ color:#7FA98A; }
+  .v2 .cand .nb{ background:#8DFF6A; color:#0B0F0A; }
+  .v2 .card13{ background:#111A10; } .v2 .card13 .frase{ color:#D8FFE3; }
+
+  /* ================= V3 · ZAP RAIZ ================= */
+  .v3{ background:linear-gradient(160deg,#1DB954 0%,#0E8C3A 45%,#0A6B79 100%); }
+  .v3 .scr{ color:#fff; font-family:"Comic Sans MS","Chalkboard SE",cursive,sans-serif; }
+  .v3 .app{ background:#FFDD00; color:#0A5C26; border-radius:99px; padding:5px 10px;
+            width:max-content; transform:rotate(-2deg); box-shadow:2px 3px 0 rgba(0,0,0,.25); }
+  .v3 .cell{ background:#fff; color:#0A5C26; box-shadow:2px 3px 0 rgba(0,0,0,.25); }
+  .v3 .thermo{ background:rgba(255,255,255,.3); } .v3 .thermo i{ background:#FFDD00; }
+  .v3 .feirao{ background:rgba(255,255,255,.93); color:#0A5C26; transform:rotate(1deg);
+               box-shadow:2px 3px 0 rgba(0,0,0,.2); }
+  .v3 .feirao b{ color:#D42B5E; }
+  .v3 .cta{ background:#FF3D71; color:#fff; transform:rotate(-1deg); box-shadow:3px 4px 0 rgba(0,0,0,.3); }
+  .v3 .selo{ color:rgba(255,255,255,.85); }
+  .v3 .urna-title{ color:#FFDD00; text-shadow:1px 2px 0 rgba(0,0,0,.3); }
+  .v3 .lado-esq{ background:rgba(255,255,255,.92); border:2px dashed #C21807; } .v3 .lado-esq h4{ color:#C21807; }
+  .v3 .pt-card{ color:#7A2C22; }
+  .v3 .lado-dir{ background:rgba(255,255,255,.16); border:2px solid rgba(255,255,255,.55); }
+  .v3 .lado-dir h4{ color:#FFDD00; }
+  .v3 .cand{ background:#fff; box-shadow:2px 2px 0 rgba(0,0,0,.22); }
+  .v3 .cand .nm{ color:#0A5C26; } .v3 .cand .sg{ color:#4C6B54; }
+  .v3 .cand .nb{ background:#FF3D71; color:#fff; }
+
+  /* ================= V4 · TABLOIDE URGENTE ================= */
+  .v4{ background:#F1EBDD; }
+  .v4 .scr{ color:#191512; font-family:Georgia,"Times New Roman",serif; }
+  .v4 .app{ font-family:Impact,"Arial Black",sans-serif; font-size:14px; color:#191512;
+            border-bottom:3px double #191512; }
+  .v4 .faltam{ font-style:italic; text-transform:none; letter-spacing:0; }
+  .v4 .cell{ background:#191512; color:#F1EBDD; border-radius:2px; }
+  .v4 .cell b{ font-family:Impact,"Arial Black",sans-serif; }
+  .v4 .thermo{ background:#D8CFBC; } .v4 .thermo i{ background:#C21807; }
+  .v4 .feirao{ background:#fff; border:1px solid #191512; border-radius:2px; color:#33291F; }
+  .v4 .feirao b{ color:#C21807; }
+  .v4 .cta{ background:#C21807; color:#F1EBDD; border-radius:2px;
+            font-family:Impact,"Arial Black",sans-serif; letter-spacing:.06em; }
+  .v4 .selo{ color:#7C6F5A; }
+  .v4 .urna-title{ font-family:Impact,"Arial Black",sans-serif; color:#191512; }
+  .v4 .lado-esq{ background:#fff; border:2px dashed #C21807; border-radius:3px; } .v4 .lado-esq h4{ color:#C21807; }
+  .v4 .pt-card{ color:#7A2C22; }
+  .v4 .lado-dir{ background:#fff; border:1px solid #191512; border-radius:3px; } .v4 .lado-dir h4{ color:#191512; }
+  .v4 .cand{ background:#F1EBDD; border:1px solid #B9AD94; border-radius:3px; }
+  .v4 .cand .nm{ color:#191512; } .v4 .cand .sg{ color:#6B5E4A; }
+  .v4 .cand .nb{ background:#191512; color:#F1EBDD; }
+  .v4 .card13{ background:#F1EBDD; }
+
+  /* ================= V5 · ARQUIBANCADA ================= */
+  .v5{ background:repeating-linear-gradient(90deg,#FFD700 0 26px,#FFC400 26px 52px); }
+  .v5 .scr{ color:#0B3D2E; font-family:"Arial Black",Arial,sans-serif; }
+  .v5 .app{ color:#0B3D2E; }
+  .v5 .board{ background:#0B3D2E; padding:10px; }
+  .v5 .faltam{ color:#FFD700; }
+  .v5 .cell{ background:#08281E; border:1px solid #17563F; }
+  .v5 .cell b{ color:#FFD700; } .v5 .cell span{ color:#8FD0B4; }
+  .v5 .thermo{ background:#08281E; } .v5 .thermo i{ background:#FFD700; }
+  .v5 .thermo-label{ color:#8FD0B4; }
+  .v5 .feirao{ background:#fff; color:#0B3D2E; border:2px solid #0B3D2E; }
+  .v5 .feirao b{ color:#C21807; }
+  .v5 .cta{ background:#0B3D2E; color:#FFD700; }
+  .v5 .selo{ color:#5C4E00; }
+  .v5 .urna-title{ color:#0B3D2E; }
+  .v5 .lado-esq{ background:#fff; border:2px dashed #C21807; } .v5 .lado-esq h4{ color:#C21807; }
+  .v5 .pt-card{ color:#7A2C22; }
+  .v5 .lado-dir{ background:#0B3D2E; } .v5 .lado-dir h4{ color:#FFD700; }
+  .v5 .cand{ background:#fff; border:1px solid #17563F; }
+  .v5 .cand .nm{ color:#0B3D2E; } .v5 .cand .sg{ color:#4C6B54; }
+  .v5 .cand .nb{ background:#0B3D2E; color:#FFD700; }
+
+  /* ================= V6 · FINTECH PATRIOTA ================= */
+  .v6{ background:#0F1115; }
+  .v6 .scr{ color:#F2F3F5; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; gap:11px; }
+  .v6 .app{ color:#9BA1AB; font-weight:600; letter-spacing:.18em; }
+  .v6 .faltam{ color:#9BA1AB; }
+  .v6 .cell{ background:#171A20; border:1px solid #23272F; }
+  .v6 .cell b{ font-weight:700; } .v6 .cell span{ color:#6E747E; }
+  .v6 .cell:first-child b{ color:#35D07F; }
+  .v6 .thermo{ background:#171A20; }
+  .v6 .thermo i{ background:linear-gradient(90deg,#35D07F,#E8C13A); }
+  .v6 .thermo-label{ color:#6E747E; }
+  .v6 .feirao{ background:#171A20; border:1px solid #23272F; color:#C6CAD1; }
+  .v6 .feirao b{ color:#E8C13A; }
+  .v6 .cta{ background:#35D07F; color:#0F1115; border-radius:12px; }
+  .v6 .selo{ color:#6E747E; }
+  .v6 .urna-title{ color:#F2F3F5; }
+  .v6 .lado-esq{ background:#1A1214; border:1px dashed #7A2C22; } .v6 .lado-esq h4{ color:#E08A7E; }
+  .v6 .pt-card{ color:#E08A7E; }
+  .v6 .lado-dir{ background:#171A20; border:1px solid #23272F; } .v6 .lado-dir h4{ color:#35D07F; }
+  .v6 .cand{ background:#0F1115; border:1px solid #23272F; }
+  .v6 .cand .nm{ color:#F2F3F5; } .v6 .cand .sg{ color:#9BA1AB; }
+  .v6 .cand .nb{ background:#35D07F; color:#0F1115; }
+  .v6 .card13{ background:#171A20; } .v6 .card13 .frase{ color:#F2F3F5; }
+
+  /* ============ acentos do TOM (depois dos visuais p/ vencer) ============ */
+  .t-eq .tone-strip{ background:#E4EFE6; color:#2A5238; border:1px solid #BFD8C5; }
+  .t-ac .tone-strip{ background:#F4F7C8; color:#5E6410; border:1px solid #D9DE7E; }
+  .t-pa .tone-strip{ background:repeating-linear-gradient(45deg,#C21807 0 10px,#A31205 10px 20px);
+                     color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.45); border:none; }
+  .t-ac .cta{ background:#CDDC00; color:#1E2405; border:none; box-shadow:none; transform:none; }
+  .t-pa .cta{ background:#C21807; color:#fff; border:none; box-shadow:none; transform:none; }
+  .t-eq .urna-footer{ background:#E4EFE6; color:#2A5238; }
+  .t-ac .urna-footer{ background:#F4F7C8; color:#5E6410; }
+  .t-pa .urna-footer{ background:#C21807; color:#fff; }
+
+  footer{ margin-top:34px; font-size:12.5px; color:var(--muted);
+          border-top:1px solid var(--line); padding-top:14px; max-width:72ch; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Contador do Livramento · simulador completo</div>
+  <h1>Simulador: 6 visuais × 7 dias × Tom do Dia</h1>
+  <p class="lede">Escolha um <strong>visual</strong> e um <strong>dia da semana</strong>. As duas telas mudam na hora:
+  o 1º plano (Home, contador ao vivo até 25/10/2026 17h) e o 2º plano (Urna do Povo com os 4 candidatos aprovados).
+  O Tom do Dia troca as frases e os acentos de cor sobre qualquer visual.</p>
+
+  <div class="ctl-label">Visual</div>
+  <div class="tabs" id="vtabs" role="tablist"></div>
+  <div class="ctl-label">Dia da semana · Tom do Dia</div>
+  <div class="tabs" id="dtabs" role="tablist"></div>
+
+  <div class="mood" id="mood"></div>
+
+  <div class="stage">
+    <div class="col">
+      <div class="plane">1º plano — Home</div>
+      <div class="phone v1 t-eq" id="ph-home"><div class="scr">
+        <div class="app" id="h-app"></div>
+        <div class="tone-strip" id="h-strip"></div>
+        <div class="board">
+          <div class="faltam" id="h-faltam"></div>
+          <div class="digits">
+            <div class="cell"><b class="dd">--</b><span>dias</span></div>
+            <div class="cell"><b class="hh">--</b><span>horas</span></div>
+            <div class="cell"><b class="mm">--</b><span>min</span></div>
+            <div class="cell"><b class="ss">--</b><span>seg</span></div>
+          </div>
+          <div class="thermo"><i></i></div>
+          <div class="thermo-label" id="h-thermo"></div>
+        </div>
+        <div class="feirao"><b id="h-feirao-t"></b><span id="h-feirao"></span></div>
+        <button class="cta" id="h-cta"></button>
+        <div class="selo">Sátira política · isto não é uma urna oficial</div>
+      </div></div>
+    </div>
+
+    <div class="col">
+      <div class="plane">2º plano — Urna do Povo</div>
+      <div class="phone v1 t-eq" id="ph-urna"><div class="scr">
+        <div class="app" id="u-app"></div>
+        <div class="urna-title" id="u-title"></div>
+        <div class="urna-grid">
+          <div class="lado lado-esq">
+            <h4>Esquerda</h4>
+            <div class="pt-card">
+              <div class="pt-flag">🚩</div>
+              <div class="num-badge">13</div>
+              <div>Bandeira do PT<br>(sozinha)</div>
+            </div>
+          </div>
+          <div class="lado lado-dir">
+            <h4>Direita</h4>
+            <div class="cand"><span class="av">🇧🇷</span><span><span class="nm">Flávio Bolsonaro</span><br><span class="sg">Camisa da seleção</span></span><span class="nb">22</span></div>
+            <div class="cand"><span class="av">🐕</span><span><span class="nm">Cachorro Caramelo</span><br><span class="sg">Nunca roubou nem um osso</span></span><span class="nb">77</span></div>
+            <div class="cand"><span class="av">🦫</span><span><span class="nm">Capivara Patriota</span><br><span class="sg">Roeu a esquerda</span></span><span class="nb">51</span></div>
+            <div class="cand"><span class="av">🥩</span><span><span class="nm">Picanha Liberal</span><br><span class="sg">Promessa que você cumpre</span></span><span class="nb">88</span></div>
+          </div>
+        </div>
+        <div class="urna-footer" id="u-footer"></div>
+        <div class="urna-btns"><button class="b-corrige">Corrige</button><button class="b-confirma">Confirma</button></div>
+      </div>
+      <div class="overlay" id="ov"><div class="card13">
+        <div class="alert">⚠️ Calma! Ainda dá tempo de voltar atrás.</div>
+        <div class="frase" id="c13-frase"></div>
+        <div class="btns">
+          <button class="b-volta">🙏 Voltar e salvar o Brasil</button>
+          <button class="b-teima">🤡 Confirmar mesmo assim</button>
+        </div>
+      </div></div>
+      </div>
+      <button class="sim13" id="btn13">Simular aperto no 13</button>
+    </div>
+  </div>
+
+  <footer>Rotação de tons desta simulação (ajustável): Equilibrado 🌤️ seg/qua/sáb/dom · Ácido 🍋 ter/qui ·
+  Pancada 🔥 sexta. Em todos os visuais a identidade-base permanece — o tom muda frases, a faixa de humor
+  e os acentos (limão no Ácido, vermelho-alerta na Pancada). Lembrete: os visuais não escolhidos como padrão
+  podem virar <strong>skins desbloqueáveis ou patrocinadas</strong> dentro do app.</footer>
+</div>
+
+<script>
+  var VISUAIS = [
+    { id:'v1', nome:'1 · Urna Oficial',    app:'⬛ Contador do Livramento' },
+    { id:'v2', nome:'2 · Placar Neon',     app:'CONTADOR_DO_LIVRAMENTO' },
+    { id:'v3', nome:'3 · Zap Raiz',        app:'🇧🇷 Contador do Livramento' },
+    { id:'v4', nome:'4 · Tabloide',        app:'CONTADOR DO LIVRAMENTO' },
+    { id:'v5', nome:'5 · Arquibancada',    app:'⚽ Contador do Livramento' },
+    { id:'v6', nome:'6 · Fintech',         app:'CONTADOR DO LIVRAMENTO' }
+  ];
+
+  var DIAS = [
+    { d:'Seg', nome:'Segunda', tom:'eq', emoji:'🌤️',
+      mood:'— o app acorda solidário: todo mundo odeia segunda, ele também. Deboche leve para começar a semana sem susto.',
+      strip:'🌤️ TOM DE HOJE: DE BOA. Segunda já é castigo suficiente.',
+      faltam:'Faltam', thermo:'Você já sobreviveu a 91% do mandato. E a mais uma segunda.',
+      feiraoT:'Feirão de segunda', feirao:'Havan 15% OFF · CafeBrasil R$ 10 · ZapModas frete grátis',
+      cta:'Votar na Urna do Povo', utitle:'🗳️ Urna do Povo — segunda-feira',
+      ufooter:'Não importa em quem da direita você vai votar — o que importa é o PT sair!',
+      c13:'"Perdeu o celular, mané? Só assim pra explicar esse 13 aí numa segunda de manhã. Respira e volta."' },
+    { d:'Ter', nome:'Terça', tom:'ac', emoji:'🍋',
+      mood:'— ironia fina o dia inteiro: os acentos azedam para verde-limão e até o elogio sai com espinho.',
+      strip:'🍋 TOM DE HOJE: ÁCIDO. O Contador tomou limão no café.',
+      faltam:'Restam meros', thermo:'91% do mandato decorrido. Impressionante como o tempo passa quando ninguém governa.',
+      feiraoT:'Feirão de terça', feirao:'TopEletro R$ 50 OFF · Havan 10% · LivroLivre 2 por 1',
+      cta:'Vote. Se souber escolher.', utitle:'🗳️ Urna do Povo — terça-feira',
+      ufooter:'Escolha qualquer um da direita. É como pizza: todo sabor serve — menos o de mortadela.',
+      c13:'"13? Curioso. Estatisticamente é o número preferido de quem acredita que dá pra estocar vento."' },
+    { d:'Qua', nome:'Quarta', tom:'eq', emoji:'🌤️',
+      mood:'— meio de semana, matemática do alívio: metade da semana vencida, 91% do mandato também.',
+      strip:'🌤️ TOM DE HOJE: DE BOA. Metade da semana já foi. O resto vai também.',
+      faltam:'Faltam', thermo:'91% do mandato sobrevivido. Quarta é o meio do túnel — e tem luz no fim.',
+      feiraoT:'Feirão de quarta', feirao:'MercaTudo R$ 30 OFF · Havan 15% · PetPatriota brinde',
+      cta:'Votar na Urna do Povo', utitle:'🗳️ Urna do Povo — quarta-feira',
+      ufooter:'Qualquer um da direita serve. Até a Picanha. PRINCIPALMENTE a Picanha.',
+      c13:'"Opa, 13 na quarta? Deve ter sido o cotovelo. Ainda dá tempo de corrigir, patriota."' },
+    { d:'Qui', nome:'Quinta', tom:'ac', emoji:'🍋',
+      mood:'— véspera do dia mais temido: o app afia a língua e avisa que amanhã ninguém escapa.',
+      strip:'🍋 TOM DE HOJE: ÁCIDO. Aproveite: amanhã é bem pior.',
+      faltam:'Contagem fria e implacável', thermo:'91% vencidos. Os outros 9% parecem os 5 minutos finais de reunião que não acaba.',
+      feiraoT:'Feirão de quinta', feirao:'ChurrasPrime 20% · Havan 10% · AutoPeças BR R$ 40',
+      cta:'Vote logo, a fila anda', utitle:'🗳️ Urna do Povo — quinta-feira',
+      ufooter:'Da direita, pode fechar os olhos e apertar. Errar aqui é estatisticamente impossível.',
+      c13:'"Um 13 na quinta? Que homenagem tocante ao banco Master. Ele agradece o seu apoio incondicional."' },
+    { d:'Sex', nome:'SEXTA', tom:'pa', emoji:'🔥',
+      mood:'— o evento da semana: faixa listrada de alerta, botão vermelho, zoeira sem anestesia. Coração fraco, volte amanhã.',
+      strip:'🔥 ALERTA: SEXTA-FEIRA PANCADA. HOJE NÃO TEM PERDÃO.',
+      faltam:'AGUENTA! FALTAM SÓ', thermo:'91% JÁ FOI! Falta menos que paciência de brasileiro em fila de banco!',
+      feiraoT:'Feirão PANCADA de sexta', feirao:'Havan 25% SÓ HOJE · MegaGrill R$ 60 · EletroPop frete grátis',
+      cta:'APERTA LOGO, PATRIOTA!', utitle:'🗳️ URNA DO POVO — SEXTA PANCADA 🔥',
+      ufooter:'VOTA EM QUALQUER UM DA DIREITA! Até no cachorro! No MIOJO se precisar! MENOS NO 13, PELO AMOR!',
+      c13:'"MEU DEUS, O MANÉ APERTOU O 13!! Devolve o celular pro dono AGORA, que com ele na mão vão sobrar só a cervejinha e a desculpa!"' },
+    { d:'Sáb', nome:'Sábado', tom:'eq', emoji:'🌤️',
+      mood:'— clima de fim de semana: vota rapidinho, garante o cupom e vai cuidar do churrasco.',
+      strip:'🌤️ TOM DE HOJE: MODO CHURRASCO. Vota e vai acender o carvão.',
+      faltam:'Faltam', thermo:'91% do mandato vencido — e cada sábado desses vale por dois.',
+      feiraoT:'Feirão de sábado', feirao:'MegaGrill 15% · Havan 15% · GeladaExpress R$ 20',
+      cta:'Votar e ir pro churrasco', utitle:'🗳️ Urna do Povo — sábado',
+      ufooter:'Vote em qualquer um da direita e vá virar a carne em paz. O PT fica de fora do rodízio.',
+      c13:'"13 no sábado? Larga o celular perto da churrasqueira não, que já vi onde isso vai dar. Volta lá e corrige."' },
+    { d:'Dom', nome:'Domingo', tom:'eq', emoji:'🌤️',
+      mood:'— dia de família: tom manso, quase devocional. O ensaio semanal para O domingo que importa: 25/10/2026.',
+      strip:'🌤️ TOM DE HOJE: PAZ DE DOMINGO. Até o Contador está de pijama.',
+      faltam:'Com fé, faltam só', thermo:'91% vencidos. Cada domingo é um ensaio para O domingo do livramento.',
+      feiraoT:'Feirão de domingo', feirao:'PadariaTop café grátis · Havan 10% · FarmaBem R$ 15',
+      cta:'Votar em família', utitle:'🗳️ Urna do Povo — domingo',
+      ufooter:'Domingo é dia de ensaio: treine hoje o voto que vai libertar o Brasil na urna de verdade.',
+      c13:'"Um 13 no dia do Senhor? Vai lá, reza três ave-marias e volta pra corrigir isso, filho."' }
+  ];
+
+  var curV = 0, curD = 0;
+  var vtabs = document.getElementById('vtabs'), dtabs = document.getElementById('dtabs');
+
+  VISUAIS.forEach(function(v, i){
+    var b = document.createElement('button');
+    b.className = 'tab'; b.setAttribute('role','tab'); b.textContent = v.nome;
+    b.addEventListener('click', function(){ curV = i; render(); });
+    vtabs.appendChild(b);
+  });
+  DIAS.forEach(function(d, i){
+    var b = document.createElement('button');
+    b.className = 'tab'; b.setAttribute('role','tab');
+    b.innerHTML = d.emoji + ' ' + d.d + '<small>' +
+      (d.tom==='eq'?'Equilibrado':d.tom==='ac'?'Ácido':'Pancada') + '</small>';
+    b.addEventListener('click', function(){ curD = i; render(); });
+    dtabs.appendChild(b);
+  });
+
+  var overlayOn = false;
+  document.getElementById('btn13').addEventListener('click', function(){
+    overlayOn = !overlayOn;
+    document.getElementById('ov').classList.toggle('show', overlayOn);
+    this.textContent = overlayOn ? 'Fechar card anti-13' : 'Simular aperto no 13';
+  });
+  document.querySelector('.b-volta').addEventListener('click', function(){
+    overlayOn = false; document.getElementById('ov').classList.remove('show');
+    document.getElementById('btn13').textContent = 'Simular aperto no 13';
+  });
+
+  function render(){
+    var v = VISUAIS[curV], d = DIAS[curD];
+    for (var k=0;k<vtabs.children.length;k++) vtabs.children[k].classList.toggle('on', k===curV);
+    for (var j=0;j<dtabs.children.length;j++) dtabs.children[j].classList.toggle('on', j===curD);
+    ['ph-home','ph-urna'].forEach(function(id){
+      document.getElementById(id).className = 'phone ' + v.id + ' t-' + d.tom;
+    });
+    document.getElementById('mood').innerHTML =
+      '<b>' + v.nome + ' · ' + d.nome + ' ' + d.emoji + '</b> ' + d.mood;
+    document.getElementById('h-app').textContent = v.app;
+    document.getElementById('u-app').textContent = v.app;
+    document.getElementById('h-strip').textContent = d.strip;
+    document.getElementById('h-faltam').textContent = d.faltam;
+    document.getElementById('h-thermo').textContent = d.thermo;
+    document.getElementById('h-feirao-t').textContent = d.feiraoT;
+    document.getElementById('h-feirao').textContent = d.feirao;
+    document.getElementById('h-cta').textContent = d.cta;
+    document.getElementById('u-title').textContent = d.utitle;
+    document.getElementById('u-footer').textContent = d.ufooter;
+    document.getElementById('c13-frase').textContent = d.c13;
+  }
+
+  var hoje = new Date().getDay(); // 0 = domingo
+  curD = (hoje === 0) ? 6 : hoje - 1;
+  render();
+
+  var alvo = new Date('2026-10-25T17:00:00-03:00').getTime();
+  function tick(){
+    var diff = Math.max(0, alvo - Date.now());
+    function set(cls,val){
+      var els = document.querySelectorAll('.'+cls), t = String(val).padStart(2,'0');
+      for (var i=0;i<els.length;i++) els[i].textContent = t;
+    }
+    set('dd', Math.floor(diff/86400000));
+    set('hh', Math.floor(diff%86400000/3600000));
+    set('mm', Math.floor(diff%3600000/60000));
+    set('ss', Math.floor(diff%60000/1000));
+  }
+  tick(); setInterval(tick,1000);
+</script>
