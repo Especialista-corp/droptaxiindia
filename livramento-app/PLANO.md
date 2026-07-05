@@ -170,6 +170,25 @@ Quando o usuário aperta 13, ANTES do confirma, aparece um card flutuante sobre 
   └─ candidatos.json      → dados, slogans e falas de cada candidato
 ```
 
+### 5.1 O Tom do Dia (decidido em 05/07/2026) 🎭
+
+O app não tem um tom fixo: **cada dia ele "acorda de um humor"**, alternando entre três modos — e anuncia isso na abertura, como previsão do tempo:
+
+| Modo | Como o app se comporta | Anúncio na abertura |
+|---|---|---|
+| 🍋 **Ácido** | Sarcasmo fino, ironia de stand-up o dia todo | *"Hoje o Contador acordou ácido. Ironia nível: limão com caipirinha."* |
+| 🔥 **Pancada** | Zoeira pesada de grupo de zap, sem dó | *"ALERTA: hoje o Contador acordou PANCADA. Coração fraco, volte amanhã."* |
+| 🌤️ **Equilibrado** | Mix 80/20 — deboche leve com picos de pancada nos momentos-assinatura | *"Hoje o Contador está de boa. Mas não aperta o 13 que ele vira bicho."* |
+
+**Como funciona por dentro:**
+- Cada frase dos bancos JSON ganha uma tag `tom: "acido" | "pancada" | "leve"`; o motor de frases filtra pelo humor do dia.
+- O tom do dia é **determinístico pela data** (função da data → todo mundo no Brasil vê o mesmo tom no mesmo dia). Isso sincroniza a zoeira nacional: "hoje tá pancada" vira assunto de grupo — marketing grátis.
+- Rotação sugerida: Equilibrado como base (~4 dias/semana), Ácido ~2, Pancada ~1 — a escassez do dia Pancada o torna um evento ("SEXTA-FEIRA PANCADA 🔥").
+- **Invariantes**: o card anti-13 e o Certificado de Amnésia são SEMPRE pancada (são a assinatura do app); avisos legais e telas de cupom são sempre neutros (dinheiro não entra na brincadeira).
+- O "Tom do Dia" aparece como selo na Home e nos cards de compartilhamento → quem vê o print fica curioso para saber o humor de amanhã.
+- Gancho comercial futuro: **Dia Pancada patrocinado** ("A pancada de hoje é oferecida por…").
+- Acessibilidade familiar: opção nas configurações "Modo Vovó 👵" — trava no tom leve para quem quiser mostrar o app para a família sem sustos (o usuário escolhe; o padrão é seguir o Tom do Dia).
+
 - **Sorteio sem reposição:** o app guarda no aparelho quais frases o usuário já viu e só repete depois de esgotar o banco → nunca fica monótono.
 - **Frases com "slots":** templates tipo `"Faltam {dias} dias e você continua firme, {apelido}"` — o mesmo texto parece novo.
 - **IA (fase 2):** quando houver backend, um job gera lotes novos de frases por IA (com revisão humana antes de publicar — humor político não pode sair do forno sem filtro) e o app baixa o JSON atualizado. **Não** chamamos IA em tempo real na v1: custo, latência e risco de sair frase problemática sem revisão.
@@ -326,7 +345,7 @@ livramento-app/
 ## 11. Decisões em aberto (para alinharmos)
 
 - [x] Nome do app: **Contador do Livramento** (decidido em 05/07/2026)
-- [ ] Aprovar os 2 candidatos novos (Capivara Patriota e Picanha Liberal) ou trocar
+- [x] Candidatos aprovados: Flávio Bolsonaro (22), Cachorro Caramelo (77), Capivara Patriota (51), Picanha Liberal (88) — decidido em 05/07/2026
 - [ ] Data-alvo padrão: 2º turno (25/10/2026) — ok?
-- [ ] Tom das frases: nível "deboche leve" ou "pancada"? (sugestão: 80% deboche leve compartilhável / 20% pancada)
+- [x] Tom das frases: **Tom do Dia** rotativo (Ácido / Pancada / Equilibrado 80-20), ver seção 5.1 — decidido em 05/07/2026
 - [ ] Identidade visual: verde-amarelo "oficial de campanha" ou algo mais moderno/neon?
