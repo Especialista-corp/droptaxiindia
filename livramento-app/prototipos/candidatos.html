@@ -1,0 +1,207 @@
+<title>Contador do Livramento — Retratos oficiais dos candidatos</title>
+<style>
+  :root{
+    --bg:#F4F3EC; --card:#FFFFFF; --ink:#20241F; --muted:#6A7065;
+    --line:#DDDCD2; --accent:#1E7A46; --gold:#C79A12;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141613; --card:#1D201C; --ink:#ECEBE3; --muted:#9AA093;
+           --line:#2C302A; --accent:#4CBB7F; --gold:#E5C24A; }
+  }
+  :root[data-theme="dark"]{ --bg:#141613; --card:#1D201C; --ink:#ECEBE3; --muted:#9AA093;
+           --line:#2C302A; --accent:#4CBB7F; --gold:#E5C24A; }
+  :root[data-theme="light"]{ --bg:#F4F3EC; --card:#FFFFFF; --ink:#20241F; --muted:#6A7065;
+           --line:#DDDCD2; --accent:#1E7A46; --gold:#C79A12; }
+
+  body{ background:var(--bg); color:var(--ink); margin:0; padding:28px 16px 70px;
+        font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; line-height:1.5; }
+  .wrap{ max-width:1080px; margin:0 auto; }
+  .eyebrow{ text-transform:uppercase; letter-spacing:.14em; font-size:12px; font-weight:700; color:var(--accent); }
+  h1{ font-size:clamp(22px,3.6vw,34px); font-weight:800; margin:.25em 0 .15em; text-wrap:balance; }
+  .lede{ color:var(--muted); max-width:66ch; margin:0 0 24px; font-size:14.5px; }
+
+  .grid{ display:grid; gap:20px; grid-template-columns:1fr; }
+  @media(min-width:640px){ .grid{ grid-template-columns:1fr 1fr; } }
+  @media(min-width:1024px){ .grid{ grid-template-columns:1fr 1fr 1fr 1fr; } }
+
+  .cartaz{ background:var(--card); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+           display:flex; flex-direction:column; }
+  .foto{ background:linear-gradient(180deg,#0C5B30 0%,#0A4B28 100%); position:relative;
+         display:flex; align-items:flex-end; justify-content:center; padding-top:14px; }
+  .foto svg{ display:block; width:100%; max-width:230px; height:auto; }
+  .faixa-topo{ position:absolute; top:0; left:0; right:0; height:8px;
+               background:repeating-linear-gradient(90deg,#F3C300 0 24px,#0C5B30 24px 48px); }
+  .num{ position:absolute; top:16px; right:12px; background:#F3C300; color:#12291B;
+        font-weight:800; font-size:22px; border-radius:9px; padding:4px 12px;
+        box-shadow:0 3px 8px rgba(0,0,0,.3); font-variant-numeric:tabular-nums; }
+  .info{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; }
+  .nome{ font-size:17px; font-weight:800; }
+  .cargo{ font-size:11px; text-transform:uppercase; letter-spacing:.12em; color:var(--gold); font-weight:700; }
+  .slogan{ font-size:13.5px; font-style:italic; color:var(--muted); }
+  .bio{ font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:8px; }
+  .aviso{ font-size:11.5px; background:color-mix(in srgb, var(--gold) 12%, transparent);
+          border:1px solid var(--gold); border-radius:8px; padding:7px 9px; color:var(--ink); }
+
+  footer{ margin-top:30px; font-size:12.5px; color:var(--muted);
+          border-top:1px solid var(--line); padding-top:14px; max-width:72ch; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Contador do Livramento · galeria oficial de campanha</div>
+  <h1>Os 4 candidatos da direita — retratos oficiais</h1>
+  <p class="lede">Ilustrações vetoriais (SVG): nítidas em qualquer tamanho, prontas para a urna, os cards de
+  compartilhamento e o material de divulgação. Moldura verde-urna com faixa e número no padrão "cartaz de campanha".</p>
+
+  <div class="grid">
+
+    <!-- 22 · FLÁVIO BOLSONARO (placeholder de direito de imagem) -->
+    <div class="cartaz">
+      <div class="foto"><div class="faixa-topo"></div><span class="num">22</span>
+        <svg viewBox="0 0 200 190" role="img" aria-label="Silhueta provisória de Flávio Bolsonaro com camisa da seleção">
+          <!-- silhueta neutra -->
+          <ellipse cx="100" cy="72" rx="34" ry="38" fill="#0E3B22"/>
+          <path d="M100 108 C60 108 38 132 34 190 L166 190 C162 132 140 108 100 108 Z" fill="#FFD700"/>
+          <path d="M78 112 Q100 126 122 112 L122 138 Q100 150 78 138 Z" fill="#1B9E4B"/>
+          <circle cx="100" cy="128" r="9" fill="#FFDF37" stroke="#1B5E2E" stroke-width="2"/>
+          <text x="100" y="132" text-anchor="middle" font-size="9" font-weight="bold" fill="#1B5E2E">CBF</text>
+          <text x="100" y="66" text-anchor="middle" font-size="30" fill="#F3C300">?</text>
+        </svg>
+      </div>
+      <div class="info">
+        <span class="cargo">O candidato sério</span>
+        <span class="nome">Flávio Bolsonaro</span>
+        <span class="slogan">"Camisa da seleção, foto oficial de campanha."</span>
+        <span class="aviso">⚠️ Pessoa real: retrato definitivo (foto ou caricatura) só com autorização de uso
+        de imagem. Silhueta provisória até lá.</span>
+      </div>
+    </div>
+
+    <!-- 77 · CACHORRO CARAMELO -->
+    <div class="cartaz">
+      <div class="foto"><div class="faixa-topo"></div><span class="num">77</span>
+        <svg viewBox="0 0 200 190" role="img" aria-label="Cachorro caramelo de óculos escuros e camisa do Brasil">
+          <!-- orelhas -->
+          <path d="M52 44 Q44 8 70 18 Q84 26 78 52 Z" fill="#B5722F"/>
+          <path d="M148 44 Q156 8 130 18 Q116 26 122 52 Z" fill="#B5722F"/>
+          <path d="M58 42 Q54 20 70 26 Q79 32 74 50 Z" fill="#8A5320"/>
+          <path d="M142 42 Q146 20 130 26 Q121 32 126 50 Z" fill="#8A5320"/>
+          <!-- cabeça -->
+          <ellipse cx="100" cy="68" rx="46" ry="42" fill="#D2913F"/>
+          <!-- focinho -->
+          <ellipse cx="100" cy="86" rx="24" ry="17" fill="#E8C388"/>
+          <ellipse cx="100" cy="80" rx="9" ry="6.5" fill="#3B2A1A"/>
+          <path d="M100 87 L100 94 M100 94 Q92 100 86 95 M100 94 Q108 100 114 95"
+                stroke="#3B2A1A" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <!-- óculos escuros -->
+          <rect x="62" y="52" width="32" height="17" rx="7" fill="#191512"/>
+          <rect x="106" y="52" width="32" height="17" rx="7" fill="#191512"/>
+          <rect x="94" y="57" width="12" height="4.5" fill="#191512"/>
+          <path d="M64 56 h10" stroke="#4A4A4A" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M108 56 h10" stroke="#4A4A4A" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- corpo camisa -->
+          <path d="M100 110 C62 110 42 134 38 190 L162 190 C158 134 138 110 100 110 Z" fill="#FFD700"/>
+          <path d="M76 114 Q100 128 124 114 L124 142 Q100 154 76 142 Z" fill="#1B9E4B"/>
+          <circle cx="100" cy="132" r="9.5" fill="#FFDF37" stroke="#1B5E2E" stroke-width="2"/>
+          <text x="100" y="136" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#1B5E2E">BR</text>
+          <!-- coleira -->
+          <path d="M70 108 Q100 122 130 108" stroke="#C21807" stroke-width="6" fill="none"/>
+          <circle cx="100" cy="117" r="5" fill="#F3C300" stroke="#8A5320" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="info">
+        <span class="cargo">O fiel da nação</span>
+        <span class="nome">Cachorro Caramelo</span>
+        <span class="slogan">"Fiel, leal e nunca roubou nem um osso."</span>
+        <span class="bio">Nascido em todas as ruas do Brasil ao mesmo tempo. Promete faro fino contra
+        falcatrua e soneca fiscal responsável.</span>
+      </div>
+    </div>
+
+    <!-- 51 · CAPIVARA PATRIOTA -->
+    <div class="cartaz">
+      <div class="foto"><div class="faixa-topo"></div><span class="num">51</span>
+        <svg viewBox="0 0 200 190" role="img" aria-label="Capivara com faixa presidencial tomando tereré">
+          <!-- orelhas -->
+          <ellipse cx="66" cy="30" rx="11" ry="9" fill="#7A5A33"/>
+          <ellipse cx="134" cy="30" rx="11" ry="9" fill="#7A5A33"/>
+          <ellipse cx="66" cy="31" rx="6" ry="5" fill="#5C3F20"/>
+          <ellipse cx="134" cy="31" rx="6" ry="5" fill="#5C3F20"/>
+          <!-- cabeça retangular de capivara -->
+          <path d="M52 34 Q100 14 148 34 L152 84 Q152 108 100 110 Q48 108 48 84 Z" fill="#96703D"/>
+          <!-- focinho -->
+          <path d="M68 78 Q100 68 132 78 L130 100 Q100 112 70 100 Z" fill="#B08A55"/>
+          <ellipse cx="86" cy="88" rx="5" ry="6.5" fill="#3B2A1A"/>
+          <ellipse cx="114" cy="88" rx="5" ry="6.5" fill="#3B2A1A"/>
+          <!-- olhos serenos: pálpebras a meio -->
+          <path d="M66 58 q10 -7 20 0 q-10 8 -20 0 Z" fill="#2B1D0F"/>
+          <path d="M114 58 q10 -7 20 0 q-10 8 -20 0 Z" fill="#2B1D0F"/>
+          <path d="M64 54 q12 -8 24 0" stroke="#5C3F20" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <path d="M112 54 q12 -8 24 0" stroke="#5C3F20" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <!-- corpo terno -->
+          <path d="M100 112 C60 112 40 136 36 190 L164 190 C160 136 140 112 100 112 Z" fill="#23303B"/>
+          <path d="M84 114 L100 132 L116 114 L110 190 L90 190 Z" fill="#fff"/>
+          <path d="M97 132 h6 l3 30 -6 8 -6 -8 Z" fill="#C21807"/>
+          <!-- faixa presidencial -->
+          <path d="M64 118 L124 190 L152 190 L84 112 Z" fill="#1B9E4B"/>
+          <path d="M72 116 L136 190 L146 190 L80 113 Z" fill="#F3C300"/>
+          <!-- tereré: cuia na "mão" -->
+          <path d="M148 132 q16 4 14 22 q-2 16 -18 14 q-14 -2 -12 -18 q2 -14 16 -18 Z" fill="#6B4A26"/>
+          <path d="M150 128 l14 -26" stroke="#C0C0C0" stroke-width="4" stroke-linecap="round"/>
+          <ellipse cx="150" cy="140" rx="9" ry="4" fill="#3E7C3A"/>
+        </svg>
+      </div>
+      <div class="info">
+        <span class="cargo">A serenidade em pessoa</span>
+        <span class="nome">Capivara Patriota</span>
+        <span class="slogan">"Calma, ordem e progresso. Roeu a esquerda."</span>
+        <span class="bio">Governa como atravessa a lagoa: sem pressa e sem escândalo. Plano de governo:
+        tereré para todos e silêncio às 14h.</span>
+      </div>
+    </div>
+
+    <!-- 88 · PICANHA LIBERAL -->
+    <div class="cartaz">
+      <div class="foto"><div class="faixa-topo"></div><span class="num">88</span>
+        <svg viewBox="0 0 200 190" role="img" aria-label="Picanha de óculos escuros com gravata e bandeira do Brasil">
+          <!-- corpo-picanha: meia-lua carnuda -->
+          <path d="M38 120 Q30 52 96 38 Q166 24 166 92 Q166 132 132 148 Q76 170 46 144 Q36 134 38 120 Z"
+                fill="#B03A2E"/>
+          <!-- capa de gordura -->
+          <path d="M96 38 Q166 24 166 92 Q166 104 162 114 Q170 56 100 52 Q60 56 44 84 Q52 48 96 38 Z"
+                fill="#F5E6C8"/>
+          <!-- brilho -->
+          <path d="M60 120 q20 18 52 10" stroke="#D4695F" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <!-- óculos escuros -->
+          <rect x="66" y="84" width="30" height="16" rx="7" fill="#191512"/>
+          <rect x="106" y="84" width="30" height="16" rx="7" fill="#191512"/>
+          <rect x="96" y="89" width="10" height="4.5" fill="#191512"/>
+          <!-- sorriso confiante -->
+          <path d="M84 118 Q101 130 118 116" stroke="#5C1F17" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <!-- colarinho + gravata -->
+          <path d="M78 148 L101 160 L124 146 L118 190 L84 190 Z" fill="#fff"/>
+          <path d="M98 160 h7 l4 22 -7 8 -7 -8 Z" fill="#1B9E4B"/>
+          <!-- bandeirinha na mão -->
+          <path d="M152 128 l0 -44" stroke="#8A5320" stroke-width="4" stroke-linecap="round"/>
+          <path d="M152 84 h34 v22 h-34 Z" fill="#1B9E4B"/>
+          <path d="M169 87 l13 8 -13 8 -13 -8 Z" fill="#F3C300"/>
+          <circle cx="169" cy="95" r="4" fill="#20469B"/>
+          <!-- garfo espetado de leve no topo (troféu de churrasco) -->
+          <path d="M56 60 l-10 -26 M50 42 h12 M52 34 v8 M60 34 v8" stroke="#9AA0A6" stroke-width="3" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div class="info">
+        <span class="cargo">A promessa que se cumpre</span>
+        <span class="nome">Picanha Liberal</span>
+        <span class="slogan">"A única promessa que você mesmo pode cumprir na churrasqueira."</span>
+        <span class="bio">Prometida em 2022, nunca entregue — resolveu se candidatar sozinha. Programa de
+        governo: ponto pra quem quer, mal passada pra quem gosta.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Os três mascotes (Caramelo, Capivara e Picanha) são criação original do projeto — sem risco de
+  direitos de terceiros. Estilo aprovado = gero as variações: rosto redondo para a urna, corpo inteiro para
+  cards de compartilhamento, versões comemorando/chorando para as telas de resultado. O retrato do candidato
+  humano fica pendente de autorização de uso de imagem.</footer>
+</div>
