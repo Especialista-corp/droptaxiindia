@@ -1,0 +1,59 @@
+{
+  "abertura": [
+    { "t": "eq", "txt": "Segura firme, patriota: a contagem está viva e o livramento se aproxima." },
+    { "t": "eq", "txt": "Bem-vindo de volta. O Brasil continua contando com você (e contando os dias)." },
+    { "t": "eq", "txt": "Respira fundo: cada segundo que passa é um segundo a menos." },
+    { "t": "ac", "txt": "Você voltou. O tempo também está passando — coisa que certas obras nunca fizeram." },
+    { "t": "ac", "txt": "A boa notícia: faltam menos dias que ontem. A má: ainda faltam dias." },
+    { "t": "pa", "txt": "ACORDA, PATRIOTA! Cada dia sem votar aqui é um dia a mais de mortadela no poder!" }
+  ],
+  "parabens": [
+    { "t": "eq", "txt": "Parabéns! Você é realmente um brasileiro de verdade. A pátria te observa com orgulho. 🇧🇷" },
+    { "t": "eq", "txt": "Voto computado! O agro agradece, o caramelo abana o rabo e a capivara acena de leve." },
+    { "t": "eq", "txt": "Missão do dia cumprida, patriota. Volte amanhã que a urna sente saudade." },
+    { "t": "ac", "txt": "Voto registrado. Impressionante: você conseguiu algo que o PAC nunca conseguiu — ser concluído." },
+    { "t": "ac", "txt": "Computado. Estatisticamente, você acaba de elevar o QI médio do eleitorado." },
+    { "t": "ac", "txt": "Confirmado. Seu voto vale mais que muita promessa de picanha por aí." },
+    { "t": "pa", "txt": "É ISSO, PATRIOTA! Voto no talo! O 13 chorou, a mortadela murchou e o Brasil sorriu!" },
+    { "t": "pa", "txt": "CONFIRMOU IGUAL MACHO! Nem a cervejinha do 'achado não é roubado' segura esse livramento!" },
+    { "t": "pa", "txt": "URNA TREMEU! Mais um dia sem fraquejar no 13. O Brasil te deve uma picanha — que você mesmo vai ter que assar." }
+  ],
+  "fidelidade": [
+    { "t": "eq", "txt": "Vejo que desde a última vez você não mudou seu voto. Coerência é tudo, patriota. 🫡" },
+    { "t": "eq", "txt": "Mesmo voto de ontem. Firmeza de quem sabe o que quer (e principalmente o que NÃO quer)." },
+    { "t": "ac", "txt": "Voto idêntico ao anterior. Que estabilidade admirável — já a inflação da picanha…" },
+    { "t": "ac", "txt": "Sem mudança no voto. Você é mais estável que aliança de governo em ano eleitoral." },
+    { "t": "pa", "txt": "NÃO MUDOU NADA! É DISSO QUE O BRASIL PRECISA: patriota que não amarela!" },
+    { "t": "pa", "txt": "MESMO VOTO, MESMA FIBRA! Enquanto isso o 13 segue esperando você fraquejar. VAI ESPERAR SENTADO!" }
+  ],
+  "mudouParaDireita": [
+    { "t": "eq", "txt": "Opa, trocou de candidato — mas continua do lado certo da urna. O que importa é o PT sair!" },
+    { "t": "ac", "txt": "Mudou de voto dentro da direita? Rotatividade saudável. Pena que certos cargos por aí não conhecem o conceito." },
+    { "t": "pa", "txt": "TROCOU MAS NÃO TRAIU! Dentro da direita vale tudo, até votar na Picanha. O 13 que não encoste!" }
+  ],
+  "anti13": [
+    { "t": "eq", "txt": "Perdeu o celular, mané? Só assim pra explicar esse 13 aí. Ainda dá tempo de voltar." },
+    { "t": "eq", "txt": "Opa, 13? Deve ter sido o dedo que escorregou. Acontece nas melhores famílias. Quer corrigir?" },
+    { "t": "eq", "txt": "Calma! Antes de confirmar, lembra: são mais 4 anos disso. Respira e escolhe de novo." },
+    { "t": "eq", "txt": "13? A capivara olhou pra você com decepção. E olha que a capivara não julga ninguém." },
+    { "t": "ac", "txt": "13? Curioso. Estatisticamente é o número preferido de quem acredita que dá pra estocar vento." },
+    { "t": "ac", "txt": "Um 13. Que homenagem tocante ao banco Master — ele agradece seu apoio incondicional." },
+    { "t": "ac", "txt": "Interessante escolha. Nove dedos também escolheriam. Pense na inflação da picanha antes do confirma." },
+    { "t": "ac", "txt": "13? Já preparou o coração pra mais 4 anos de 'nunca antes na história deste país'?" },
+    { "t": "ac", "txt": "Apertou 13? Vou avisar a Dilma pra estocar vento pra você. Saudade dessa meteorologia econômica?" },
+    { "t": "pa", "txt": "MEU DEUS, O MANÉ APERTOU O 13!! Devolve o celular pro dono AGORA, que com ele na mão vão sobrar só a cervejinha e a desculpa!" },
+    { "t": "pa", "txt": "PERDEU O CELULAR, MANÉ?! Porque só assim pra explicar esse 13. Agora que estou com ele, vou tomar uma cervejinha. VOLTA ATRÁS!" },
+    { "t": "pa", "txt": "13?! TÁ MALUCO?! Nem o cachorro caramelo, que ama todo mundo, aprovaria isso. CORRIGE ESSA URNA!" },
+    { "t": "pa", "txt": "ALERTA MÁXIMO: dedo no 13 detectado! Você tem UMA chance de salvar o Brasil. USA ELA!" }
+  ],
+  "confirmou13": [
+    { "t": "eq", "txt": "Confirmou o 13 mesmo… Tudo bem. O app te ama assim mesmo — e emitiu seu Certificado de Amnésia Eleitoral. 🍖" },
+    { "t": "ac", "txt": "13 confirmado. Seu Certificado de Amnésia Eleitoral está pronto. Emoldure: é o único documento que o comprova cientificamente." },
+    { "t": "pa", "txt": "CONFIRMOU O 13!!! Chuva de mortadela liberada! Seu Certificado de Amnésia Eleitoral já está no forno. 🍖🍖🍖" }
+  ],
+  "voltou13": [
+    { "t": "eq", "txt": "UFA! O Brasil agradece. Agora escolha qualquer um do lado de lá com a consciência limpa." },
+    { "t": "ac", "txt": "Sábia decisão. Seu futuro biógrafo agradece por cortar essa página constrangedora." },
+    { "t": "pa", "txt": "ARREPENDIMENTO ACEITO! O caramelo abanou o rabo, a capivara sorriu e a pátria respirou. AGORA VOTA DIREITO!" }
+  ]
+}

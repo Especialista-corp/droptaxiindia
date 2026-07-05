@@ -333,8 +333,8 @@ livramento-app/
 
 ## 10. Roadmap proposto
 
-1. **M1 — Esqueleto navegável:** contador funcionando + layout responsivo das telas (sem conteúdo final).
-2. **M2 — Urna completa:** fluxo de voto, card anti-13, resultado, persistência local, sons.
+1. ✅ **M1 — Esqueleto navegável:** contador funcionando + layout responsivo das telas (`app/`, React + Vite).
+2. ✅ **M2 — Urna completa:** fluxo de voto, card anti-13, resultado, persistência local, beep de urna, Feirão/Carteira v0, Tom do Dia e 6 skins trocáveis.
 3. **M3 — Conteúdo:** bancos de frases v1, mascotes/artes dos candidatos, animações.
 4. **M4 — Retenção:** PWA + notificação diária, conquistas, compartilhamento com imagem.
 5. **M5 — Beta:** publicar na web (Vercel/Netlify, custo zero), testar com grupo fechado.
