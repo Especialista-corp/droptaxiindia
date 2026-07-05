@@ -1,4 +1,4 @@
-# 📱 Plano do Aplicativo — "Contador do Livramento" (nome provisório)
+# 📱 Plano do Aplicativo — "Contador do Livramento" ✅ (nome oficial)
 
 > **Fase atual:** alinhamento 100% do FRONT-END. Backend fica para a fase 2 (mas já deixamos os "ganchos" prontos).
 > **Formato:** Web App responsivo (PWA) que abre em qualquer aparelho — celular, tablet, desktop.
@@ -325,7 +325,7 @@ livramento-app/
 
 ## 11. Decisões em aberto (para alinharmos)
 
-- [ ] Nome do app (seção 1)
+- [x] Nome do app: **Contador do Livramento** (decidido em 05/07/2026)
 - [ ] Aprovar os 2 candidatos novos (Capivara Patriota e Picanha Liberal) ou trocar
 - [ ] Data-alvo padrão: 2º turno (25/10/2026) — ok?
 - [ ] Tom das frases: nível "deboche leve" ou "pancada"? (sugestão: 80% deboche leve compartilhável / 20% pancada)
