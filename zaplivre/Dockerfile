@@ -4,6 +4,7 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY server ./server
+COPY docs ./docs
 COPY public ./public
 RUN mkdir -p /app/data
 VOLUME ["/app/data"]

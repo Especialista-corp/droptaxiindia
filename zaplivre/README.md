@@ -2,26 +2,44 @@
 
 **Mensagens grátis, feitas para o Brasil.**
 
-ZapLivre é um mensageiro de código aberto, sem anúncios e sem cobrança, pensado como
-alternativa ao WhatsApp para brasileiros. Funciona como aplicativo instalável (PWA) no
-celular e no computador, direto pelo navegador.
+ZapLivre é um mensageiro de código aberto, sem anúncios, gratuito para pessoas e com
+assinatura fixa para empresas. Foi desenhado para resolver as dores do WhatsApp: mistura
+de vida pessoal com trabalho e cobranças, exposição do número de telefone, cobrança por
+mensagem e bloqueio de contas que usam automação.
 
-> ⚠️ Este é um MVP (produto mínimo viável). Veja a seção *Roteiro* para o que ainda falta
-> antes de um lançamento público.
+Funciona como aplicativo instalável (PWA) no celular e no computador, pelo navegador.
 
-## Funcionalidades
+> ⚠️ É um MVP avançado. Veja *Roteiro* para o que falta antes do lançamento público.
 
-- Cadastro pelo número de celular com código de verificação (SMS via webhook; em
-  desenvolvimento o código aparece na tela).
-- Conversas individuais e grupos (até 256 participantes) com administradores.
-- Mensagens de texto e fotos (redimensionadas no aparelho antes de enviar).
-- Confirmação de envio, entrega e leitura (✓, ✓✓, ✓✓ azul).
-- "Online", "visto por último" e "digitando...".
-- Responder mensagens e apagar para todos.
-- Notificações no navegador/celular e ícone com contador de não lidas.
-- Instalável como aplicativo (PWA) com funcionamento offline da interface.
-- Interface 100% em português, modo claro e escuro, layout para celular e desktop.
-- Sincronização com a agenda do celular (API de contatos do Chrome no Android).
+## O que o ZapLivre faz
+
+### Para pessoas (grátis)
+
+- **Identidade por @usuário.** O telefone serve só para confirmar que é você e nunca aparece
+  para outras pessoas ou empresas. Amigos podem te achar pela agenda apenas se você permitir.
+- **Três abas:** *Social* (amigos e família), *Trabalho* (equipes e projetos) e
+  *Atendimento* (empresas). Empresas só existem na aba Atendimento; nunca poluem a Social.
+- Conversas individuais e grupos (até 256 pessoas) com administradores.
+- Texto, fotos, documentos e **áudios com transcrição e resumo sob demanda**.
+- **Painel de mídias e documentos** por conversa: fotos, áudios, documentos e links
+  organizados, com categorias automáticas (comprovante, contrato, planilha...) e etiquetas.
+- Recibos ✓ ✓✓ ✓✓azul, online, visto por último, digitando, responder, apagar para todos.
+- Bloqueio de contatos e empresas. Link de convite `https://seu-servidor/@usuario`.
+- Notificações, contador no ícone, modo escuro, instalável como app.
+
+### Para empresas (assinatura fixa, mensagens ilimitadas)
+
+- **Identidade por domínio** (`@suaempresa.com.br`), verificado por registro DNS. Sem chip.
+- **Sem taxa por mensagem.** Planos fixos mensais com 14 dias grátis.
+- **API aberta e webhooks** para conectar robôs de n8n, Typebot, Make, LangChain ou qualquer
+  ferramenta, sem risco de bloqueio. Documentação em [docs/API.md](docs/API.md).
+- **Robô → humano com um clique.** O atendente vê a conversa da IA em tempo real, clica em
+  *Assumir* e o robô para. *Devolver ao robô* reativa.
+- **Painel Kanban** (Em aberto, Em atendimento, Concluído) com arrastar e soltar, etiquetas
+  e responsável, dentro do próprio app.
+- Vários atendentes por empresa, cada resposta identificada pelo nome do atendente.
+- **Antispam de fábrica:** a empresa nunca inicia conversa, só responde a quem a procurou.
+  Limite de envios por hora conforme o plano. Cliente pode bloquear.
 
 ## Rodando localmente
 
@@ -30,13 +48,14 @@ Requisitos: Node.js 22.13 ou superior (usa o SQLite embutido do Node, sem compil
 ```bash
 cd zaplivre
 npm install
-npm run dev      # modo desenvolvimento: código de verificação aparece na tela
+npm run dev      # código de verificação aparece na tela
 ```
 
-Abra <http://localhost:3000>. Para testar uma conversa, abra uma segunda janela anônima
-e cadastre outro número.
+Abra <http://localhost:3000>. Para testar, abra uma janela anônima e cadastre outro
+número. Para testar atendimento: menu → *Minhas empresas* → cadastre um domínio, depois
+na outra conta procure `@dominio` em *Nova conversa*.
 
-Testes automatizados:
+Testes automatizados (API, webhooks, robô, Kanban, arquivos, transcrição, tempo real):
 
 ```bash
 npm test
@@ -48,15 +67,17 @@ npm test
 PORT=3000 DB_FILE=/var/lib/zaplivre/zaplivre.db SMS_WEBHOOK_URL=https://seu-provedor/enviar npm start
 ```
 
-| Variável          | Descrição                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `PORT`            | Porta HTTP (padrão 3000).                                                          |
-| `DB_FILE`         | Caminho do banco SQLite (padrão `data/zaplivre.db`).                               |
-| `SMS_WEBHOOK_URL` | URL que recebe `POST {"to": "+55...", "message": "..."}` e dispara o SMS.          |
-| `DEV_SHOW_OTP`    | `1` devolve o código na resposta da API. **Nunca use em produção.**                |
-
-O webhook de SMS é propositalmente genérico: basta um pequeno adaptador para Zenvia,
-Twilio, TotalVoice, Comtele ou qualquer outro provedor brasileiro.
+| Variável                 | Descrição                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `PORT`                   | Porta HTTP (padrão 3000).                                                            |
+| `DB_FILE`                | Caminho do banco SQLite (padrão `data/zaplivre.db`).                                 |
+| `UPLOAD_DIR`             | Pasta dos arquivos enviados (padrão `data/uploads`).                                 |
+| `SMS_WEBHOOK_URL`        | URL que recebe `POST {"to": "+55...", "message": "..."}` e dispara o SMS.            |
+| `BILLING_WEBHOOK_SECRET` | Segredo do webhook do provedor de pagamento (`X-Billing-Secret`).                    |
+| `OPENAI_API_KEY`         | Ativa transcrição de áudio (Whisper) e, com `SUMMARY_MODEL`, o resumo em tópicos.    |
+| `OPENAI_BASE_URL`        | Endpoint compatível (padrão `https://api.openai.com/v1`; serve para Whisper próprio).|
+| `TRANSCRIBE_WEBHOOK_URL` | Alternativa: seu próprio serviço que recebe o áudio e devolve `{"text": "..."}`.     |
+| `DEV_SHOW_OTP`           | `1` devolve o código na resposta da API. **Nunca use em produção.**                  |
 
 Com Docker:
 
@@ -66,43 +87,41 @@ docker run -p 3000:3000 -v zaplivre-data:/app/data -e SMS_WEBHOOK_URL=... zapliv
 ```
 
 Coloque um proxy com HTTPS na frente (Caddy, Nginx ou o balanceador da nuvem). HTTPS é
-obrigatório para PWA, notificações e acesso à agenda de contatos.
+obrigatório para PWA, notificações, microfone e agenda de contatos.
 
 ## Arquitetura
 
 ```
 zaplivre/
 ├── server/
-│   ├── index.js   # Express + Socket.IO, rotas REST e eventos em tempo real
-│   ├── auth.js    # OTP por telefone, sessões
-│   ├── chats.js   # conversas, grupos, mensagens, recibos
-│   └── db.js      # esquema SQLite (node:sqlite) e utilitários
-├── public/        # PWA: index.html, app.js, styles.css, sw.js, manifest, ícones
-└── test/          # testes de API e tempo real (node:test)
+│   ├── index.js       # Express + Socket.IO, rotas REST, API pública /api/v1, webhooks
+│   ├── auth.js        # OTP por telefone, @usuário, sessões
+│   ├── chats.js       # conversas, abas, grupos, mensagens, tickets, antispam, bloqueio
+│   ├── workspaces.js  # empresas: domínio, DNS, atendentes, chave de API, webhook, planos
+│   ├── files.js       # fotos, áudios, documentos, painel de mídias, transcrição
+│   └── db.js          # esquema SQLite (node:sqlite) e migrações
+├── public/            # PWA: index.html, app.js, styles.css, sw.js, manifest, ícones
+├── docs/
+│   ├── API.md         # API para robôs e integrações
+│   └── DECISOES.md    # decisões de produto (criptografia, antispam, descoberta)
+└── test/              # testes com node:test
 ```
-
-Cliente e servidor se comunicam por REST (`/api/...`) para carregar dados e por
-WebSocket (Socket.IO) para mensagens, recibos, presença e digitação.
 
 ## Roteiro até o lançamento
 
-1. **Criptografia de ponta a ponta** (protocolo Signal ou X3DH + Double Ratchet). Hoje as
-   mensagens ficam legíveis no servidor. Isso é o item mais importante antes de lançar.
-2. **Áudio, vídeo e documentos** com armazenamento em objeto (S3 compatível) em vez de
-   base64 no banco.
-3. **Chamadas de voz e vídeo** via WebRTC.
-4. **Aplicativos nativos** (Android/iOS) com notificações push do sistema. O PWA já cobre
-   Android; no iPhone o PWA funciona com limitações de notificação.
-5. **Escala**: trocar SQLite por PostgreSQL e usar o adaptador Redis do Socket.IO para
-   rodar várias instâncias.
-6. **Antiabuso**: denúncias, bloqueio de contatos, limites por conta.
-7. **LGPD**: política de privacidade, exportação e exclusão de dados da conta.
+1. **Criptografia de ponta a ponta nas abas Social e Trabalho.** Atendimento continua
+   legível pela empresa (como na API do WhatsApp Business). Ver `docs/DECISOES.md`.
+2. **Chamadas de voz e vídeo** via WebRTC.
+3. **Aplicativos nativos** (Android/iOS) com push do sistema. O PWA já cobre Android.
+4. **Escala**: PostgreSQL, armazenamento S3 e adaptador Redis do Socket.IO.
+5. **Antiabuso**: denúncias, reputação de empresas.
+6. **LGPD**: política de privacidade, exportação e exclusão de dados.
+7. **Nós prontos** para n8n e Make na loja de integrações deles.
+8. **Mini-apps e formulários no chat** (pedidos, agendamento).
 
 ## Avisos importantes
 
-- **Marca**: "WhatsApp" é marca registrada da Meta. Não use o nome, o logotipo ou o visual
-  idêntico do WhatsApp na divulgação. ZapLivre tem identidade própria.
+- **Marca**: "WhatsApp" é marca registrada da Meta. ZapLivre tem nome e identidade próprios.
 - **Segurança**: sem criptografia de ponta a ponta o operador do servidor tem acesso às
   mensagens. Deixe isso claro aos usuários até o item 1 do roteiro estar pronto.
-- **Licença**: AGPL-3.0. Quem hospedar uma versão modificada precisa disponibilizar o
-  código.
+- **Licença**: AGPL-3.0.

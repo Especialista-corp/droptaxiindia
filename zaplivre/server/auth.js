@@ -1,8 +1,7 @@
-// Autenticação por número de telefone + código de verificação (OTP).
-// Em produção, o código é enviado via SMS (SMS_WEBHOOK_URL). Em desenvolvimento,
-// DEV_SHOW_OTP=1 devolve o código na resposta e imprime no console.
+// Autenticação: telefone + código (OTP) para verificar a pessoa; identidade pública é o @usuario.
+// O telefone nunca é exposto a outros usuários (só serve para verificação e descoberta opcional).
 import crypto from 'node:crypto';
-import { now, newId, normalizePhone, sha256 } from './db.js';
+import { now, newId, normalizePhone, normalizeUsername, sha256 } from './db.js';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -18,10 +17,11 @@ export function createAuth(db, { devShowOtp = false, smsWebhookUrl = '', logger 
     bumpAttempts: db.prepare('UPDATE otps SET attempts = attempts + 1 WHERE phone = ?'),
     deleteOtp: db.prepare('DELETE FROM otps WHERE phone = ?'),
     getUserByPhone: db.prepare('SELECT * FROM users WHERE phone = ?'),
-    insertUser: db.prepare('INSERT INTO users (id, phone, name, created_at, last_seen) VALUES (?, ?, ?, ?, ?)'),
+    getUserByUsername: db.prepare('SELECT * FROM users WHERE username = ?'),
+    insertUser: db.prepare('INSERT INTO users (id, phone, username, name, created_at, last_seen) VALUES (?, ?, ?, ?, ?, ?)'),
     insertSession: db.prepare('INSERT INTO sessions (token, user_id, created_at, last_used) VALUES (?, ?, ?, ?)'),
     getSession: db.prepare(
-      `SELECT s.token, s.created_at, u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?`
+      `SELECT s.token, s.created_at AS session_created_at, u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token = ?`
     ),
     touchSession: db.prepare('UPDATE sessions SET last_used = ? WHERE token = ?'),
     deleteSession: db.prepare('DELETE FROM sessions WHERE token = ?'),
@@ -47,10 +47,19 @@ export function createAuth(db, { devShowOtp = false, smsWebhookUrl = '', logger 
     } else {
       logger.log(`[OTP] ${phone} -> ${code}`);
     }
-    return { phone, ...(devShowOtp ? { devCode: code } : {}) };
+    const existing = stmts.getUserByPhone.get(phone);
+    return { phone, isNew: !existing, ...(devShowOtp ? { devCode: code } : {}) };
   }
 
-  function verifyOtp(rawPhone, code, name) {
+  function usernameAvailable(raw) {
+    const username = normalizeUsername(raw);
+    if (!username) return { ok: false, reason: 'Use 3 a 30 caracteres: letras minúsculas, números, ponto ou sublinhado.' };
+    if (RESERVED.has(username)) return { ok: false, reason: 'Esse nome é reservado.' };
+    if (stmts.getUserByUsername.get(username)) return { ok: false, reason: 'Esse @usuário já está em uso.' };
+    return { ok: true, username };
+  }
+
+  function verifyOtp(rawPhone, code, { name, username } = {}) {
     const phone = normalizePhone(rawPhone);
     if (!phone) throw httpError(400, 'Número de telefone inválido.');
     const row = stmts.getOtp.get(phone);
@@ -64,27 +73,28 @@ export function createAuth(db, { devShowOtp = false, smsWebhookUrl = '', logger 
       stmts.bumpAttempts.run(phone);
       throw httpError(400, 'Código incorreto.');
     }
-    stmts.deleteOtp.run(phone);
 
     let user = stmts.getUserByPhone.get(phone);
     let isNew = false;
     if (!user) {
-      const cleanName = String(name || '').trim().slice(0, 40) || phone;
-      const id = newId();
-      stmts.insertUser.run(id, phone, cleanName, now(), now());
+      const check = usernameAvailable(username);
+      if (!check.ok) throw httpError(400, check.reason);
+      const cleanName = String(name || '').trim().slice(0, 40) || check.username;
+      stmts.insertUser.run(newId(), phone, check.username, cleanName, now(), now());
       user = stmts.getUserByPhone.get(phone);
       isNew = true;
     }
+    stmts.deleteOtp.run(phone);
     const token = crypto.randomBytes(32).toString('base64url');
     stmts.insertSession.run(token, user.id, now(), now());
-    return { token, user: publicUser(user), isNew };
+    return { token, user: privateUser(user), isNew };
   }
 
   function authenticate(token) {
     if (!token) return null;
     const row = stmts.getSession.get(token);
     if (!row) return null;
-    if (row.created_at + SESSION_TTL_MS < now()) {
+    if (row.session_created_at + SESSION_TTL_MS < now()) {
       stmts.deleteSession.run(token);
       return null;
     }
@@ -96,12 +106,31 @@ export function createAuth(db, { devShowOtp = false, smsWebhookUrl = '', logger 
     stmts.deleteSession.run(token);
   }
 
-  return { requestOtp, verifyOtp, authenticate, logout };
+  return { requestOtp, verifyOtp, authenticate, logout, usernameAvailable };
 }
 
+const RESERVED = new Set(['admin', 'zaplivre', 'suporte', 'support', 'root', 'api', 'ajuda', 'help', 'sistema', 'system']);
+
+// Visão pública de um usuário: SEM telefone. É o que outros usuários e empresas enxergam.
 export function publicUser(u) {
   if (!u) return null;
-  return { id: u.id, phone: u.phone, name: u.name, about: u.about, avatar: u.avatar, lastSeen: u.last_seen };
+  return {
+    id: u.id,
+    username: u.username,
+    handle: u.username ? '@' + u.username : null,
+    kind: u.kind || 'person',
+    workspaceId: u.workspace_id || null,
+    name: u.name,
+    about: u.about,
+    avatar: u.avatar,
+    lastSeen: u.last_seen,
+  };
+}
+
+// Visão do próprio usuário: inclui telefone e preferências.
+export function privateUser(u) {
+  if (!u) return null;
+  return { ...publicUser(u), phone: u.phone, discoverableByPhone: Boolean(u.discoverable_by_phone) };
 }
 
 export function httpError(status, message) {

@@ -1,5 +1,5 @@
 // Service worker: guarda a "casca" do app para abrir rápido e funcionar offline.
-const CACHE = 'zaplivre-v1';
+const CACHE = 'zaplivre-v2';
 const SHELL = ['/', '/index.html', '/styles.css', '/app.js', '/manifest.webmanifest', '/icons/icon.svg', '/socket.io/socket.io.js'];
 
 self.addEventListener('install', (event) => {
