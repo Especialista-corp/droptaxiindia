@@ -88,7 +88,7 @@ function avatarFor(entity) {
   let hash = 0;
   for (const c of name) hash = (hash * 31 + c.charCodeAt(0)) >>> 0;
   const hue = hash % 360;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${hue} 45% 55%)"/><text x="32" y="40" font-family="Arial" font-size="26" fill="#fff" text-anchor="middle">${initials || '?'}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" fill="hsl(${250 + (hash % 70)} 42% 58%)"/><text x="32" y="40" font-family="Arial" font-size="26" fill="#fff" text-anchor="middle">${initials || '?'}</text></svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -147,7 +147,7 @@ $('#username').addEventListener('input', () => {
   usernameTimer = setTimeout(async () => {
     const r = await api('/auth/username-available?u=' + encodeURIComponent(u));
     $('#username-hint').textContent = r.ok ? `@${r.username} está disponível!` : r.reason;
-    $('#username-hint').style.color = r.ok ? 'var(--green)' : 'var(--danger)';
+    $('#username-hint').style.color = r.ok ? 'var(--brand)' : 'var(--danger)';
   }, 300);
 });
 $('#form-code').addEventListener('submit', async (e) => {
@@ -326,7 +326,7 @@ function memberName(chat, userId) {
   return chat?.members.find((m) => m.id === userId)?.name || 'Participante';
 }
 function previewText(chat) {
-  if (state.typing.get(chat.id)?.size) return `<span style="color:var(--green)">digitando...</span>`;
+  if (state.typing.get(chat.id)?.size) return `<span style="color:var(--brand)">digitando...</span>`;
   const m = chat.lastMessage;
   if (!m) return '';
   const who = chat.type === 'group' && m.senderId && m.type !== 'system' ? escapeHtml(memberName(chat, m.senderId)) + ': ' : '';
