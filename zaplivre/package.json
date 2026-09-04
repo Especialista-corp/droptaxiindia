@@ -1,0 +1,24 @@
+{
+  "name": "zaplivre",
+  "version": "0.1.0",
+  "description": "Mensageiro gratuito para brasileiros - alternativa livre ao WhatsApp",
+  "private": true,
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node --no-warnings=ExperimentalWarning server/index.js",
+    "dev": "DEV_SHOW_OTP=1 node --no-warnings=ExperimentalWarning --watch server/index.js",
+    "test": "DEV_SHOW_OTP=1 node --no-warnings=ExperimentalWarning --test test/*.test.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  },
+  "license": "AGPL-3.0-only"
+}

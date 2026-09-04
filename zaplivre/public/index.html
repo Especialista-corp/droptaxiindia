@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1B1466">
+  <meta name="description" content="ZapLivre: mensagens gratuitas, feitas para o Brasil.">
+  <title>ZapLivre</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Tela de login -->
+  <section id="auth" class="screen auth hidden">
+    <div class="auth-card">
+      <img src="/icons/icon.svg" alt="" class="auth-logo">
+      <h1>ZapLivre</h1>
+      <p class="muted">Mensagens grátis, feitas para o Brasil.</p>
+
+      <form id="form-phone" class="auth-step">
+        <label for="phone">Seu número de celular</label>
+        <div class="phone-row">
+          <span class="ddi">+55</span>
+          <input id="phone" type="tel" inputmode="tel" placeholder="(11) 91234-5678" autocomplete="tel-national" required>
+        </div>
+        <p class="hint">Usamos o número só para confirmar que é você. Ele nunca aparece para outras pessoas ou empresas.</p>
+        <button type="submit" class="btn-primary">Receber código</button>
+      </form>
+
+      <form id="form-code" class="auth-step hidden">
+        <label for="code">Código de verificação</label>
+        <input id="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" autocomplete="one-time-code" required>
+        <p class="hint" id="code-hint">Digite o código de 6 dígitos que enviamos para <b id="code-phone"></b>.</p>
+        <div id="new-user-fields">
+          <label for="username">Escolha seu @usuário</label>
+          <div class="phone-row"><span class="ddi">@</span><input id="username" type="text" maxlength="30" placeholder="seu.nome" autocomplete="username"></div>
+          <p class="hint" id="username-hint">É assim que as pessoas vão te encontrar, sem precisar do seu número.</p>
+          <label for="name">Seu nome</label>
+          <input id="name" type="text" maxlength="40" placeholder="Como quer ser chamado?">
+        </div>
+        <button type="submit" class="btn-primary">Entrar</button>
+        <button type="button" id="btn-back" class="btn-link">Trocar número</button>
+      </form>
+      <p id="auth-error" class="error" role="alert"></p>
+    </div>
+  </section>
+
+  <!-- Aplicativo -->
+  <section id="app" class="screen app hidden">
+    <aside id="sidebar" class="sidebar">
+      <header class="bar">
+        <button class="avatar-btn" id="btn-profile" title="Perfil"><img id="me-avatar" class="avatar" alt=""></button>
+        <div class="bar-actions">
+          <button id="btn-new-chat" class="icon-btn" title="Nova conversa" aria-label="Nova conversa">
+            <svg viewBox="0 0 24 24"><path d="M19.005 3.175H4.674C3.642 3.175 3 3.789 3 4.821V21.02l3.544-3.514h12.461c1.033 0 2.064-1.06 2.064-2.093V4.821c-.001-1.032-1.032-1.646-2.064-1.646zm-4.989 9.869H7.041V11.1h6.975v1.944zm3-4H7.041V7.1h9.975v1.944z"/></svg>
+          </button>
+          <button id="btn-menu" class="icon-btn" title="Menu" aria-label="Menu">
+            <svg viewBox="0 0 24 24"><path d="M12 7a2 2 0 1 0-.001-4.001A2 2 0 0 0 12 7zm0 2a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 9zm0 6a2 2 0 1 0-.001 3.999A2 2 0 0 0 12 15z"/></svg>
+          </button>
+        </div>
+      </header>
+      <nav class="tabs" id="tabs" role="tablist">
+        <button class="tab active" data-tab="social" role="tab">Social<span class="tab-badge hidden"></span></button>
+        <button class="tab" data-tab="work" role="tab">Trabalho<span class="tab-badge hidden"></span></button>
+        <button class="tab" data-tab="desk" role="tab">Atendimento<span class="tab-badge hidden"></span></button>
+      </nav>
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Pesquisar">
+      </div>
+      <div id="chat-list" class="chat-list" role="list"></div>
+      <div id="empty-list" class="empty hidden">
+        <p id="empty-text">Nenhuma conversa aqui ainda.</p>
+        <button id="btn-empty-new" class="btn-primary">Começar uma conversa</button>
+      </div>
+    </aside>
+
+    <main id="chat-pane" class="chat-pane">
+      <div id="chat-placeholder" class="placeholder">
+        <img src="/icons/icon.svg" alt="" width="96" height="96">
+        <h2>ZapLivre para Web</h2>
+        <p class="muted">Escolha uma conversa ao lado ou comece uma nova.<br>Gratuito, sem anúncios e feito para o Brasil.</p>
+      </div>
+      <div id="chat-view" class="chat-view hidden">
+        <header class="bar chat-header">
+          <button id="btn-back-list" class="icon-btn back" aria-label="Voltar">
+            <svg viewBox="0 0 24 24"><path d="M12 4l1.4 1.4L7.8 11H20v2H7.8l5.6 5.6L12 20l-8-8z"/></svg>
+          </button>
+          <button id="btn-chat-info" class="chat-title">
+            <img id="chat-avatar" class="avatar" alt="">
+            <div>
+              <div id="chat-name" class="name"></div>
+              <div id="chat-status" class="status"></div>
+            </div>
+          </button>
+          <div class="bar-actions">
+            <div id="desk-controls" class="desk-controls hidden">
+              <select id="ticket-status" title="Status do atendimento">
+                <option value="open">Em aberto</option>
+                <option value="in_progress">Em atendimento</option>
+                <option value="done">Concluído</option>
+              </select>
+              <button id="btn-takeover" class="pill">Assumir</button>
+              <button id="btn-resume-bot" class="pill hidden">Devolver ao robô</button>
+            </div>
+            <button id="btn-media" class="icon-btn" title="Mídias e documentos" aria-label="Mídias e documentos">
+              <svg viewBox="0 0 24 24"><path d="M3 5h6l2 2h10v12H3z" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+            </button>
+          </div>
+        </header>
+        <div id="bot-banner" class="bot-banner hidden"></div>
+        <div id="messages" class="messages" aria-live="polite"></div>
+        <div id="reply-preview" class="reply-preview hidden">
+          <div class="reply-body"><b id="reply-name"></b><span id="reply-text"></span></div>
+          <button id="btn-cancel-reply" class="icon-btn" aria-label="Cancelar resposta">✕</button>
+        </div>
+        <form id="composer" class="composer" autocomplete="off">
+          <label class="icon-btn attach" title="Enviar foto ou documento">
+            <input id="file-input" type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip" hidden>
+            <svg viewBox="0 0 24 24"><path d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 0 0 3.972-1.645l9.547-9.548c.769-.768 1.147-1.287 1.147-2.236a3.135 3.135 0 0 0-3.132-3.132c-.948 0-1.469.378-2.236 1.146l-7.61 7.61c-.348.347-.569.822-.569 1.35 0 1.05.85 1.9 1.9 1.9.528 0 1.003-.221 1.35-.569l6.086-6.086a1 1 0 1 1 1.414 1.414l-6.086 6.086a3.882 3.882 0 0 1-2.764 1.155 3.902 3.902 0 0 1-3.9-3.9c0-1.08.442-2.058 1.155-2.764l7.61-7.61C16.226 4.1 17.318 3.5 18.97 3.5a5.135 5.135 0 0 1 5.132 5.132c0 1.65-.6 2.742-1.85 3.994l-9.547 9.548A7.58 7.58 0 0 1 7.436 24.2 7.6 7.6 0 0 1 2.05 21.97 7.6 7.6 0 0 1-.184 15.558v-.002h2z"/></svg>
+          </label>
+          <input id="message-input" type="text" placeholder="Digite uma mensagem" maxlength="4000">
+          <button type="button" id="btn-mic" class="icon-btn mic" aria-label="Gravar áudio" title="Gravar áudio">
+            <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
+          </button>
+          <button type="submit" class="icon-btn send" aria-label="Enviar">
+            <svg viewBox="0 0 24 24"><path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/></svg>
+          </button>
+        </form>
+        <div id="recording" class="recording hidden"><span class="rec-dot"></span><span id="rec-time">0:00</span><button id="btn-rec-cancel" class="btn-link danger">Cancelar</button><button id="btn-rec-send" class="btn-primary">Enviar</button></div>
+      </div>
+    </main>
+
+    <!-- Painel lateral direito: mídias e documentos da conversa -->
+    <aside id="media-hub" class="media-hub hidden">
+      <header class="bar"><button id="btn-close-media" class="icon-btn" aria-label="Fechar">✕</button><h3>Mídias e documentos</h3></header>
+      <div class="panel-body" id="media-body"></div>
+    </aside>
+
+    <!-- Painéis -->
+    <div id="panel-new-chat" class="panel hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3>Nova conversa</h3></header>
+      <div class="panel-body">
+        <button id="btn-new-group" class="row-btn"><span class="round green">👥</span> Novo grupo</button>
+        <button id="btn-pick-contacts" class="row-btn hidden"><span class="round green">📒</span> Escolher dos contatos do celular</button>
+        <form id="form-direct" class="stack">
+          <label for="direct-handle">@usuário, @empresa ou telefone</label>
+          <input id="direct-handle" type="text" placeholder="@maria ou @loja.com.br ou (11) 91234-5678" required>
+          <button class="btn-primary" type="submit">Conversar</button>
+        </form>
+        <p class="hint">Só é possível conversar com quem já tem o ZapLivre. Convide seus amigos!</p>
+        <button id="btn-share" class="btn-link">Compartilhar meu link de convite</button>
+        <h4>Contatos no ZapLivre</h4>
+        <div id="contacts-list" class="contacts"></div>
+      </div>
+    </div>
+
+    <div id="panel-new-group" class="panel hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3>Novo grupo</h3></header>
+      <form id="form-group" class="panel-body stack">
+        <label for="group-name">Nome do grupo</label>
+        <input id="group-name" type="text" maxlength="60" required placeholder="Ex.: Família, Projeto, Futebol">
+        <label>Aba</label>
+        <div class="choice"><label><input type="radio" name="group-category" value="social" checked> Social</label><label><input type="radio" name="group-category" value="work"> Trabalho</label></div>
+        <label for="group-members">Participantes (@usuário ou telefone, um por linha)</label>
+        <textarea id="group-members" rows="5" placeholder="@maria&#10;(21) 99876-5432"></textarea>
+        <button class="btn-primary" type="submit">Criar grupo</button>
+      </form>
+    </div>
+
+    <div id="panel-profile" class="panel hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3>Perfil</h3></header>
+      <form id="form-profile" class="panel-body stack">
+        <label class="avatar-upload">
+          <img id="profile-avatar" class="avatar big" alt="">
+          <span>Trocar foto</span>
+          <input id="profile-file" type="file" accept="image/*" hidden>
+        </label>
+        <p class="center"><b id="profile-handle"></b></p>
+        <label for="profile-name">Nome</label>
+        <input id="profile-name" type="text" maxlength="40" required>
+        <label for="profile-about">Recado</label>
+        <input id="profile-about" type="text" maxlength="140">
+        <p class="hint">Telefone (privado): <b id="profile-phone"></b></p>
+        <label class="check"><input id="profile-discoverable" type="checkbox"> Amigos podem me encontrar pelo meu número da agenda</label>
+        <button class="btn-primary" type="submit">Salvar</button>
+        <button type="button" id="btn-logout" class="btn-link danger">Sair da conta</button>
+      </form>
+    </div>
+
+    <div id="panel-info" class="panel hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3>Dados da conversa</h3></header>
+      <div class="panel-body stack">
+        <div class="center">
+          <img id="info-avatar" class="avatar big" alt="">
+          <h2 id="info-name"></h2>
+          <p id="info-sub" class="muted"></p>
+        </div>
+        <div id="info-category" class="stack hidden">
+          <label>Mostrar esta conversa na aba</label>
+          <div class="choice"><label><input type="radio" name="my-category" value="social"> Social</label><label><input type="radio" name="my-category" value="work"> Trabalho</label></div>
+        </div>
+        <form id="form-group-edit" class="stack hidden">
+          <label for="info-group-name">Nome do grupo</label>
+          <input id="info-group-name" type="text" maxlength="60">
+          <button class="btn-primary" type="submit">Salvar nome</button>
+        </form>
+        <h4 id="info-members-title">Participantes</h4>
+        <div id="info-members" class="contacts"></div>
+        <form id="form-add-member" class="stack hidden">
+          <label for="add-member-handle">Adicionar participante (@usuário ou telefone)</label>
+          <input id="add-member-handle" type="text" placeholder="@maria" required>
+          <button class="btn-primary" type="submit">Adicionar</button>
+        </form>
+        <button id="btn-block" class="btn-link danger hidden">Bloquear</button>
+        <button id="btn-leave" class="btn-link danger hidden">Sair do grupo</button>
+      </div>
+    </div>
+
+    <div id="panel-workspaces" class="panel hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3>Minhas empresas</h3></header>
+      <div class="panel-body stack">
+        <div id="workspace-list" class="contacts"></div>
+        <h4>Cadastrar empresa</h4>
+        <form id="form-workspace" class="stack">
+          <label for="ws-domain">Domínio da empresa (vira o @ dela)</label>
+          <input id="ws-domain" type="text" placeholder="suaempresa.com.br" required>
+          <label for="ws-name">Nome</label>
+          <input id="ws-name" type="text" maxlength="60" placeholder="Sua Empresa" required>
+          <button class="btn-primary" type="submit">Criar com 14 dias grátis</button>
+        </form>
+        <p class="hint">Empresas têm assinatura fixa mensal, mensagens ilimitadas e API aberta para robôs, sem risco de bloqueio.</p>
+      </div>
+    </div>
+
+    <div id="panel-workspace" class="panel wide hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3 id="ws-title">Empresa</h3></header>
+      <div class="panel-body stack" id="ws-body"></div>
+    </div>
+
+    <div id="panel-board" class="panel full hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3 id="board-title">Painel de atendimento</h3></header>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div id="menu" class="menu hidden">
+      <button id="menu-profile">Perfil</button>
+      <button id="menu-workspaces">Minhas empresas</button>
+      <button id="menu-notifications">Ativar notificações</button>
+      <button id="menu-install" class="hidden">Instalar aplicativo</button>
+      <button id="menu-logout">Sair</button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+  <div id="lightbox" class="lightbox hidden"><img alt=""></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
