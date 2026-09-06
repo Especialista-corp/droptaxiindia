@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ClipboardList, Calendar, Wallet, User, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { diasRestantesAte } from "@/lib/utils";
@@ -45,10 +45,10 @@ export default async function PrestadorLayout({ children }: { children: React.Re
       {children}
       <BottomNav
         items={[
-          { href: "/prestador/pedidos", label: "Pedidos", icon: ClipboardList },
-          { href: "/prestador/agenda", label: "Agenda", icon: Calendar },
-          { href: "/prestador/carteira", label: "Carteira", icon: Wallet },
-          { href: "/prestador/perfil", label: "Perfil", icon: User },
+          { href: "/prestador/pedidos", label: "Pedidos", icon: "pedidos" },
+          { href: "/prestador/agenda", label: "Agenda", icon: "agenda" },
+          { href: "/prestador/carteira", label: "Carteira", icon: "carteira" },
+          { href: "/prestador/perfil", label: "Perfil", icon: "perfil" },
         ]}
       />
     </div>

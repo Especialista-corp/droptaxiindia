@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { Home, ClipboardList, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/nav/bottom-nav";
 
@@ -15,9 +14,9 @@ export default async function ClienteLayout({ children }: { children: React.Reac
       {children}
       <BottomNav
         items={[
-          { href: "/cliente", label: "Início", icon: Home },
-          { href: "/cliente/pedidos", label: "Pedidos", icon: ClipboardList },
-          { href: "/cliente/perfil", label: "Perfil", icon: User },
+          { href: "/cliente", label: "Início", icon: "home" },
+          { href: "/cliente/pedidos", label: "Pedidos", icon: "pedidos" },
+          { href: "/cliente/perfil", label: "Perfil", icon: "perfil" },
         ]}
       />
     </div>
