@@ -26,7 +26,13 @@ export async function loginAction(_prev: ActionState, formData: FormData): Promi
     email: parsed.data.email,
     password: parsed.data.senha,
   });
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.code === "email_not_confirmed") {
+      return { error: "Confirme seu e-mail antes de entrar. Procure a mensagem na caixa de entrada ou no spam." };
+    }
+    if (error.code === "invalid_credentials") return { error: "E-mail ou senha incorretos." };
+    return { error: error.message };
+  }
 
   const {
     data: { user },
@@ -79,6 +85,7 @@ export async function cadastroPrestadorAction(
     email: formData.get("email"),
     telefone: formData.get("telefone"),
     senha: formData.get("senha"),
+    confirmaSenha: formData.get("confirmaSenha"),
     cep: formData.get("cep"),
     endereco: formData.get("endereco"),
     numero: formData.get("numero"),
@@ -134,6 +141,11 @@ export async function cadastroPrestadorAction(
   if (!userId) {
     return { error: "Não foi possível concluir o cadastro. Tente novamente." };
   }
+  // Com confirmação de e-mail ligada, o Supabase não devolve erro para um e-mail
+  // já cadastrado: devolve um usuário "fantasma" sem identidades.
+  if (signUpData.user?.identities?.length === 0) {
+    return { error: "Este e-mail já está cadastrado. Entre com a sua senha." };
+  }
 
   // A criação da linha em public.users acontece via trigger on_auth_user_created.
   // Usamos o client admin aqui pois a sessão do usuário recém-criado ainda não
@@ -188,6 +200,11 @@ export async function cadastroPrestadorAction(
     tipo: "documentos_prazo",
     payload: { prazo: prazoDocumentos },
   });
+
+  // Sem sessão = o Supabase exige confirmar o e-mail antes do primeiro acesso.
+  if (!signUpData.session) {
+    redirect(`/cadastro/prestador/verifique-email?email=${encodeURIComponent(parsed.data.email)}`);
+  }
 
   redirect("/prestador/documentos");
 }

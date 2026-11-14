@@ -23,7 +23,13 @@ export const veiculoSchema = z.object({
     .pipe(z.string().regex(placaRegex, "Placa inválida (use ABC1234 ou ABC1D23)")),
 });
 
-export const cadastroPrestadorSchema = cadastroClienteSchema.extend({
+export const cadastroPrestadorSchema = cadastroClienteSchema
+  .extend({
+  telefone: z
+    .string()
+    .transform(somenteDigitos)
+    .pipe(z.string().regex(/^\d{10,13}$/, "WhatsApp inválido, use DDD + número")),
+  confirmaSenha: z.string().min(1, "Confirme a senha"),
   cpf: z
     .string()
     .refine(validarCpf, "CPF inválido")
@@ -41,7 +47,11 @@ export const cadastroPrestadorSchema = cadastroClienteSchema.extend({
     .min(1, "Cadastre ao menos um veículo")
     .max(2, "Máximo de 2 veículos"),
   categoriaIds: z.array(z.string().uuid()).min(1, "Selecione ao menos uma categoria"),
-});
+  })
+  .refine((dados) => dados.senha === dados.confirmaSenha, {
+    message: "As senhas não conferem",
+    path: ["confirmaSenha"],
+  });
 
 export const loginSchema = z.object({
   email: z.email("E-mail inválido"),

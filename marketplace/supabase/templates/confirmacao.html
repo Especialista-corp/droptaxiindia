@@ -1,0 +1,13 @@
+<!-- Modelo do e-mail de confirmação de cadastro. Em produção, cole o assunto e este HTML em
+     Supabase > Authentication > Emails > Confirm signup. Se o nome do app mudar, troque aqui. -->
+<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#16161A">
+  <h2 style="margin:0 0 12px">Confirme seu cadastro no MontaJá</h2>
+  <p>Recebemos o seu cadastro. Para ativar a conta, confirme o seu e-mail:</p>
+  <p style="margin:24px 0">
+    <a href="{{ .ConfirmationURL }}"
+       style="background:#BB0189;color:#FEF8FB;text-decoration:none;padding:14px 24px;border-radius:999px;font-weight:bold;display:inline-block">
+      Confirmar e-mail
+    </a>
+  </p>
+  <p style="font-size:13px;color:#555">Se você não fez este cadastro, ignore esta mensagem.</p>
+</div>

@@ -253,6 +253,10 @@ otp_expiry = 3600
 # subject = "Your password has been changed"
 # content_path = "./supabase/templates/password_changed_notification.html"
 
+[auth.email.template.confirmation]
+subject = "Confirme seu cadastro no MontaJá"
+content_path = "./supabase/templates/confirmacao.html"
+
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false

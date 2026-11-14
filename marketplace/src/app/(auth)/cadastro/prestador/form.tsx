@@ -5,7 +5,9 @@ import Link from "next/link";
 import { cadastroPrestadorAction } from "../../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { formatarCpf } from "@/lib/cpf";
+import { formatarTelefone } from "@/lib/telefone";
 import { VEHICLE_COLORS, VEHICLE_TYPES, TRUCK_SIZES, TRUCK_SIZE_LABELS, type VehicleType } from "@/lib/constants";
 
 export function PrestadorSignupForm({
@@ -21,6 +23,11 @@ export function PrestadorSignupForm({
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [cepErro, setCepErro] = useState<string>();
   const [cpf, setCpf] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [senha, setSenha] = useState("");
+  const [confirmaSenha, setConfirmaSenha] = useState("");
+  const senhasDiferentes = confirmaSenha.length > 0 && senha !== confirmaSenha;
+  const senhasConferem = confirmaSenha.length > 0 && senha === confirmaSenha;
 
   async function buscarCep(valor: string) {
     const cep = valor.replace(/\D/g, "");
@@ -60,22 +67,41 @@ export function PrestadorSignupForm({
         onChange={(event) => setCpf(formatarCpf(event.target.value))}
       />
       <Input label="Nome completo" name="nome" required />
-      <Input label="E-mail" name="email" type="email" required autoComplete="email" />
       <Input
-        label="Telefone (com DDD)"
+        label="WhatsApp (com DDD)"
         name="telefone"
         type="tel"
-        placeholder="11987654321"
+        inputMode="tel"
+        placeholder="(11) 98765-4321"
         required
+        value={telefone}
+        onChange={(event) => setTelefone(formatarTelefone(event.target.value))}
       />
-      <Input
+      <p className="-mt-2 text-xs text-muted">
+        Informe o número do WhatsApp em que você atende clientes. Se tiver o WhatsApp comum e o
+        Business, digite o número do que quer usar aqui.
+      </p>
+      <Input label="E-mail" name="email" type="email" required autoComplete="email" />
+      <PasswordInput
         label="Senha"
         name="senha"
-        type="password"
         required
         minLength={8}
         autoComplete="new-password"
+        value={senha}
+        onChange={(event) => setSenha(event.target.value)}
       />
+      <PasswordInput
+        label="Confirme a senha"
+        name="confirmaSenha"
+        required
+        minLength={8}
+        autoComplete="new-password"
+        value={confirmaSenha}
+        onChange={(event) => setConfirmaSenha(event.target.value)}
+        error={senhasDiferentes ? "As senhas não conferem" : undefined}
+      />
+      {senhasConferem && <p className="-mt-2 text-sm text-success">✓ As senhas conferem</p>}
 
       <div className="flex flex-col gap-1.5">
         <Input
@@ -191,7 +217,7 @@ export function PrestadorSignupForm({
 
       {state?.error && <p className="text-sm text-danger-soft">{state.error}</p>}
 
-      <Button type="submit" disabled={pending} className="mt-2">
+      <Button type="submit" disabled={pending || senhasDiferentes} className="mt-2">
         {pending ? "Criando conta…" : "Criar conta de montador"}
       </Button>
 
