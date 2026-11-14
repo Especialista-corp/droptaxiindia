@@ -182,6 +182,8 @@ Importação da exportação de conversa com mídias, preservando datas, e varre
 detector sobre todo o histórico.
 *Aceite:* importar uma conversa exportada traz mensagens e mídias com as datas originais e
 lista os comprovantes encontrados.
+*Reaproveitamento:* este importador também alimenta o Garimpo, o Migrar meu grupo e o Cofre
+de Contatos do Plano Segundo App (`docs/PLANO-SEGUNDO-APP.md`). Construir uma vez só.
 
 **Etapa 9. Cotas e patrocínio de empresa · 2 dias**
 Cota grátis, cota extra, cota patrocinada.

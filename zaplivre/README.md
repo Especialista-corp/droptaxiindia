@@ -141,7 +141,8 @@ zaplivre/
 ├── public/            # PWA: index.html, app.js, styles.css, sw.js, manifest, ícones
 ├── docs/
 │   ├── API.md         # API para robôs e integrações
-│   └── DECISOES.md    # decisões de produto (criptografia, antispam, descoberta)
+│   ├── DECISOES.md    # decisões de produto (criptografia, antispam, descoberta)
+│   └── PLANO-*.md     # planos aprovados: Cômodos, Baú, Chave Dupla, Segundo App
 └── test/              # testes com node:test
 ```
 
