@@ -280,7 +280,10 @@ export function createApp({
   }));
 
   // ----- Arquivos e painel de mídias -----
-  app.post('/api/uploads', requireAuth, express.raw({ type: () => true, limit: '26mb' }), wrap((req, res) => {
+  // 61mb cobre o limite de vídeo (60 MB) com folga. O corte de verdade, por
+  // tipo de arquivo, é feito em files.save com mensagem clara; este aqui só
+  // impede que o corpo da requisição cresça sem limite.
+  app.post('/api/uploads', requireAuth, express.raw({ type: () => true, limit: '61mb' }), wrap((req, res) => {
     const name = decodeURIComponent(req.get('x-file-name') || 'arquivo');
     const attachment = files.save(req.user.id, { buffer: req.body, mime: req.get('content-type'), name, duration: req.get('x-duration') });
     res.status(201).json({ attachment });
