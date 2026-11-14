@@ -1,16 +1,14 @@
 // Regras de negócio: conversas, grupos, mensagens, abas (social/trabalho/atendimento), tickets e antispam.
 import { now, newId, normalizePhone, normalizeUsername } from './db.js';
 import { httpError, publicUser } from './auth.js';
+import { ARQUIVO_KEYS, DEFAULT_TAB, isArquivo } from './tabs.js';
 
 const MAX_TEXT = 4000;
 const MAX_IMAGE_DATA_URL = 1_500_000;
 const MAX_GROUP_MEMBERS = 256;
-export const CATEGORIES = ['social', 'work', 'desk'];
 export const TICKET_STATUSES = ['open', 'in_progress', 'done'];
 
-export function createChatService(db, { workspaces, files }) {
-  ensureColumn('chat_members', 'category', 'TEXT');
-
+export function createChatService(db, { workspaces, files, tabs }) {
   function ensureColumn(table, column, def) {
     const cols = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
     if (!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`);
@@ -23,19 +21,19 @@ export function createChatService(db, { workspaces, files }) {
     updateProfile: db.prepare('UPDATE users SET name = ?, about = ?, avatar = ?, discoverable_by_phone = ? WHERE id = ?'),
     touchLastSeen: db.prepare('UPDATE users SET last_seen = ? WHERE id = ?'),
     directByKey: db.prepare("SELECT * FROM chats WHERE type = 'direct' AND direct_key = ?"),
-    insertChat: db.prepare('INSERT INTO chats (id, type, category, name, avatar, direct_key, workspace_id, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'),
+    insertChat: db.prepare('INSERT INTO chats (id, type, tab_key, name, avatar, direct_key, workspace_id, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'),
     insertMember: db.prepare('INSERT OR IGNORE INTO chat_members (chat_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)'),
     removeMember: db.prepare('DELETE FROM chat_members WHERE chat_id = ? AND user_id = ?'),
     member: db.prepare('SELECT * FROM chat_members WHERE chat_id = ? AND user_id = ?'),
     members: db.prepare('SELECT u.*, m.role, m.joined_at FROM chat_members m JOIN users u ON u.id = m.user_id WHERE m.chat_id = ? ORDER BY m.joined_at'),
     memberIds: db.prepare('SELECT user_id FROM chat_members WHERE chat_id = ?'),
     chatById: db.prepare('SELECT * FROM chats WHERE id = ?'),
-    updateGroup: db.prepare('UPDATE chats SET name = ?, avatar = ?, category = ? WHERE id = ?'),
-    setMemberCategory: db.prepare('UPDATE chat_members SET category = ? WHERE chat_id = ? AND user_id = ?'),
+    updateGroup: db.prepare('UPDATE chats SET name = ?, avatar = ?, tab_key = ? WHERE id = ?'),
+    setMemberTab: db.prepare('UPDATE chat_members SET tab_key = ? WHERE chat_id = ? AND user_id = ?'),
     setTicket: db.prepare('UPDATE chats SET ticket_status = ?, assignee_id = ?, tags = ?, bot_paused = ? WHERE id = ?'),
     setAdmin: db.prepare("UPDATE chat_members SET role = 'admin' WHERE chat_id = ? AND user_id = ?"),
     chatsForUser: db.prepare(
-      `SELECT c.*, m.last_read_at, m.role, m.category AS member_category, m.user_id AS viewer_member_id,
+      `SELECT c.*, m.last_read_at, m.role, m.tab_key AS member_tab, m.user_id AS viewer_member_id,
         m.pinned_at, m.muted_until, m.archived,
         (SELECT COUNT(*) FROM messages x WHERE x.chat_id = c.id AND x.created_at > m.last_read_at AND x.sender_id != m.user_id AND x.deleted_at IS NULL AND x.type != 'system') AS unread
        FROM chats c JOIN chat_members m ON m.chat_id = c.id WHERE m.user_id = ?`
@@ -76,7 +74,7 @@ export function createChatService(db, { workspaces, files }) {
     isBlocked: db.prepare('SELECT 1 FROM blocks WHERE user_id = ? AND blocked_id = ?'),
     blockedIds: db.prepare('SELECT blocked_id FROM blocks WHERE user_id = ?'),
     workspaceChats: db.prepare(
-      `SELECT c.*, m.last_read_at, m.role, NULL AS member_category, m.user_id AS viewer_member_id,
+      `SELECT c.*, m.last_read_at, m.role, NULL AS member_tab, m.user_id AS viewer_member_id,
         (SELECT COUNT(*) FROM messages x WHERE x.chat_id = c.id AND x.created_at > m.last_read_at AND x.sender_id != m.user_id AND x.deleted_at IS NULL AND x.type != 'system') AS unread
        FROM chats c JOIN chat_members m ON m.chat_id = c.id WHERE m.user_id = ?`
     ),
@@ -147,7 +145,8 @@ export function createChatService(db, { workspaces, files }) {
     const other = findUser(target);
     if (other.id === userId) throw httpError(400, 'Você não pode conversar consigo mesmo.');
     if (s.isBlocked.get(other.id, userId)) throw httpError(403, 'Não foi possível iniciar a conversa.');
-    const category = other.kind === 'business' ? 'desk' : 'social';
+    // Empresa só existe na aba Atendimento; nunca polui a Social.
+    const tabKey = other.kind === 'business' ? 'desk' : DEFAULT_TAB;
     const key = [userId, other.id].sort().join(':');
     let chat = s.directByKey.get(key);
     let created = false;
@@ -155,7 +154,7 @@ export function createChatService(db, { workspaces, files }) {
       const id = newId();
       db.exec('BEGIN');
       try {
-        s.insertChat.run(id, 'direct', category, null, null, key, other.workspace_id || null, userId, now());
+        s.insertChat.run(id, 'direct', tabKey, null, null, key, other.workspace_id || null, userId, now());
         s.insertMember.run(id, userId, 'member', now());
         s.insertMember.run(id, other.id, 'member', now());
         db.exec('COMMIT');
@@ -169,10 +168,12 @@ export function createChatService(db, { workspaces, files }) {
     return { chat: chatView(chat, userId), created, business: other.kind === 'business' ? other : null };
   }
 
-  function createGroup(userId, { name, category = 'social', memberPhones = [], memberHandles = [], memberIds: ids = [] }) {
+  function createGroup(userId, { name, category, tabKey, memberPhones = [], memberHandles = [], memberIds: ids = [] }) {
     const cleanName = String(name || '').trim().slice(0, 60);
     if (!cleanName) throw httpError(400, 'Dê um nome ao grupo.');
-    const cat = category === 'work' ? 'work' : 'social';
+    // `category` continua aceito para não quebrar quem já integra com a API.
+    const escolhida = tabKey || category;
+    const cat = escolhida === 'desk' ? DEFAULT_TAB : tabForGroup(escolhida);
     const others = new Set();
     for (const p of memberPhones) {
       const u = s.userByPhone.get(normalizePhone(p) || '');
@@ -203,25 +204,30 @@ export function createChatService(db, { workspaces, files }) {
     return { chat: chatView(s.chatById.get(chatId), userId), message };
   }
 
-  function updateGroup(userId, chatId, { name, avatar, category }) {
+  function updateGroup(userId, chatId, { name, avatar, category, tabKey }) {
     const { chat } = access(chatId, userId);
     const m = s.member.get(chatId, userId);
     if (chat.type !== 'group') throw httpError(400, 'Só grupos podem ser editados.');
     if (m?.role !== 'admin') throw httpError(403, 'Só administradores podem editar o grupo.');
     const cleanName = String(name ?? chat.name).trim().slice(0, 60) || chat.name;
-    const cat = category && ['social', 'work'].includes(category) ? category : chat.category;
+    const pedida = tabKey || category;
+    const cat = pedida && pedida !== 'desk' && isArquivo(pedida) ? pedida : chat.tab_key;
     s.updateGroup.run(cleanName, validateImage(avatar === undefined ? chat.avatar : avatar), cat, chatId);
     return chatView(s.chatById.get(chatId), userId);
   }
 
   // Aba por usuário: cada pessoa pode mover uma conversa entre Social e Trabalho só para si.
-  function setMyCategory(userId, chatId, category) {
+  function setMyTab(userId, chatId, tabKey) {
     const { chat } = access(chatId, userId);
-    if (chat.category === 'desk') throw httpError(400, 'Conversas com empresas ficam sempre em Atendimento.');
+    if (chat.tab_key === 'desk') throw httpError(400, 'Conversas com empresas ficam sempre em Atendimento.');
     if (!s.member.get(chatId, userId)) throw httpError(403, 'Você não participa desta conversa.');
-    const cat = category === null || category === chat.category ? null : category;
+    // Guardar null quer dizer "igual ao endereço da conversa", para a visão
+    // própria não congelar se a conversa mudar de lugar depois.
+    if (tabKey != null && !isArquivo(tabKey)) throw httpError(400, 'Conversa só mora em aba de arquivo.');
+    if (tabKey === 'desk') throw httpError(400, 'Atendimento é só para conversas com empresas.');
+    const cat = tabKey == null || tabKey === chat.tab_key ? null : tabKey;
     if (cat && !['social', 'work'].includes(cat)) throw httpError(400, 'Aba inválida.');
-    s.setMemberCategory.run(cat, chatId, userId);
+    s.setMemberTab.run(cat, chatId, userId);
     return getChat(userId, chatId);
   }
 
@@ -266,7 +272,7 @@ export function createChatService(db, { workspaces, files }) {
   }
 
   // ---------- visões ----------
-  function chatView(chat, viewerId, { viewerMemberId = null, memberCategory = null } = {}) {
+  function chatView(chat, viewerId, { viewerMemberId = null, memberTab = null } = {}) {
     // A linha pode vir da consulta da lista (já traz os campos) ou de chats
     // puro; neste caso busca-se a visão de quem está olhando.
     const meu = chat.viewer_member_id === (viewerMemberId || viewerId)
@@ -289,7 +295,10 @@ export function createChatService(db, { workspaces, files }) {
     return {
       id: chat.id,
       type: chat.type,
-      category: memberCategory || chat.category,
+      // `tabKey` é o nome novo; `category` fica como apelido para não quebrar
+      // bots e integrações que já leem esse campo.
+      tabKey: memberTab || chat.tab_key,
+      category: memberTab || chat.tab_key,
       name,
       avatar,
       peer,
@@ -299,7 +308,7 @@ export function createChatService(db, { workspaces, files }) {
       lastMessage: last ? messageView(last) : null,
       unread: 0,
       business: business ? { id: business.id, workspaceId: business.workspaceId, handle: business.handle, name: business.name } : null,
-      ticket: chat.category === 'desk' ? { status: chat.ticket_status, assigneeId: chat.assignee_id, botPaused: Boolean(chat.bot_paused), tags: JSON.parse(chat.tags || '[]') } : null,
+      ticket: chat.tab_key === 'desk' ? { status: chat.ticket_status, assigneeId: chat.assignee_id, botPaused: Boolean(chat.bot_paused), tags: JSON.parse(chat.tags || '[]') } : null,
       blocked: peer ? Boolean(s.isBlocked.get(viewerId, peer.id)) : false,
       pinned: Boolean(meu.pinned_at),
       muted: Boolean(meu.muted_until && meu.muted_until > now()),
@@ -311,7 +320,7 @@ export function createChatService(db, { workspaces, files }) {
 
   // Lista do usuário: suas conversas + (se for agente) as conversas das empresas em que atende.
   function listChats(userId) {
-    const out = s.chatsForUser.all(userId).map((row) => ({ ...chatView(row, userId, { memberCategory: row.member_category }), unread: row.unread }));
+    const out = s.chatsForUser.all(userId).map((row) => ({ ...chatView(row, userId, { memberTab: row.member_tab }), unread: row.unread }));
     const seen = new Set(out.map((c) => c.id));
     for (const w of workspaces.listForUser(userId)) {
       const bu = w.businessUser;
@@ -330,7 +339,7 @@ export function createChatService(db, { workspaces, files }) {
 
   function getChat(userId, chatId) {
     const a = access(chatId, userId);
-    const v = chatView(a.chat, userId, { viewerMemberId: a.actorId, memberCategory: s.member.get(chatId, userId)?.category || null });
+    const v = chatView(a.chat, userId, { viewerMemberId: a.actorId, memberTab: s.member.get(chatId, userId)?.tab_key || null });
     return a.viaWorkspace ? { ...v, viaWorkspace: a.viaWorkspace, actingAs: a.actorId } : v;
   }
 
@@ -423,6 +432,7 @@ export function createChatService(db, { workspaces, files }) {
       return {
         chatId: r.chat_id,
         chatName: view.name,
+        chatTab: view.tabKey,
         chatCategory: view.category,
         chatAvatar: view.avatar,
         snippet: r.snippet,
@@ -641,7 +651,7 @@ export function createChatService(db, { workspaces, files }) {
   // ---------- atendimento (Desk): tickets, Kanban e passagem robô <-> humano ----------
   function requireDeskAgent(chatId, userId) {
     const a = access(chatId, userId);
-    if (a.chat.category !== 'desk' || !a.viaWorkspace) throw httpError(403, 'Só atendentes da empresa podem fazer isso.');
+    if (a.chat.tab_key !== 'desk' || !a.viaWorkspace) throw httpError(403, 'Só atendentes da empresa podem fazer isso.');
     return a;
   }
 
@@ -699,7 +709,7 @@ export function createChatService(db, { workspaces, files }) {
     openDirectChat,
     createGroup,
     updateGroup,
-    setMyCategory,
+    setMyTab,
     addGroupMember,
     leaveGroup,
     block,
@@ -741,6 +751,12 @@ function normalizeEmoji(raw) {
   if ([...e].length > 3 || e.length > 16) return null;
   if (!/\p{Extended_Pictographic}/u.test(e)) return null;
   return e;
+}
+
+// Grupo nasce numa aba de arquivo. Atendimento é só de empresa, e lente não
+// guarda conversa nenhuma.
+function tabForGroup(key) {
+  return isArquivo(key) && key !== 'desk' ? key : DEFAULT_TAB;
 }
 
 function validateLocation(raw) {

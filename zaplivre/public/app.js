@@ -21,11 +21,17 @@ const state = {
   mediaFilter: 'all',
   recorder: null,
   config: null,
+  tabs: [],
+  tabsExtras: [],
   searchHits: [],
   pendingRecovery: null,
 };
 let usernameTimer;
+// O catalogo de abas vem do servidor (Plano Comodos). Estes rotulos sao so a
+// reserva para o primeiro desenho da tela, antes de a resposta chegar.
 const TAB_LABEL = { social: 'Social', work: 'Trabalho', desk: 'Atendimento' };
+const rotuloDaAba = (key) => state.tabs.find((t) => t.key === key)?.label || TAB_LABEL[key] || key;
+const abaDeArquivo = (key) => (state.tabs.find((t) => t.key === key)?.type || 'arquivo') === 'arquivo';
 const STATUS_LABEL = { open: 'Em aberto', in_progress: 'Em atendimento', done: 'Concluído' };
 
 // ---------- utilitários ----------
@@ -275,7 +281,7 @@ async function boot() {
   }
   showApp();
   renderMe();
-  await Promise.all([loadChats(), loadWorkspaces()]);
+  await Promise.all([loadChats(), loadWorkspaces(), loadTabs()]);
   connectSocket();
   setTab(state.tab, false);
   // Link de convite: /@usuario abre a conversa direto.
@@ -436,14 +442,68 @@ const selfId = (chat) => chat?.actingAs || state.me.id;
 const isMine = (chat, m) => m.senderId === selfId(chat);
 
 // ---------- abas e lista ----------
+// Carrega as abas desta pessoa. Quem ja tinha conta recebe exatamente as tres
+// de sempre: o servidor registra as padrao na primeira leitura.
+async function loadTabs() {
+  try {
+    const r = await api('/tabs');
+    state.tabs = r.tabs || [];
+    state.tabsExtras = r.extras || [];
+  } catch {
+    state.tabs = Object.entries(TAB_LABEL).map(([key, label]) => ({ key, label, type: 'arquivo' }));
+    state.tabsExtras = [];
+  }
+  if (!state.tabs.some((t) => t.key === state.tab)) state.tab = state.tabs[0]?.key || 'social';
+  renderTabs();
+}
+
+// No maximo quatro abas na tela; o resto fica atras do botao "mais". Aba demais
+// mata o produto.
+function renderTabs() {
+  const visiveis = state.tabs.filter((t) => !state.tabsExtras.includes(t.key));
+  const extras = state.tabs.filter((t) => state.tabsExtras.includes(t.key));
+  // Se a aba aberta estiver entre as extras, ela toma o lugar da ultima visivel,
+  // para a pessoa nunca ficar numa aba que nao aparece.
+  if (extras.some((t) => t.key === state.tab)) {
+    const i = visiveis.findIndex((t) => t.key !== state.tab);
+    if (i > -1) {
+      const fora = visiveis.splice(visiveis.length - 1, 1, extras.find((t) => t.key === state.tab))[0];
+      extras.splice(extras.findIndex((t) => t.key === state.tab), 1, fora);
+    }
+  }
+  const btn = (t) => `<button class="tab ${t.key === state.tab ? 'active' : ''}" data-tab="${t.key}" role="tab" title="${escapeHtml(t.descricao || '')}">${t.type === 'lente' ? `<span class="lente-mark" title="Lente: atravessa as outras abas">${t.icon || ''}</span>` : ''}${escapeHtml(t.label)}<span class="tab-badge hidden"></span></button>`;
+  $('#tabs').innerHTML = visiveis.map(btn).join('')
+    + (extras.length ? `<button class="tab tab-more" data-more="1" aria-label="Mais abas">⋯</button>` : '');
+  $('#search').placeholder = state.tab === 'desk' ? 'Pesquisar atendimentos' : 'Pesquisar ou começar uma nova conversa';
+}
+
 function setTab(tab, save = true) {
   state.tab = tab;
   if (save) localStorage.setItem('zl_tab', tab);
-  $$('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === tab));
-  $('#search').placeholder = tab === 'desk' ? 'Pesquisar atendimentos' : 'Pesquisar ou começar uma nova conversa';
+  renderTabs();
   renderChatList();
 }
-$('#tabs').addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) setTab(t.dataset.tab); });
+$('#tabs').addEventListener('click', (e) => {
+  if (e.target.closest('[data-more]')) return abrirMaisAbas();
+  const t = e.target.closest('.tab');
+  if (t) setTab(t.dataset.tab);
+});
+
+function abrirMaisAbas() {
+  const extras = state.tabs.filter((t) => state.tabsExtras.includes(t.key));
+  const box = $('#emoji-picker');
+  box.innerHTML = extras.map((t) => `<button class="tab-extra" data-tab-extra="${t.key}">${t.icon || ''} ${escapeHtml(t.label)}</button>`).join('');
+  box.classList.remove('hidden');
+  const r = $('.tab-more').getBoundingClientRect();
+  box.style.left = Math.max(8, Math.min(r.left, window.innerWidth - (box.offsetWidth || 200) - 8)) + 'px';
+  box.style.top = (r.bottom + 6) + 'px';
+}
+$('#emoji-picker').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tab-extra]');
+  if (!b) return;
+  $('#emoji-picker').classList.add('hidden');
+  setTab(b.dataset.tabExtra);
+});
 
 function sortedChats() {
   const q = $('#search').value.trim().toLowerCase();
@@ -490,10 +550,16 @@ function renderChatList() {
           <div class="bottom"><span class="preview">${previewText(c)}</span>${c.unread ? `<span class="badge">${c.unread}</span>` : ''}</div>
         </div>
       </button>`).join('');
-  const totals = { social: 0, work: 0, desk: 0 };
+  const totals = {};
   for (const c of state.chats.values()) totals[c.category] = (totals[c.category] || 0) + (c.unread || 0);
-  $$('.tab').forEach((t) => { const b = t.querySelector('.tab-badge'); const n = totals[t.dataset.tab]; b.textContent = n; b.classList.toggle('hidden', !n); });
-  const total = totals.social + totals.work + totals.desk;
+  $$('.tab').forEach((t) => {
+    const b = t.querySelector('.tab-badge');
+    if (!b) return;
+    const n = totals[t.dataset.tab];
+    b.textContent = n;
+    b.classList.toggle('hidden', !n);
+  });
+  const total = Object.values(totals).reduce((a, b) => a + b, 0);
   document.title = total ? `(${total}) ZapLivre` : 'ZapLivre';
   if (navigator.setAppBadge) (total ? navigator.setAppBadge(total) : navigator.clearAppBadge()).catch(() => {});
 }
@@ -978,10 +1044,13 @@ function openInfo() {
   $('#info-name').textContent = chat.name;
   const isGroup = chat.type === 'group', isAdmin = chat.role === 'admin' && !chat.viaWorkspace;
   const peerIsBusiness = chat.peer?.kind === 'business';
-  $('#info-sub').textContent = isGroup ? `Grupo de ${TAB_LABEL[chat.category]} · ${chat.members.length} participante(s)` : peerIsBusiness ? `Empresa ${chat.peer.handle} · ${chat.peer.about || ''}` : `${chat.peer?.handle || ''} · ${chat.peer?.about || ''}`;
+  $('#info-sub').textContent = isGroup ? `Grupo de ${rotuloDaAba(chat.category)} · ${chat.members.length} participante(s)` : peerIsBusiness ? `Empresa ${chat.peer.handle} · ${chat.peer.about || ''}` : `${chat.peer?.handle || ''} · ${chat.peer?.about || ''}`;
   $('#info-category').classList.toggle('hidden', chat.category === 'desk' || Boolean(chat.viaWorkspace));
-  const radio = document.querySelector(`input[name=my-category][value=${chat.category}]`);
-  if (radio) radio.checked = true;
+  // As opcoes saem do catalogo de abas: Atendimento fica de fora (e so de
+  // empresa) e lente tambem (lente nao guarda conversa).
+  const destinos = state.tabs.filter((t) => t.type === 'arquivo' && t.key !== 'desk');
+  $('#info-category .choice').innerHTML = destinos.map((t) => `
+    <label><input type="radio" name="my-category" value="${t.key}" ${t.key === chat.category ? 'checked' : ''}> ${escapeHtml(t.label)}</label>`).join('');
   $('#form-group-edit').classList.toggle('hidden', !(isGroup && isAdmin));
   $('#info-group-name').value = chat.name;
   $('#form-add-member').classList.toggle('hidden', !(isGroup && isAdmin));
@@ -1001,7 +1070,7 @@ $('#info-category').addEventListener('change', async (e) => {
     const { chat } = await api(`/chats/${state.activeChatId}/category`, { method: 'PATCH', body: { category: e.target.value } });
     state.chats.set(chat.id, { ...state.chats.get(chat.id), ...chat });
     setTab(chat.category);
-    toast(`Conversa movida para ${TAB_LABEL[chat.category]}.`);
+    toast(`Conversa movida para ${rotuloDaAba(chat.category)}.`);
   } catch (err) { toast(err.message); }
 });
 $('#form-group-edit').addEventListener('submit', async (e) => {
@@ -1269,7 +1338,7 @@ function abrirEncaminhar(m) {
     <label class="contact-row forward-row">
       <input type="checkbox" value="${c.id}">
       <img class="avatar" src="${avatarFor(c)}" alt="">
-      <span class="body"><span class="name">${escapeHtml(c.name)}</span><span class="handle">${TAB_LABEL[c.category] || ''}</span></span>
+      <span class="body"><span class="name">${escapeHtml(c.name)}</span><span class="handle">${escapeHtml(rotuloDaAba(c.category))}</span></span>
     </label>`).join('') || '<p class="hint">Nenhuma outra conversa para encaminhar.</p>';
   $('#btn-forward-send').disabled = true;
   openPanel('#panel-forward');

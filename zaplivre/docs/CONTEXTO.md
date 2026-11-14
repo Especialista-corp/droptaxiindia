@@ -15,7 +15,7 @@ Pasta: `zaplivre/`. Branch: `claude/whatsapp-clone-app-wlxki0`. PR #3.
 | Ordem | Plano | Documento | Situação |
 | --- | --- | --- | --- |
 | 0 | **3 Dias** (notificação, convite, busca, paridade, produção) | `PLANO-3-DIAS.md` | Proposto, aguardando aprovação |
-| 1 | **Cômodos**, etapa 0 (fundação do sistema de abas) | `PLANO-COMODOS.md` | Aprovado, prioridade máxima |
+| 1 | **Cômodos**, etapa 0 (fundação do sistema de abas) | `PLANO-COMODOS.md` | ✅ Entregue em 14/11 |
 | 2 | **Baú** (chassi, custódia, fotos) | `PLANO-BAU.md` | Aprovado |
 | 3 | **Cômodos**, restante (abas Dinheiro, Passageiras, Cofre, Murais, Assistente, Combinados, Balcão, Perto) | `PLANO-COMODOS.md` | Aprovado |
 | 4 | **Chave Dupla** (privacidade do telefone) | `PLANO-CHAVE-DUPLA.md` | Aprovado |
@@ -75,6 +75,8 @@ código de recuperação, mostrado uma única vez, que substitui o SMS no retorn
   hora por plano. Bloqueio disponível.
 - **Abas de arquivo contra abas de lente.** Arquivo é endereço e é exclusivo. Lente é
   ponto de vista e atravessa tudo. Máximo de quatro abas na tela, nada ligado por padrão.
+  Implementado em `server/tabs.js`: o catálogo é a única fonte de verdade, e aba nova
+  entra por ele, não por migração de banco.
 - **Criptografia por aba.** Social e Trabalho cifrados no futuro. Atendimento legível pela
   empresa, como na API do WhatsApp Business.
 - **Não é serviço financeiro.** Não processa, não intermedia, não guarda saldo.

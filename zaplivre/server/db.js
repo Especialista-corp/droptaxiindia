@@ -78,7 +78,10 @@ function migrate(db) {
     CREATE TABLE IF NOT EXISTS chats (
       id TEXT PRIMARY KEY,
       type TEXT NOT NULL CHECK (type IN ('direct', 'group')),
-      category TEXT NOT NULL DEFAULT 'social' CHECK (category IN ('social', 'work', 'desk')),
+      -- Endereço da conversa: a chave de uma aba de arquivo. Sem CHECK fechado,
+      -- porque abas novas entram pelo catálogo em server/tabs.js, não por
+      -- migração de banco.
+      tab_key TEXT NOT NULL DEFAULT 'social',
       name TEXT,
       avatar TEXT,
       direct_key TEXT UNIQUE,
@@ -103,6 +106,8 @@ function migrate(db) {
       last_read_at INTEGER NOT NULL DEFAULT 0,
       -- Organização da lista: cada pessoa fixa, silencia e arquiva a SUA visão
       -- da conversa, sem mexer na do outro.
+      -- Cada pessoa pode guardar a MESMA conversa numa aba diferente da do outro.
+      tab_key TEXT,
       pinned_at INTEGER,
       muted_until INTEGER,
       archived INTEGER NOT NULL DEFAULT 0,
@@ -181,6 +186,19 @@ function migrate(db) {
       created_at INTEGER NOT NULL
     );
 
+    -- Plano Cômodos: quais abas cada pessoa ligou, em que ordem, com que ajustes.
+    -- O catálogo do que existe mora em server/tabs.js; aqui fica só a escolha
+    -- de cada um.
+    CREATE TABLE IF NOT EXISTS user_tabs (
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tab_key TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      position INTEGER NOT NULL DEFAULT 0,
+      config TEXT NOT NULL DEFAULT '{}',
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, tab_key)
+    );
+
     -- Configuração do servidor que precisa sobreviver a reinício (ex.: chaves VAPID).
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,
@@ -256,6 +274,7 @@ function migrate(db) {
   addColumnIfMissing(db, 'chat_members', 'archived', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'chats', 'ephemeral_seconds', 'INTEGER NOT NULL DEFAULT 0');
   widenTypeChecks(db);
+  migrateToTabs(db);
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)');
 
   buildSearchIndex(db);
@@ -358,18 +377,72 @@ function widenTypeChecks(db) {
   }
 }
 
+// Plano Cômodos, Etapa 0: o campo fixo `category` vira `tab_key`, a chave de uma
+// aba registrada. O CHECK antigo prendia o aplicativo a três abas para sempre.
+// Social, Trabalho e Atendimento viram abas registradas sem ninguém notar: os
+// valores guardados são exatamente os mesmos.
+function migrateToTabs(db) {
+  const colunas = (t) => db.prepare(`PRAGMA table_info(${t})`).all().map((c) => c.name);
+
+  if (!colunas('chats').includes('tab_key')) {
+    rebuildTable(db, 'chats', `
+      CREATE TABLE chats__novo (
+        id TEXT PRIMARY KEY,
+        type TEXT NOT NULL CHECK (type IN ('direct', 'group')),
+        tab_key TEXT NOT NULL DEFAULT 'social',
+        name TEXT,
+        avatar TEXT,
+        direct_key TEXT UNIQUE,
+        workspace_id TEXT REFERENCES workspaces(id),
+        created_by TEXT REFERENCES users(id),
+        created_at INTEGER NOT NULL,
+        ticket_status TEXT NOT NULL DEFAULT 'open' CHECK (ticket_status IN ('open', 'in_progress', 'done')),
+        assignee_id TEXT REFERENCES users(id),
+        bot_paused INTEGER NOT NULL DEFAULT 0,
+        tags TEXT NOT NULL DEFAULT '[]',
+        ephemeral_seconds INTEGER NOT NULL DEFAULT 0
+      )`, ['CREATE INDEX IF NOT EXISTS idx_chats_workspace ON chats(workspace_id)'],
+      { category: 'tab_key' });
+  }
+
+  if (!colunas('chat_members').includes('tab_key')) {
+    rebuildTable(db, 'chat_members', `
+      CREATE TABLE chat_members__novo (
+        chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'admin')),
+        joined_at INTEGER NOT NULL,
+        last_read_at INTEGER NOT NULL DEFAULT 0,
+        tab_key TEXT,
+        pinned_at INTEGER,
+        muted_until INTEGER,
+        archived INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (chat_id, user_id)
+      )`, ['CREATE INDEX IF NOT EXISTS idx_members_user ON chat_members(user_id)'],
+      { category: 'tab_key' });
+  }
+}
+
 // Troca uma tabela por outra preservando as linhas, pelas colunas em comum.
+// `renomeadas` mapeia coluna antiga -> coluna nova, para um campo que mudou de
+// nome não perder os dados na reconstrução.
 // Os gatilhos da busca caem junto com a tabela antiga e são refeitos logo
 // depois, em buildSearchIndex.
-function rebuildTable(db, table, createNewSql, indexes) {
+function rebuildTable(db, table, createNewSql, indexes, renomeadas = {}) {
   const novo = table + '__novo';
   db.exec('PRAGMA foreign_keys = OFF');
   try {
     db.exec(createNewSql);
     const colsNovo = db.prepare(`PRAGMA table_info(${novo})`).all().map((c) => c.name);
     const colsVelho = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
-    const comuns = colsNovo.filter((c) => colsVelho.includes(c)).join(', ');
-    db.exec(`INSERT INTO ${novo} (${comuns}) SELECT ${comuns} FROM ${table}`);
+    const destino = [];
+    const origem = [];
+    for (const c of colsNovo) {
+      if (colsVelho.includes(c)) { destino.push(c); origem.push(c); continue; }
+      const antiga = Object.keys(renomeadas).find((k) => renomeadas[k] === c);
+      if (antiga && colsVelho.includes(antiga)) { destino.push(c); origem.push(antiga); }
+    }
+    db.exec(`INSERT INTO ${novo} (${destino.join(', ')}) SELECT ${origem.join(', ')} FROM ${table}`);
     db.exec(`DROP TABLE ${table}`);
     db.exec(`ALTER TABLE ${novo} RENAME TO ${table}`);
     for (const sql of indexes) db.exec(sql);

@@ -2,7 +2,7 @@
 
 **"Cada coisa no seu lugar."**
 
-Status: aprovado, **prioridade máxima**. Nenhuma etapa foi implementada ainda.
+Status: aprovado, **prioridade máxima**. **Etapa 0 entregue** em 14/11; etapas 1 a 9 pendentes.
 
 > O WhatsApp é uma caixa onde tudo cai junto. O ZapLivre é uma casa onde cada coisa tem
 > o seu cômodo.
@@ -111,14 +111,28 @@ alerta de rua. Ocupa o espaço dos grupos de bairro sem o caos deles.
 
 ### Onda 1
 
-**Etapa 0. Fundação do sistema de abas** · 2 dias
+**Etapa 0. Fundação do sistema de abas** · ✅ ENTREGUE
 - Trocar o campo fixo `category` por um registro de abas (`tab_key`), com a distinção
   arquivo x lente no código.
 - Tabela `user_tabs`: quais abas cada pessoa ativou, em que ordem, com que ajustes.
 - Barra de abas adaptativa com limite de 4 e botão "mais".
 - Migração: `social`, `work` e `desk` viram abas registradas, sem quebrar nada.
 - *Aceite:* usuário existente abre o aplicativo e vê exatamente as três abas de hoje,
-  com as conversas nos mesmos lugares.
+  com as conversas nos mesmos lugares. **Verificado** sobre um banco da versão anterior:
+  endereços, visão própria de cada pessoa, mensagens e índice de busca intactos.
+
+> **Como ficou.** O catálogo de abas mora em `server/tabs.js`, com a distinção
+> arquivo/lente no código (`isArquivo`, `isLente`) e o limite de quatro na tela. A
+> tabela `user_tabs` guarda o que cada pessoa ligou, em que ordem. O campo `category`
+> virou `tab_key` em `chats` e em `chat_members`, sem `CHECK` fechado, porque aba nova
+> passa a entrar pelo catálogo e não por migração de banco. Na saída da API `tabKey` é o
+> nome novo e `category` ficou como apelido, para não quebrar bots já integrados. A barra
+> de abas do cliente é montada a partir de `GET /api/tabs`, com botão "mais" quando
+> passar de quatro. O catálogo é injetável, o que permite testar o limite antes de
+> existir uma quarta aba de verdade.
+>
+> O que a Etapa 0 **não** faz, de propósito: nenhuma aba nova é ligada. Quem abre o
+> aplicativo vê as mesmas três. Dinheiro, Passageiras e Cofre entram nas etapas 1 a 3.
 
 **Etapa 1. Dinheiro** · 3 dias
 - Detector de comprovante, boleto, Pix e cobrança em anexos e em texto, com extração de

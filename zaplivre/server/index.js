@@ -12,6 +12,7 @@ import { createWorkspaceService, PLANS } from './workspaces.js';
 import { createFileService, buildTranscriber } from './files.js';
 import { createPushService } from './push.js';
 import { createInviteService } from './invites.js';
+import { createTabService } from './tabs.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -36,7 +37,8 @@ export function createApp({
   const bootstrapInvite = accessMode === 'invite' ? invites.bootstrap() : null;
   const workspaces = createWorkspaceService(db, { dnsResolver, logger });
   const files = createFileService(db, { uploadDir, transcriber, logger });
-  const chats = createChatService(db, { workspaces, files });
+  const tabs = createTabService(db, { logger });
+  const chats = createChatService(db, { workspaces, files, tabs });
 
   const app = express();
   app.disable('x-powered-by');
@@ -145,7 +147,23 @@ export function createApp({
     io.to(room(chat.id)).emit('chat:updated', { chatId: chat.id });
     res.json({ chat });
   }));
-  app.patch('/api/chats/:id/category', requireAuth, wrap((req, res) => res.json({ chat: chats.setMyCategory(req.user.id, req.params.id, req.body?.category ?? null) })));
+  // `category` e `tabKey` são o mesmo campo; o nome antigo segue aceito.
+  app.patch('/api/chats/:id/category', requireAuth, wrap((req, res) => {
+    const alvo = req.body?.tabKey !== undefined ? req.body.tabKey : (req.body?.category ?? null);
+    res.json({ chat: chats.setMyTab(req.user.id, req.params.id, alvo) });
+  }));
+  app.patch('/api/chats/:id/tab', requireAuth, wrap((req, res) => {
+    res.json({ chat: chats.setMyTab(req.user.id, req.params.id, req.body?.tabKey ?? null) });
+  }));
+
+  // ----- Abas (Plano Cômodos) -----
+  app.get('/api/tabs', requireAuth, (req, res) => res.json(tabs.listFor(req.user.id)));
+  app.post('/api/tabs/:key', requireAuth, wrap((req, res) => {
+    const r = tabs.setEnabled(req.user.id, req.params.key, req.body?.enabled !== false);
+    if (!r.ok) throw httpError(400, r.reason);
+    res.json(r.tabs);
+  }));
+  app.post('/api/tabs', requireAuth, wrap((req, res) => res.json(tabs.reorder(req.user.id, req.body?.order))));
   app.post('/api/chats/:id/members', requireAuth, wrap((req, res) => {
     const { chat, message, addedUserId } = chats.addGroupMember(req.user.id, req.params.id, req.body || {});
     joinUserToRoom(addedUserId, chat.id);
@@ -377,7 +395,7 @@ export function createApp({
     io.to(room(chatId)).emit('message:new', { message, clientId: payload.clientId || null });
     notifyByPush(message, chatId, userId).catch((err) => logger.error?.('push:', err.message));
     const chat = chats.rawChat(chatId);
-    if (chat.category === 'desk' && !chat.bot_paused) {
+    if (chat.tab_key === 'desk' && !chat.bot_paused) {
       const sender = chats.userById(message.senderId);
       if (sender?.kind === 'person') {
         const view = chats.getChat(userId, chatId);
