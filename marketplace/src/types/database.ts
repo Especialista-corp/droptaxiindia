@@ -32,6 +32,7 @@ export type UsersRow = {
 
 export type ProviderProfilesRow = {
   user_id: string;
+  cpf: string | null;
   status: ProviderStatus;
   documento_url: string | null;
   selfie_url: string | null;

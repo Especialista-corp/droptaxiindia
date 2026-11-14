@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cadastroPrestadorAction } from "../../actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatarCpf } from "@/lib/cpf";
 import { VEHICLE_COLORS, VEHICLE_TYPES, TRUCK_SIZES, TRUCK_SIZE_LABELS, type VehicleType } from "@/lib/constants";
 
 export function PrestadorSignupForm({
@@ -19,6 +20,7 @@ export function PrestadorSignupForm({
   const [endereco, setEndereco] = useState({ endereco: "", bairro: "", cidade: "", estado: "" });
   const [buscandoCep, setBuscandoCep] = useState(false);
   const [cepErro, setCepErro] = useState<string>();
+  const [cpf, setCpf] = useState("");
 
   async function buscarCep(valor: string) {
     const cep = valor.replace(/\D/g, "");
@@ -47,6 +49,16 @@ export function PrestadorSignupForm({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <Input
+        label="CPF"
+        name="cpf"
+        inputMode="numeric"
+        placeholder="000.000.000-00"
+        autoComplete="off"
+        required
+        value={cpf}
+        onChange={(event) => setCpf(formatarCpf(event.target.value))}
+      />
       <Input label="Nome completo" name="nome" required />
       <Input label="E-mail" name="email" type="email" required autoComplete="email" />
       <Input

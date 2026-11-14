@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/card";
+import { formatarCpf } from "@/lib/cpf";
 import {
   aprovarPrestadorAction,
   suspenderPrestadorAction,
@@ -17,7 +18,7 @@ export default async function AdminPrestadoresPage() {
   const { data: prestadores } = await admin
     .from("provider_profiles")
     .select(
-      "user_id, status, raio_km, strikes, documento_url, selfie_url, comprovante_endereco_url, certidao_negativa_url, documentos_prazo_em, cep, endereco, numero, complemento, bairro, cidade, estado, users(nome, email, telefone), provider_vehicles(tipo, cor, porte, placa, em_uso)",
+      "user_id, cpf, status, raio_km, strikes, documento_url, selfie_url, comprovante_endereco_url, certidao_negativa_url, documentos_prazo_em, cep, endereco, numero, complemento, bairro, cidade, estado, users!provider_profiles_user_id_fkey(nome, email, telefone), provider_vehicles(tipo, cor, porte, placa, em_uso)",
     )
     .order("criado_em", { ascending: false });
 
@@ -37,6 +38,7 @@ export default async function AdminPrestadoresPage() {
                 <p className="font-bold">{usuario?.nome ?? "Sem nome"}</p>
                 <p className="text-sm text-muted">
                   {usuario?.email} · {usuario?.telefone}
+                  {prestador.cpf && ` · CPF ${formatarCpf(prestador.cpf)}`}
                 </p>
                 <p className="text-sm text-muted">
                   {prestador.endereco

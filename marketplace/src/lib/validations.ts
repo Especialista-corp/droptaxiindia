@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { somenteDigitos, validarCpf } from "@/lib/cpf";
 
 const telefoneRegex = /^\+?\d{10,13}$/;
 
@@ -23,6 +24,10 @@ export const veiculoSchema = z.object({
 });
 
 export const cadastroPrestadorSchema = cadastroClienteSchema.extend({
+  cpf: z
+    .string()
+    .refine(validarCpf, "CPF inválido")
+    .transform(somenteDigitos),
   cep: z.string().regex(/^\d{5}-?\d{3}$/, "CEP inválido"),
   endereco: z.string().min(3, "Informe o endereço"),
   numero: z.string().min(1, "Informe o número"),

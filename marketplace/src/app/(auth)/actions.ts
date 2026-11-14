@@ -74,6 +74,7 @@ export async function cadastroPrestadorAction(
   formData: FormData,
 ): Promise<ActionState> {
   const parsed = cadastroPrestadorSchema.safeParse({
+    cpf: formData.get("cpf"),
     nome: formData.get("nome"),
     email: formData.get("email"),
     telefone: formData.get("telefone"),
@@ -110,6 +111,15 @@ export async function cadastroPrestadorAction(
     return { error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
   }
 
+  // Confere o CPF antes de criar o login, para não deixar conta órfã.
+  const admin = createAdminClient();
+  const { data: cpfExistente } = await admin
+    .from("provider_profiles")
+    .select("user_id")
+    .eq("cpf", parsed.data.cpf)
+    .maybeSingle();
+  if (cpfExistente) return { error: "Já existe um cadastro de montador com este CPF." };
+
   const supabase = await createClient();
   const { data: signUpData, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -128,8 +138,6 @@ export async function cadastroPrestadorAction(
   // A criação da linha em public.users acontece via trigger on_auth_user_created.
   // Usamos o client admin aqui pois a sessão do usuário recém-criado ainda não
   // está disponível neste request (confirmação de e-mail pendente).
-  const admin = createAdminClient();
-
   // Aprovação automática: o prestador já pode receber pedidos, mas tem
   // PROVIDER_DOCS_DEADLINE_DAYS para enviar comprovante de endereço e certidão
   // negativa de antecedentes criminais — senão o cron o suspende.
@@ -139,6 +147,7 @@ export async function cadastroPrestadorAction(
 
   const { error: profileError } = await admin.from("provider_profiles").insert({
     user_id: userId,
+    cpf: parsed.data.cpf,
     status: "aprovado",
     aprovado_em: new Date().toISOString(),
     documentos_prazo_em: prazoDocumentos,
