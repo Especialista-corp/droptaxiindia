@@ -43,6 +43,16 @@
   color-scheme: dark;
 }
 
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  textarea,
+  select {
+    background-color: var(--color-surface-2);
+    color: var(--color-foreground);
+    min-width: 0;
+  }
+}
+
 html {
   height: 100%;
 }
