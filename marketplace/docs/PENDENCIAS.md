@@ -38,41 +38,49 @@ Nunca peça chaves no chat para serem guardadas no repositório: elas ficam só 
 - [ ] 17. (Dono) Criar a conta Resend e configurar o e-mail do domínio
 - [ ] 18. (Claude) Testar notificações no celular e por e-mail
 - [ ] 19. (Dono) Criar o bot do Telegram pelo @BotFather e me enviar o token
-- [ ] 20. (Dono) Criar uma caixa de e-mail só para arquivar cadastros (ex.: cadastros@seu-domínio)
+- [ ] 20. (Dono) Criar o número oficial de WhatsApp da empresa (WhatsApp Business Platform da Meta)
+- [ ] 21. (Dono) Criar uma caixa de e-mail só para arquivar cadastros (ex.: cadastros@seu-domínio)
 
 ## Etapa 4: Funcionalidades que faltam
-- [ ] 21. (Claude) Fluxo de disputas: cliente abre, pagamento congela, admin resolve
-- [ ] 22. (Claude) Revisão de documentos pelo admin: abrir comprovante e certidão no painel
-- [ ] 23. (Dono) Decidir a verificação de identidade paga (CPF + selfie com prova de vida) com base nos preços levantados
-- [ ] 24. (Dono) Pedir cotação de verificação de identidade (Serpro Datavalid, BigDataCorp, Unico, CAF, idwall)
-- [ ] 25. (Dono) Decidir: o montador só recebe pedidos depois de verificado e aprovado (hoje a aprovação é automática)
-- [ ] 26. (Claude) Exigir CNH ou RG novo (CIN): explicar os modelos aceitos e fotografar só pela câmera do app, sem envio de arquivo
-- [ ] 27. (Claude) Leitura automática (OCR) do documento e comparação com o nome e o CPF digitados
-- [ ] 28. (Claude) Pontuação de risco por cadastro (CPF, nome x documento, telefone, placa e rosto repetidos)
-- [ ] 29. (Claude) Aviso no Telegram ao admin a cada cadastro, com dados, link seguro para as fotos e botões Aprovar e Reprovar
-- [ ] 30. (Claude) Área do admin: botão para ligar o Telegram dele ao bot
-- [ ] 31. (Claude) E-mail de arquivo ao admin: título com nome, CPF e WhatsApp, dados do cadastro e cópias dos documentos
-- [ ] 32. (Claude) Corrigir a lista de itens que o montador vê no pedido
-- [ ] 33. (Dono) Contratar o serviço de mensagens para o código (SMS ou WhatsApp)
-- [ ] 34. (Claude) Verificação do WhatsApp do montador por código (SMS ou WhatsApp)
-- [ ] 35. (Claude) Gerar os ícones PNG para iPhone e Android
+- [ ] 22. (Claude) Fluxo de disputas: cliente abre, pagamento congela, admin resolve
+- [ ] 23. (Claude) Revisão de documentos pelo admin: abrir comprovante e certidão no painel
+- [ ] 24. (Dono) Decidir a verificação de identidade paga (CPF + selfie com prova de vida) com base nos preços levantados
+- [ ] 25. (Dono) Pedir cotação de verificação de identidade (Serpro Datavalid, BigDataCorp, Unico, CAF, idwall)
+- [ ] 26. (Claude) Mudar a aprovação: cadastro verde é aprovado sozinho; amarelo e vermelho esperam o admin; só aprovado recebe pedidos
+- [ ] 27. (Claude) Exigir CNH ou RG novo (CIN): explicar os modelos aceitos e fotografar só pela câmera do app, sem envio de arquivo
+- [ ] 28. (Claude) Leitura automática (OCR) do documento e comparação com o nome e o CPF digitados
+- [ ] 29. (Claude) Pontuação de risco por cadastro (CPF, nome x documento, telefone, placa e rosto repetidos)
+- [ ] 30. (Claude) Aviso no Telegram ao admin a cada cadastro, com dados, link seguro para as fotos e botões Aprovar e Reprovar
+- [ ] 31. (Claude) Área do admin: botão para ligar o Telegram dele ao bot
+- [ ] 32. (Claude) Reprovação com motivos em botões e mensagem automática ao montador explicando o que corrigir
+- [ ] 33. (Claude) Lembrete de cadastro parado há mais de 24 horas e resumo diário ao admin
+- [ ] 34. (Claude) Guia na câmera: moldura, aviso de reflexo, borrão e pouca luz, e selfie segurando o documento
+- [ ] 35. (Claude) Avisar antes de a CNH e a certidão vencerem e reverificar uma vez por ano
+- [ ] 36. (Claude) Vários admins no grupo do Telegram, com registro de quem aprovou e quando
+- [ ] 37. (Claude) Botão "Confirmar pelo WhatsApp": a mensagem recebida no número oficial confirma o número de quem enviou
+- [ ] 38. (Dono) Decidir se aceitamos a CNH digital, validada pelo QR code
+- [ ] 39. (Claude) E-mail de arquivo ao admin: título com nome, CPF e WhatsApp, dados do cadastro e cópias dos documentos
+- [ ] 40. (Claude) Corrigir a lista de itens que o montador vê no pedido
+- [ ] 41. (Dono) Contratar o serviço de mensagens para o código (SMS ou WhatsApp)
+- [ ] 42. (Claude) Verificação do WhatsApp do montador por código (SMS ou WhatsApp)
+- [ ] 43. (Claude) Gerar os ícones PNG para iPhone e Android
 
 ## Etapa 5: Qualidade e segurança
-- [ ] 36. (Claude) Criar os testes automáticos do fluxo principal
-- [ ] 37. (Claude) Revisão de segurança (acesso, ações do servidor, pagamento)
-- [ ] 38. (Dono) Testar em iPhone e Android reais
-- [ ] 39. (Claude) Limpar a cópia antiga: pasta marketplace do droptaxiindia e a PR #1
+- [ ] 44. (Claude) Criar os testes automáticos do fluxo principal
+- [ ] 45. (Claude) Revisão de segurança (acesso, ações do servidor, pagamento)
+- [ ] 46. (Dono) Testar em iPhone e Android reais
+- [ ] 47. (Claude) Limpar a cópia antiga: pasta marketplace do droptaxiindia e a PR #1
 
 ## Etapa 6: Pagamentos (Asaas)
-- [ ] 40. (Dono) Criar a conta Asaas sandbox e enviar a chave de API
-- [ ] 41. (Claude) Testar cobrança Pix real no sandbox e o retorno automático (webhook)
-- [ ] 42. (Claude) Implementar o repasse ao montador (subconta e divisão)
-- [ ] 43. (Claude) Testar cancelamento e reembolso
-- [ ] 44. (Dono) Abrir a conta Asaas de produção (documentos da empresa), cerca de 1 semana antes do piloto
+- [ ] 48. (Dono) Criar a conta Asaas sandbox e enviar a chave de API
+- [ ] 49. (Claude) Testar cobrança Pix real no sandbox e o retorno automático (webhook)
+- [ ] 50. (Claude) Implementar o repasse ao montador (subconta e divisão)
+- [ ] 51. (Claude) Testar cancelamento e reembolso
+- [ ] 52. (Dono) Abrir a conta Asaas de produção (documentos da empresa), cerca de 1 semana antes do piloto
 
 ## Etapa 7: Lançamento
-- [ ] 45. (Dono) Decidir o nome definitivo e consultar a marca no INPI
-- [ ] 46. (Dono) Termos de uso e política de privacidade (LGPD)
-- [ ] 47. (Claude) Guia de operação e lista de ideias da Fase 2
-- [ ] 48. (Dono) Piloto com poucos montadores e clientes
-- [ ] 49. (Dono) Decidir quando migrar para o plano pago do Supabase
+- [ ] 53. (Dono) Decidir o nome definitivo e consultar a marca no INPI
+- [ ] 54. (Dono) Termos de uso e política de privacidade (LGPD)
+- [ ] 55. (Claude) Guia de operação e lista de ideias da Fase 2
+- [ ] 56. (Dono) Piloto com poucos montadores e clientes
+- [ ] 57. (Dono) Decidir quando migrar para o plano pago do Supabase
