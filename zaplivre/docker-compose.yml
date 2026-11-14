@@ -1,0 +1,63 @@
+# ZapLivre em produção: o aplicativo mais um porteiro que cuida do HTTPS.
+#
+#   cp .env.example .env   (e preencha DOMINIO e EMAIL_HTTPS)
+#   docker compose up -d
+#
+# O certificado é pedido e renovado sozinho pelo Caddy. Não há nada para
+# configurar nem para lembrar de renovar.
+services:
+  zaplivre:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+      DB_FILE: /app/data/zaplivre.db
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - dados:/app/data
+    # Sem portas publicadas: só o porteiro fala com a internet.
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  porteiro:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-dados:/data
+      - caddy-config:/config
+    depends_on:
+      - zaplivre
+
+  # Backup diário do banco e dos arquivos, guardando os 14 últimos.
+  backup:
+    build: .
+    restart: unless-stopped
+    environment:
+      DB_FILE: /app/data/zaplivre.db
+      UPLOAD_DIR: /app/data/uploads
+    volumes:
+      - dados:/app/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        while true; do
+          sleep 86400
+          node --no-warnings=ExperimentalWarning scripts/backup.js --manter 14 || echo "backup falhou"
+        done
+
+volumes:
+  dados:
+  caddy-dados:
+  caddy-config:

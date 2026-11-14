@@ -14,7 +14,7 @@ Pasta: `zaplivre/`. Branch: `claude/whatsapp-clone-app-wlxki0`. PR #3.
 
 | Ordem | Plano | Documento | Situação |
 | --- | --- | --- | --- |
-| 0 | **3 Dias** (notificação, convite, busca, paridade, produção) | `PLANO-3-DIAS.md` | Proposto, aguardando aprovação |
+| 0 | **3 Dias** (notificação, convite, busca, paridade, produção) | `PLANO-3-DIAS.md` | ✅ Entregue em 14/11 |
 | 1 | **Cômodos**, etapa 0 (fundação do sistema de abas) | `PLANO-COMODOS.md` | ✅ Entregue em 14/11 |
 | 2 | **Baú** (chassi, custódia, fotos) | `PLANO-BAU.md` | Aprovado |
 | 3 | **Cômodos**, restante (abas Dinheiro, Passageiras, Cofre, Murais, Assistente, Combinados, Balcão, Perto) | `PLANO-COMODOS.md` | Aprovado |
@@ -23,7 +23,8 @@ Pasta: `zaplivre/`. Branch: `claude/whatsapp-clone-app-wlxki0`. PR #3.
 | 6 | Criptografia de ponta a ponta, chamadas, apps nativos, escala, LGPD | `DECISOES.md` | Roteiro |
 
 Outros documentos: `API.md` (integração de robôs), `DECISOES.md` (criptografia contra IA,
-antispam, descoberta de contatos).
+antispam, descoberta de contatos), `IMPLANTACAO.md` (do zero até dez pessoas
+conversando).
 
 ## 3. Já construído e testado
 
@@ -52,7 +53,7 @@ Levantados em 2026-11-14. Plano de ataque em `PLANO-3-DIAS.md`.
 | 2 | Entrada dependia de `DEV_SHOW_OTP` | ✅ resolvido: modo convite (`server/invites.js`) |
 | 3 | Sem busca de mensagens | ✅ resolvido: índice FTS5 (`buildSearchIndex` em `db.js`) |
 | 4 | Sem backup | ✅ resolvido: `npm run backup` e `npm run restaurar` |
-| 5 | Sem servidor no ar | ⬜ pendente (Dia 3) |
+| 5 | Sem servidor no ar | ✅ pronto para subir: `docker-compose.yml` e `IMPLANTACAO.md`. Falta o dono comprar domínio e servidor. |
 
 ### Como ligar o modo piloto
 

@@ -2,7 +2,7 @@
 
 **"Um amigo instala, usa uma semana inteira e não volta para o WhatsApp para falar com você."**
 
-Status: **Dias 1 e 2 entregues** (14/11). Dia 3 pendente.
+Status: **os três dias entregues** (14/11). Falta você comprar domínio e servidor.
 
 ## 1. Por que este plano existe
 
@@ -111,9 +111,9 @@ Tudo aqui é curto. O valor está em serem muitos de uma vez.
 > silêncio. A tabela é reconstruída na subida, preservando linhas, índices e gatilhos da
 > busca. Testado sobre um banco da versão anterior.
 
-### Dia 3 · Fundação e produção
+### Dia 3 · Fundação e produção ✅ ENTREGUE
 
-**3.1 Plano Cômodos, Etapa 0** · fundação do sistema de abas
+**3.1 Plano Cômodos, Etapa 0** · ✅ feito · fundação do sistema de abas
 Exatamente como está em `PLANO-COMODOS.md`: `tab_key` no lugar de `category`, tabela
 `user_tabs`, distinção arquivo contra lente no código, barra adaptativa com limite de
 quatro abas. O usuário existente abre e vê as mesmas três abas de hoje.
@@ -121,13 +121,30 @@ quatro abas. O usuário existente abre e vê as mesmas três abas de hoje.
 Sem isso, cada aba nova dos planos futuros vira remendo. Com isso, Dinheiro, Passageiras,
 Cofre e as demais entram como peça encaixada.
 
-**3.2 Preparo de produção**
-- `docker-compose` com HTTPS automático, domínio e renovação de certificado.
-- Variáveis de ambiente documentadas, com as chaves de verdade separadas do código.
-- Revisão de segurança do que entrou nos três dias.
-- Tela de boas-vindas com o aviso honesto: ainda não há criptografia de ponta a ponta, o
+**3.2 Preparo de produção** · ✅ feito
+- ✅ `docker-compose` com HTTPS automático (Caddy), backup diário e verificação de saúde.
+- ✅ `.env.example` com tudo documentado, e o aviso de que `DEV_SHOW_OTP` nunca vai para
+  produção.
+- ✅ `docs/IMPLANTACAO.md`: do zero até dez pessoas conversando, escrito para quem não é
+  programador.
+- ✅ Revisão de segurança do que entrou nos três dias. Achados corrigidos:
+  - `proxy-addr` com falha **crítica** de falsificação de IP, e `body-parser` com falha
+    **alta** de negação de serviço, ambas em dependências do Express. Corrigidas; a
+  auditoria agora acusa zero.
+  - `trust proxy` estava em `true`, confiando em qualquer proxy. Como o limite de
+    tentativas de entrada é contado por IP, qualquer pessoa poderia forjar o cabeçalho e
+    furá-lo. Passou a confiar em um só, configurável por `TRUST_PROXY`.
+  - A conferência de convite era pública e sem limite, o que permitia varrer o espaço de
+    códigos à procura de um válido. Passou a ter limite por IP.
+- ✅ Tela de entrada com o aviso honesto: ainda não há criptografia de ponta a ponta, o
   operador do servidor consegue ler as mensagens.
-- Testes automatizados cobrindo o que foi construído.
+- ✅ 24 cenários de teste automatizado, mais simulação no Chromium em computador e
+  celular.
+
+> **Não verificado aqui:** a imagem Docker não chegou a ser construída, porque o ambiente
+> onde o código foi escrito não tem o serviço do Docker rodando. O `docker compose
+> config` valida, o `npm ci --omit=dev` instala limpo e os caminhos copiados existem, mas
+> a primeira construção de verdade acontece no seu servidor.
 
 ## 4. O que este plano deliberadamente não faz
 
@@ -141,7 +158,7 @@ Cofre e as demais entram como peça encaixada.
 ## 5. O que depende de você, não de mim
 
 1. **Domínio e servidor.** Algo entre trinta e sessenta reais por mês serve para o
-   piloto. Sem isso o Dia 3 entrega tudo pronto, mas não no ar.
+   piloto. Tudo está pronto para subir; o passo a passo está em `IMPLANTACAO.md`.
 2. **Decidir a ordem.** Este plano põe a Etapa 0 do Cômodos no Dia 3. Você a marcou como
    prioridade máxima. O argumento para adiá-la é que ela é invisível ao usuário, e
    invisível não faz ninguém usar. A decisão é sua.

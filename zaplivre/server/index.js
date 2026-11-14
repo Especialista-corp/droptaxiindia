@@ -42,7 +42,11 @@ export function createApp({
 
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', true);
+  // Confiar em UM proxy, não em todos. Com `true`, qualquer cliente poderia
+  // forjar o X-Forwarded-For e furar o limite de tentativas, que é contado por
+  // IP. O 1 corresponde ao porteiro do docker-compose; atrás de mais camadas,
+  // ajuste o número.
+  app.set('trust proxy', Number(process.env.TRUST_PROXY ?? 1));
   app.use(express.json({ limit: '2mb' }));
 
   const server = http.createServer(app);
@@ -97,7 +101,10 @@ export function createApp({
     if (!req.user?.is_admin) return next(httpError(403, 'Só quem administra o servidor pode emitir convites.'));
     next();
   }
-  app.get('/api/invites/:code', (req, res) => res.json(invites.check(req.params.code)));
+  app.get('/api/invites/:code', wrap((req, res) => {
+    if (!rateLimit('convite:' + req.ip, 30, 600000)) throw httpError(429, 'Muitas tentativas. Aguarde alguns minutos.');
+    res.json(invites.check(req.params.code));
+  }));
   app.get('/api/invites', requireAuth, requireAdmin, (req, res) => res.json({ invites: invites.list() }));
   app.post('/api/invites', requireAuth, requireAdmin, wrap((req, res) => res.status(201).json({ invite: invites.create(req.user.id, req.body || {}) })));
   app.delete('/api/invites/:code', requireAuth, requireAdmin, wrap((req, res) => res.json(invites.revoke(req.params.code))));

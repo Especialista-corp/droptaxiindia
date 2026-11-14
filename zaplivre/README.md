@@ -72,6 +72,16 @@ Abra <http://localhost:3000>. Para testar, abra uma janela anônima e cadastre o
 número. Para testar atendimento: menu → *Minhas empresas* → cadastre um domínio, depois
 na outra conta procure `@dominio` em *Nova conversa*.
 
+### Em produção
+
+```bash
+cp .env.example .env    # preencha DOMINIO e EMAIL_HTTPS
+docker compose up -d
+```
+
+HTTPS automático, backup diário e verificação de saúde já vêm configurados. O passo a
+passo completo, para quem não é programador, está em [docs/IMPLANTACAO.md](docs/IMPLANTACAO.md).
+
 ### Backup
 
 ```bash
