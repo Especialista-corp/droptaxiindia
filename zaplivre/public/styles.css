@@ -108,6 +108,9 @@ input:focus, textarea:focus { outline: 2px solid var(--brand); border-color: tra
 .search-wrap input { border-radius: 8px; padding: 9px 12px; }
 
 .chat-list { overflow-y: auto; flex: 1; }
+@media (prefers-color-scheme: dark) {
+  .chat-list { background: #5500ff; }
+}
 .chat-item {
   display: flex; gap: 14px; align-items: center; padding: 10px 16px; cursor: pointer; border: 0; width: 100%; background: none; text-align: left;
 }
