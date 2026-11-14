@@ -14,6 +14,7 @@ Pasta: `zaplivre/`. Branch: `claude/whatsapp-clone-app-wlxki0`. PR #3.
 
 | Ordem | Plano | Documento | Situação |
 | --- | --- | --- | --- |
+| 0 | **3 Dias** (notificação, convite, busca, paridade, produção) | `PLANO-3-DIAS.md` | Proposto, aguardando aprovação |
 | 1 | **Cômodos**, etapa 0 (fundação do sistema de abas) | `PLANO-COMODOS.md` | Aprovado, prioridade máxima |
 | 2 | **Baú** (chassi, custódia, fotos) | `PLANO-BAU.md` | Aprovado |
 | 3 | **Cômodos**, restante (abas Dinheiro, Passageiras, Cofre, Murais, Assistente, Combinados, Balcão, Perto) | `PLANO-COMODOS.md` | Aprovado |
@@ -35,6 +36,16 @@ webhooks assinados; Kanban de atendimento; passagem robô para humano; planos de
 com webhook de cobrança; notificações, modo escuro, instalação como aplicativo.
 
 Seis cenários de teste automatizado passando. Fluxo completo simulado no Chromium.
+
+## 3.1 Bloqueios conhecidos para uso real
+
+Levantados em 2026-11-14. Detalhe e plano de ataque em `PLANO-3-DIAS.md`.
+
+1. **Não avisa com o aplicativo fechado.** Falta Web Push; hoje a notificação só aparece
+   com a aba aberta. É o bloqueio número um: mensageiro que não avisa não é mensageiro.
+2. **Entrada depende de `DEV_SHOW_OTP`**, que em produção seria falha de segurança.
+3. **Sem busca de mensagens.**
+4. **Sem servidor no ar** e **sem backup** do banco e das mídias.
 
 ## 4. Decisões de produto já tomadas
 
