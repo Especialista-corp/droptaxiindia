@@ -29,7 +29,7 @@ export default async function AdminPedidosPage() {
                   {formatDataAgendada(pedido.data_agendada)} · {cliente?.nome ?? "—"} →{" "}
                   {prestador?.nome ?? "sem prestador"}
                 </p>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-muted">
                   {formatBRL(valor)} · comissão {formatBRL(comissao)}
                   {pedido.no_show_prestador && " · no-show do prestador"}
                 </p>
@@ -37,8 +37,8 @@ export default async function AdminPedidosPage() {
               <span
                 className={
                   pedido.status === "disputa"
-                    ? "rounded-full bg-[#BB032A] px-3 py-1 text-xs font-bold text-white"
-                    : "rounded-full bg-[#F6F6F6] px-3 py-1 text-xs font-medium"
+                    ? "rounded-full bg-danger px-3 py-1 text-xs font-bold text-on-brand"
+                    : "rounded-full bg-surface px-3 py-1 text-xs font-medium"
                 }
               >
                 {ORDER_STATUS_LABELS[pedido.status as OrderStatus]}
@@ -46,7 +46,7 @@ export default async function AdminPedidosPage() {
             </Card>
           );
         })}
-        {(pedidos ?? []).length === 0 && <p className="text-[#545454]">Nenhum pedido ainda.</p>}
+        {(pedidos ?? []).length === 0 && <p className="text-muted">Nenhum pedido ainda.</p>}
       </div>
     </div>
   );

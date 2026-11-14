@@ -7,8 +7,8 @@ export function OrderStatusStepper({ status }: { status: OrderStatus }) {
     return (
       <div
         className={cn(
-          "rounded-lg px-4 py-3 text-center font-bold text-white",
-          status === "disputa" ? "bg-[#BB032A]" : "bg-[#545454]",
+          "rounded-lg px-4 py-3 text-center font-bold text-on-brand",
+          status === "disputa" ? "bg-danger" : "bg-surface-2",
         )}
       >
         {ORDER_STATUS_LABELS[status]}
@@ -35,7 +35,7 @@ export function OrderStatusStepper({ status }: { status: OrderStatus }) {
                 <div
                   className={cn(
                     "h-0.5 flex-1",
-                    isDone || isActive ? "bg-black" : "bg-[#E2E2E2]",
+                    isDone || isActive ? "bg-brand" : "bg-line",
                   )}
                 />
               )}
@@ -43,24 +43,24 @@ export function OrderStatusStepper({ status }: { status: OrderStatus }) {
                 className={cn(
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
                   isDone
-                    ? "bg-black text-white"
+                    ? "bg-brand-gradient text-on-brand"
                     : isActive
-                      ? "border-2 border-black text-black"
-                      : "border border-[#E2E2E2] text-[#545454]",
+                      ? "border-2 border-brand text-foreground"
+                      : "border border-line text-muted",
                 )}
               >
                 {isDone ? <Check size={14} /> : index + 1}
               </div>
               {index < ORDER_TRACKING_STEPS.length - 1 && (
                 <div
-                  className={cn("h-0.5 flex-1", isDone ? "bg-black" : "bg-[#E2E2E2]")}
+                  className={cn("h-0.5 flex-1", isDone ? "bg-brand" : "bg-line")}
                 />
               )}
             </div>
             <span
               className={cn(
                 "text-center text-[11px] leading-tight",
-                isActive ? "font-bold text-black" : "text-[#545454]",
+                isActive ? "font-bold text-foreground" : "text-muted",
               )}
             >
               {ORDER_STATUS_LABELS[step]}

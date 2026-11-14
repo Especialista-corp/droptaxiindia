@@ -44,7 +44,7 @@ export function GerarCobrancaButton({
             className="h-48 w-48"
           />
         )}
-        <p className="w-full break-all rounded-lg bg-[#F6F6F6] p-3 text-xs text-[#545454]">
+        <p className="w-full break-all rounded-lg bg-surface p-3 text-xs text-muted">
           {qrCode.payload}
         </p>
         <Button
@@ -63,7 +63,7 @@ export function GerarCobrancaButton({
       <Button type="button" onClick={gerarCobranca} disabled={pending}>
         {pending ? "Gerando cobrança…" : "Pagar com Pix"}
       </Button>
-      {error && <p className="mt-2 text-sm text-[#BB032A]">{error}</p>}
+      {error && <p className="mt-2 text-sm text-danger-soft">{error}</p>}
     </div>
   );
 }

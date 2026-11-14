@@ -8,7 +8,7 @@ import type { TruckSize, VehicleType } from "@/lib/constants";
 declare global {
   interface Window {
     google?: typeof google;
-    __montajaMapsCallback?: () => void;
+    __mapsReadyCallback?: () => void;
   }
 }
 
@@ -19,9 +19,9 @@ function loadGoogleMaps(apiKey: string): Promise<void> {
   if (mapsLoadingPromise) return mapsLoadingPromise;
 
   mapsLoadingPromise = new Promise((resolve) => {
-    window.__montajaMapsCallback = () => resolve();
+    window.__mapsReadyCallback = () => resolve();
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=__montajaMapsCallback`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=__mapsReadyCallback`;
     script.async = true;
     document.head.appendChild(script);
   });
@@ -137,11 +137,11 @@ export function LiveMap({
 
   if (!apiKey) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl bg-[#F6F6F6] text-center text-sm text-[#545454]">
+      <div className="flex h-64 items-center justify-center rounded-xl bg-surface text-center text-sm text-muted">
         Configure NEXT_PUBLIC_GOOGLE_MAPS_API_KEY para ver o mapa ao vivo.
       </div>
     );
   }
 
-  return <div ref={mapRef} className="h-64 w-full rounded-xl bg-[#F6F6F6]" />;
+  return <div ref={mapRef} className="h-64 w-full rounded-xl bg-surface" />;
 }

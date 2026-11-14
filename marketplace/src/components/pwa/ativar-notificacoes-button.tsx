@@ -41,7 +41,7 @@ export function AtivarNotificacoesButton() {
   }
 
   if (status === "ativo") {
-    return <p className="text-sm font-medium text-[#127A3E]">Notificações ativadas ✓</p>;
+    return <p className="text-sm font-medium text-success">Notificações ativadas ✓</p>;
   }
 
   return (

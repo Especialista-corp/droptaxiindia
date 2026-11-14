@@ -43,7 +43,7 @@ export default async function PrestadorAgendaPage() {
         </div>
       ))}
       {(pedidos ?? []).length === 0 && (
-        <p className="text-sm text-[#545454]">Nenhum compromisso agendado.</p>
+        <p className="text-sm text-muted">Nenhum compromisso agendado.</p>
       )}
     </div>
   );

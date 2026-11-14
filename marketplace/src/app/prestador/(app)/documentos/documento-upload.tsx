@@ -50,18 +50,18 @@ export function DocumentoUpload({
   }
 
   return (
-    <div className="flex items-center gap-3 border-b border-[#E2E2E2] py-4 last:border-b-0">
+    <div className="flex items-center gap-3 border-b border-line py-4 last:border-b-0">
       {enviado ? (
-        <CheckCircle2 className="shrink-0 text-[#127A3E]" size={24} />
+        <CheckCircle2 className="shrink-0 text-success" size={24} />
       ) : (
-        <Upload className="shrink-0 text-[#545454]" size={24} />
+        <Upload className="shrink-0 text-muted" size={24} />
       )}
       <div className="min-w-0 flex-1">
         <p className="font-medium">{titulo}</p>
-        {descricao && <p className="text-sm text-[#545454]">{descricao}</p>}
-        {error && <p className="text-sm text-[#BB032A]">{error}</p>}
+        {descricao && <p className="text-sm text-muted">{descricao}</p>}
+        {error && <p className="text-sm text-danger-soft">{error}</p>}
       </div>
-      <label className="shrink-0 cursor-pointer rounded-lg border border-[#E2E2E2] px-3 py-2 text-sm font-medium">
+      <label className="shrink-0 cursor-pointer rounded-lg border border-line px-3 py-2 text-sm font-medium">
         {pending ? "Enviando…" : enviado ? "Substituir" : "Enviar"}
         <input
           type="file"

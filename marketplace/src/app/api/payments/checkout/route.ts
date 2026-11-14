@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { findOrCreateAsaasCustomer, criarCobrancaPix, obterQrCodePix } from "@/lib/asaas";
-import { SIGNAL_PERCENT } from "@/lib/constants";
+import { BRAND, SIGNAL_PERCENT } from "@/lib/constants";
 
 export async function POST(request: Request) {
   const { orderId, tipo } = (await request.json()) as {
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
 
   try {
     const customer = await findOrCreateAsaasCustomer({
-      name: profile?.nome ?? "Cliente MontaJá",
+      name: profile?.nome ?? `Cliente ${BRAND.name}`,
       email: profile?.email ?? user.email ?? "",
       phone: profile?.telefone ?? undefined,
       externalReference: user.id,
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const charge = await criarCobrancaPix({
       customerId: customer.id,
       value: valorInstallment,
-      description: `MontaJá — ${tipo === "sinal_50" ? "sinal" : "saldo final"} do pedido ${orderId}`,
+      description: `${BRAND.name} — ${tipo === "sinal_50" ? "sinal" : "saldo final"} do pedido ${orderId}`,
       externalReference: `${orderId}:${tipo}`,
     });
 

@@ -1,4 +1,6 @@
-const CACHE_NAME = "montaja-shell-v2";
+// O nome do app vem de BRAND.name (src/lib/constants.ts) via ?name= no registro.
+const APP_NAME = new URL(self.location.href).searchParams.get("name") || "App";
+const CACHE_NAME = "app-shell-v3";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -45,10 +47,10 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { title: "MontaJá", body: event.data.text() };
+    payload = { title: APP_NAME, body: event.data.text() };
   }
   event.waitUntil(
-    self.registration.showNotification(payload.title || "MontaJá", {
+    self.registration.showNotification(payload.title || APP_NAME, {
       body: payload.body,
       icon: "/icons/icon.svg",
       badge: "/icons/icon.svg",

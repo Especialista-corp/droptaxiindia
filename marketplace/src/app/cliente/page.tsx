@@ -25,13 +25,13 @@ export default async function ClienteHomePage() {
       <h1 className="mb-6 text-2xl font-bold">Olá 👋</h1>
 
       <Link href="/cliente/novo-pedido">
-        <Card className="mb-8 flex items-center gap-4 border-black">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black text-white">
+        <Card className="mb-8 flex items-center gap-4 border-brand">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-gradient text-on-brand">
             <Wrench size={22} />
           </div>
           <div className="flex-1">
             <p className="font-bold">Montar um móvel</p>
-            <p className="text-sm text-[#545454]">Veja o preço e agende em minutos</p>
+            <p className="text-sm text-muted">Veja o preço e agende em minutos</p>
           </div>
         </Card>
       </Link>
@@ -47,7 +47,7 @@ export default async function ClienteHomePage() {
           </Link>
         ))}
         {(pedidosAtivos ?? []).length === 0 && (
-          <p className="py-2 text-sm text-[#545454]">Nenhum pedido em andamento.</p>
+          <p className="py-2 text-sm text-muted">Nenhum pedido em andamento.</p>
         )}
       </Card>
 

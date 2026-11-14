@@ -1,15 +1,15 @@
 import type { MetadataRoute } from "next";
+import { BRAND, COLORS } from "@/lib/constants";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "MontaJá — Montagem de móveis",
-    short_name: "MontaJá",
-    description:
-      "Agende um montador verificado, acompanhe a chegada em tempo real e pague em garantia.",
+    name: BRAND.manifestName,
+    short_name: BRAND.name,
+    description: BRAND.manifestDescription,
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#000000",
+    background_color: COLORS.background,
+    theme_color: COLORS.background,
     orientation: "portrait",
     icons: [
       {

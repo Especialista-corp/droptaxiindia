@@ -35,12 +35,12 @@ export default async function PrestadorCarteiraPage() {
       <h1 className="mb-6 text-2xl font-bold">Carteira</h1>
       <div className="mb-6 grid grid-cols-2 gap-4">
         <Card>
-          <p className="text-sm text-[#545454]">Saldo retido</p>
+          <p className="text-sm text-muted">Saldo retido</p>
           <p className="mt-1 text-2xl font-bold">{formatBRL(saldoRetido)}</p>
         </Card>
         <Card>
-          <p className="text-sm text-[#545454]">Saldo liberado</p>
-          <p className="mt-1 text-2xl font-bold text-[#127A3E]">{formatBRL(saldoLiberado)}</p>
+          <p className="text-sm text-muted">Saldo liberado</p>
+          <p className="mt-1 text-2xl font-bold text-success">{formatBRL(saldoLiberado)}</p>
         </Card>
       </div>
 
@@ -49,17 +49,17 @@ export default async function PrestadorCarteiraPage() {
         {historico.map((item, index) => (
           <div
             key={index}
-            className="flex justify-between border-b border-[#E2E2E2] py-2 text-sm last:border-b-0"
+            className="flex justify-between border-b border-line py-2 text-sm last:border-b-0"
           >
             <span>{formatDataAgendada(item.data)}</span>
-            <span className="font-medium text-[#127A3E]">+{formatBRL(item.valor)}</span>
+            <span className="font-medium text-success">+{formatBRL(item.valor)}</span>
           </div>
         ))}
         {historico.length === 0 && (
-          <p className="py-2 text-sm text-[#545454]">Nenhum repasse ainda.</p>
+          <p className="py-2 text-sm text-muted">Nenhum repasse ainda.</p>
         )}
       </Card>
-      <p className="mt-4 text-xs text-[#545454]">
+      <p className="mt-4 text-xs text-muted">
         Os saques via Pix para sua conta cadastrada são processados automaticamente pelo Asaas
         após a liberação de cada pagamento.
       </p>

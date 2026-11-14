@@ -13,7 +13,7 @@ export default async function NovoPedidoPage() {
   if (!categoria) {
     return (
       <div className="px-6 py-8">
-        <p className="text-[#545454]">
+        <p className="text-muted">
           Catálogo de montagem de móveis ainda não configurado. Rode o seed do banco.
         </p>
       </div>

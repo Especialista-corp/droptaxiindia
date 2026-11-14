@@ -25,20 +25,20 @@ export default async function AdminCatalogoPage() {
         <form action={criarCategoriaAction} className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-sm">
             Nome
-            <input name="nome" required className="rounded-lg border border-[#E2E2E2] px-3 py-2" />
+            <input name="nome" required className="rounded-lg border border-line px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             Slug
-            <input name="slug" required className="rounded-lg border border-[#E2E2E2] px-3 py-2" />
+            <input name="slug" required className="rounded-lg border border-line px-3 py-2" />
           </label>
           <label className="flex flex-col gap-1 text-sm">
             Precificação
-            <select name="tipoPrecificacao" className="rounded-lg border border-[#E2E2E2] px-3 py-2">
+            <select name="tipoPrecificacao" className="rounded-lg border border-line px-3 py-2">
               <option value="tabela">Tabela</option>
               <option value="distancia">Distância (frete)</option>
             </select>
           </label>
-          <button type="submit" className="rounded-lg bg-black px-4 py-2 text-sm font-bold text-white">
+          <button type="submit" className="rounded-lg bg-brand-gradient px-4 py-2 text-sm font-bold text-on-brand">
             Criar categoria
           </button>
         </form>
@@ -49,7 +49,7 @@ export default async function AdminCatalogoPage() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="font-bold">{categoria.nome}</h2>
-              <p className="text-sm text-[#545454]">
+              <p className="text-sm text-muted">
                 /{categoria.slug} · {categoria.tipo_precificacao} ·{" "}
                 {categoria.ativo ? "ativa" : "inativa"}
               </p>
@@ -62,7 +62,7 @@ export default async function AdminCatalogoPage() {
             >
               <button
                 type="submit"
-                className="rounded-lg border border-[#E2E2E2] px-3 py-1.5 text-sm font-medium"
+                className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium"
               >
                 {categoria.ativo ? "Desativar" : "Ativar"}
               </button>
@@ -80,27 +80,27 @@ export default async function AdminCatalogoPage() {
                     "use server";
                     await atualizarItemAction(item.id, formData);
                   }}
-                  className="flex flex-wrap items-center gap-2 border-b border-[#E2E2E2] py-2 text-sm last:border-b-0"
+                  className="flex flex-wrap items-center gap-2 border-b border-line py-2 text-sm last:border-b-0"
                 >
                   <input
                     name="nome"
                     defaultValue={item.nome}
-                    className="w-56 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                    className="w-56 rounded-lg border border-line px-2 py-1"
                   />
-                  <span className="text-[#545454]">{item.unidade}</span>
+                  <span className="text-muted">{item.unidade}</span>
                   <input
                     name="precoBase"
                     type="number"
                     step="0.01"
                     defaultValue={item.preco_base}
-                    className="w-24 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                    className="w-24 rounded-lg border border-line px-2 py-1"
                   />
                   <input
                     name="faixaMin"
                     type="number"
                     step="0.01"
                     defaultValue={item.faixa_min}
-                    className="w-24 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                    className="w-24 rounded-lg border border-line px-2 py-1"
                   />
                   <span>–</span>
                   <input
@@ -108,11 +108,11 @@ export default async function AdminCatalogoPage() {
                     type="number"
                     step="0.01"
                     defaultValue={item.faixa_max}
-                    className="w-24 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                    className="w-24 rounded-lg border border-line px-2 py-1"
                   />
                   <button
                     type="submit"
-                    className="rounded-lg bg-black px-3 py-1.5 font-medium text-white"
+                    className="rounded-lg bg-brand-gradient px-3 py-1.5 font-medium text-on-brand"
                   >
                     Salvar
                   </button>
@@ -122,11 +122,11 @@ export default async function AdminCatalogoPage() {
                       "use server";
                       await removerItemAction(item.id);
                     }}
-                    className="rounded-lg border border-[#BB032A] px-3 py-1.5 font-medium text-[#BB032A]"
+                    className="rounded-lg border border-danger px-3 py-1.5 font-medium text-danger-soft"
                   >
                     Remover
                   </button>
-                  <span className="ml-auto text-[#545454]">
+                  <span className="ml-auto text-muted">
                     Preço tabelado: {formatBRL(item.preco_base)}
                   </span>
                 </form>
@@ -135,16 +135,16 @@ export default async function AdminCatalogoPage() {
 
           <form
             action={criarItemAction}
-            className="mt-4 flex flex-wrap items-end gap-2 border-t border-[#E2E2E2] pt-4 text-sm"
+            className="mt-4 flex flex-wrap items-end gap-2 border-t border-line pt-4 text-sm"
           >
             <input type="hidden" name="categoryId" value={categoria.id} />
             <label className="flex flex-col gap-1">
               Nome do item
-              <input name="nome" required className="rounded-lg border border-[#E2E2E2] px-2 py-1" />
+              <input name="nome" required className="rounded-lg border border-line px-2 py-1" />
             </label>
             <label className="flex flex-col gap-1">
               Tipo
-              <select name="tipoItem" className="rounded-lg border border-[#E2E2E2] px-2 py-1">
+              <select name="tipoItem" className="rounded-lg border border-line px-2 py-1">
                 <option value="padrao">Padrão</option>
                 <option value="adicional">Adicional</option>
               </select>
@@ -154,7 +154,7 @@ export default async function AdminCatalogoPage() {
               <input
                 name="unidade"
                 defaultValue="serviço"
-                className="w-28 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                className="w-28 rounded-lg border border-line px-2 py-1"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -164,7 +164,7 @@ export default async function AdminCatalogoPage() {
                 type="number"
                 step="0.01"
                 required
-                className="w-24 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                className="w-24 rounded-lg border border-line px-2 py-1"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -174,7 +174,7 @@ export default async function AdminCatalogoPage() {
                 type="number"
                 step="0.01"
                 required
-                className="w-24 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                className="w-24 rounded-lg border border-line px-2 py-1"
               />
             </label>
             <label className="flex flex-col gap-1">
@@ -184,10 +184,10 @@ export default async function AdminCatalogoPage() {
                 type="number"
                 step="0.01"
                 required
-                className="w-24 rounded-lg border border-[#E2E2E2] px-2 py-1"
+                className="w-24 rounded-lg border border-line px-2 py-1"
               />
             </label>
-            <button type="submit" className="rounded-lg bg-black px-4 py-2 font-bold text-white">
+            <button type="submit" className="rounded-lg bg-brand-gradient px-4 py-2 font-bold text-on-brand">
               Adicionar item
             </button>
           </form>

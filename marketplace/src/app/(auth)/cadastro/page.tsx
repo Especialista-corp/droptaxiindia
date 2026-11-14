@@ -12,8 +12,8 @@ export default function CadastroClientePage() {
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12">
       <div className="mx-auto w-full max-w-sm">
-        <h1 className="mb-1 text-3xl font-bold text-black">Criar conta</h1>
-        <p className="mb-8 text-[#545454]">
+        <h1 className="mb-1 text-3xl font-bold text-foreground">Criar conta</h1>
+        <p className="mb-8 text-muted">
           Em 60 segundos você agenda a montagem do seu móvel.
         </p>
 
@@ -35,15 +35,15 @@ export default function CadastroClientePage() {
             minLength={8}
             autoComplete="new-password"
           />
-          {state?.error && <p className="text-sm text-[#BB032A]">{state.error}</p>}
+          {state?.error && <p className="text-sm text-danger-soft">{state.error}</p>}
           <Button type="submit" disabled={pending} className="mt-2">
             {pending ? "Criando conta…" : "Criar conta"}
           </Button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-[#545454]">
+        <p className="mt-8 text-center text-sm text-muted">
           Já tem conta?{" "}
-          <Link href="/login" className="font-bold text-black">
+          <Link href="/login" className="font-bold text-foreground">
             Entrar
           </Link>
         </p>

@@ -33,8 +33,8 @@ export default async function PrestadorDocumentosPage() {
 
       {obrigatoriosPendentes && dias !== null && (
         <div
-          className={`mb-6 rounded-lg p-4 text-sm font-medium text-white ${
-            dias <= 2 ? "bg-[#BB032A]" : "bg-black"
+          className={`mb-6 rounded-lg p-4 text-sm font-medium text-on-brand ${
+            dias <= 2 ? "bg-danger-strong" : "bg-warning-strong"
           }`}
         >
           Você tem {dias} {dias === 1 ? "dia" : "dias"} para enviar o comprovante de endereço e a
@@ -43,7 +43,7 @@ export default async function PrestadorDocumentosPage() {
         </div>
       )}
       {!obrigatoriosPendentes && (
-        <p className="mb-6 text-sm font-medium text-[#127A3E]">
+        <p className="mb-6 text-sm font-medium text-success">
           Documentos obrigatórios enviados. Nossa equipe pode revisá-los a qualquer momento.
         </p>
       )}
@@ -68,7 +68,7 @@ export default async function PrestadorDocumentosPage() {
           href={CERTIDAO_ANTECEDENTES_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center gap-2 text-sm font-bold text-black underline"
+          className="mt-3 flex items-center gap-2 text-sm font-bold text-foreground underline"
         >
           <ExternalLink size={16} />
           Emitir certidão de antecedentes criminais (gov.br — grátis)
@@ -91,7 +91,7 @@ export default async function PrestadorDocumentosPage() {
         />
       </Card>
 
-      <p className="mt-4 text-xs text-[#545454]">
+      <p className="mt-4 text-xs text-muted">
         Seus documentos ficam arquivados com segurança na plataforma e são usados apenas para
         verificação do seu cadastro.
       </p>

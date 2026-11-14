@@ -1,5 +1,6 @@
 import "server-only";
 import { Resend } from "resend";
+import { BRAND } from "@/lib/constants";
 
 let client: Resend | null = null;
 
@@ -14,7 +15,7 @@ export async function enviarEmail(params: { to: string; subject: string; html: s
   if (!resend) return; // RESEND_API_KEY não configurada — e-mail não enviado.
 
   await resend.emails.send({
-    from: process.env.RESEND_FROM_EMAIL ?? "MontaJá <contato@montaja.com.br>",
+    from: process.env.RESEND_FROM_EMAIL ?? BRAND.emailFrom,
     to: params.to,
     subject: params.subject,
     html: params.html,

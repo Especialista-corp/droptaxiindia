@@ -69,13 +69,13 @@ export function NovoPedidoWizard({
   return (
     <div className="px-6 py-8">
       <h1 className="mb-1 text-2xl font-bold">Novo pedido</h1>
-      <p className="mb-6 text-[#545454]">{categoryNome}</p>
+      <p className="mb-6 text-muted">{categoryNome}</p>
 
       <div className="mb-8 flex gap-2">
         {STEPS.map((label, index) => (
           <div
             key={label}
-            className={`h-1 flex-1 rounded-full ${index <= step ? "bg-black" : "bg-[#E2E2E2]"}`}
+            className={`h-1 flex-1 rounded-full ${index <= step ? "bg-brand-gradient" : "bg-line"}`}
           />
         ))}
       </div>
@@ -103,16 +103,16 @@ export function NovoPedidoWizard({
 
         <div data-step={1} hidden={step !== 1} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-black">Descrição (opcional)</span>
+            <span className="text-sm font-medium text-foreground">Descrição (opcional)</span>
             <textarea
               name="descricao"
               rows={4}
-              className="rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] p-3 text-base outline-none focus:border-black"
+              className="rounded-lg border border-line bg-surface-2 p-3 text-base outline-none focus:border-brand-soft"
               placeholder="Alguma observação sobre a montagem?"
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-black">Fotos (opcional)</span>
+            <span className="text-sm font-medium text-foreground">Fotos (opcional)</span>
             <input
               type="file"
               name="fotos"
@@ -152,17 +152,17 @@ export function NovoPedidoWizard({
                 setCoords({ lat: position.coords.latitude, lng: position.coords.longitude }),
               );
             }}
-            className="text-left text-sm font-medium text-black underline"
+            className="text-left text-sm font-medium text-foreground underline"
           >
             {coords ? "Localização capturada ✓" : "Usar minha localização atual"}
           </button>
-          <p className="text-xs text-[#545454]">
+          <p className="text-xs text-muted">
             Isso ajuda o montador a chegar até você e habilita o mapa de acompanhamento.
           </p>
         </div>
 
         <div data-step={4} hidden={step !== 4} className="flex flex-col gap-4">
-          <div className="rounded-xl border border-[#E2E2E2] p-4">
+          <div className="rounded-xl border border-line p-4">
             <p className="mb-2 font-bold">Resumo</p>
             {itensSelecionados.map(({ serviceItemId, quantidade }) => {
               const item = itens.find((i) => i.id === serviceItemId);
@@ -176,12 +176,12 @@ export function NovoPedidoWizard({
                 </div>
               );
             })}
-            <div className="mt-3 flex justify-between border-t border-[#E2E2E2] pt-3 font-bold">
+            <div className="mt-3 flex justify-between border-t border-line pt-3 font-bold">
               <span>Total estimado</span>
               <span>{formatBRL(valorEstimado)}</span>
             </div>
           </div>
-          {state?.error && <p className="text-sm text-[#BB032A]">{state.error}</p>}
+          {state?.error && <p className="text-sm text-danger-soft">{state.error}</p>}
         </div>
 
         <div className="mt-8 flex gap-3">
@@ -225,24 +225,24 @@ function ItemGroup({
 }) {
   return (
     <div>
-      <p className="mb-2 text-sm font-bold text-[#545454]">{titulo}</p>
+      <p className="mb-2 text-sm font-bold text-muted">{titulo}</p>
       <div className="flex flex-col gap-2">
         {itens.map((item) => {
           const quantidade = quantidades[item.id] ?? 0;
           return (
             <div
               key={item.id}
-              className="flex items-center justify-between rounded-lg border border-[#E2E2E2] p-3"
+              className="flex items-center justify-between rounded-lg border border-line p-3"
             >
               <div>
                 <p className="font-medium">{item.nome}</p>
-                <p className="text-sm text-[#545454]">{formatBRL(item.preco_base)}</p>
+                <p className="text-sm text-muted">{formatBRL(item.preco_base)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => onChange(item.id, -1)}
-                  className="h-8 w-8 rounded-full border border-[#E2E2E2] font-bold"
+                  className="h-8 w-8 rounded-full border border-line font-bold"
                 >
                   −
                 </button>
@@ -250,7 +250,7 @@ function ItemGroup({
                 <button
                   type="button"
                   onClick={() => onChange(item.id, 1)}
-                  className="h-8 w-8 rounded-full border border-[#E2E2E2] font-bold"
+                  className="h-8 w-8 rounded-full border border-line font-bold"
                 >
                   +
                 </button>

@@ -1,6 +1,7 @@
 import "server-only";
 import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { BRAND } from "@/lib/constants";
 
 let configurado = false;
 
@@ -10,7 +11,7 @@ function configurarWebPush() {
   if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) return;
 
   webpush.setVapidDetails(
-    VAPID_SUBJECT ?? "mailto:contato@montaja.com.br",
+    VAPID_SUBJECT ?? `mailto:${BRAND.contactEmail}`,
     VAPID_PUBLIC_KEY,
     VAPID_PRIVATE_KEY,
   );

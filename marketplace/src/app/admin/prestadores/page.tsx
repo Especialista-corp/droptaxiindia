@@ -35,15 +35,15 @@ export default async function AdminPrestadoresPage() {
             <Card key={prestador.user_id} className="flex items-center justify-between gap-4">
               <div>
                 <p className="font-bold">{usuario?.nome ?? "Sem nome"}</p>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-muted">
                   {usuario?.email} · {usuario?.telefone}
                 </p>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-muted">
                   {prestador.endereco
                     ? `${prestador.endereco}, ${prestador.numero ?? "s/n"}${prestador.complemento ? ` (${prestador.complemento})` : ""} — ${prestador.bairro ?? ""}, ${prestador.cidade ?? ""}/${prestador.estado ?? ""} · CEP ${prestador.cep ?? "—"}`
                     : "Endereço não informado"}
                 </p>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-muted">
                   {(prestador.provider_vehicles ?? [])
                     .map(
                       (veiculo) =>
@@ -53,7 +53,7 @@ export default async function AdminPrestadoresPage() {
                   · raio {prestador.raio_km}km
                   {prestador.strikes > 0 && ` · ${prestador.strikes} strike(s)`}
                 </p>
-                <p className="text-sm text-[#545454]">
+                <p className="text-sm text-muted">
                   Comprovante + certidão: {obrigatoriosOk ? "✓ enviados" : "pendentes"} · RG/selfie:{" "}
                   {identificacaoOk ? "✓" : "pendentes"}
                   {!obrigatoriosOk &&
@@ -72,7 +72,7 @@ export default async function AdminPrestadoresPage() {
                   >
                     <button
                       type="submit"
-                      className="rounded-lg bg-[#127A3E] px-4 py-2 text-sm font-bold text-white"
+                      className="rounded-lg bg-success-strong px-4 py-2 text-sm font-bold text-on-brand"
                     >
                       Aprovar
                     </button>
@@ -87,7 +87,7 @@ export default async function AdminPrestadoresPage() {
                   >
                     <button
                       type="submit"
-                      className="rounded-lg bg-[#BB032A] px-4 py-2 text-sm font-bold text-white"
+                      className="rounded-lg bg-danger px-4 py-2 text-sm font-bold text-on-brand"
                     >
                       Suspender
                     </button>
@@ -102,7 +102,7 @@ export default async function AdminPrestadoresPage() {
                   >
                     <button
                       type="submit"
-                      className="rounded-lg bg-black px-4 py-2 text-sm font-bold text-white"
+                      className="rounded-lg bg-brand-gradient px-4 py-2 text-sm font-bold text-on-brand"
                     >
                       Reativar
                     </button>
@@ -113,7 +113,7 @@ export default async function AdminPrestadoresPage() {
           );
         })}
         {(prestadores ?? []).length === 0 && (
-          <p className="text-[#545454]">Nenhum prestador cadastrado ainda.</p>
+          <p className="text-muted">Nenhum prestador cadastrado ainda.</p>
         )}
       </div>
     </div>

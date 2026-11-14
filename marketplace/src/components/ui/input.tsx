@@ -10,18 +10,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, id, ...props }, ref) => {
     return (
       <label className="flex flex-col gap-1.5" htmlFor={id}>
-        {label && <span className="text-sm font-medium text-black">{label}</span>}
+        {label && <span className="text-sm font-medium text-foreground">{label}</span>}
         <input
           ref={ref}
           id={id}
           className={cn(
-            "h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base text-black outline-none placeholder:text-[#545454] focus:border-black",
-            error && "border-[#BB032A]",
+            "h-14 rounded-lg border border-line bg-surface-2 px-4 text-base text-foreground outline-none placeholder:text-muted focus:border-brand-soft",
+            error && "border-danger",
             className,
           )}
           {...props}
         />
-        {error && <span className="text-sm text-[#BB032A]">{error}</span>}
+        {error && <span className="text-sm text-danger-soft">{error}</span>}
       </label>
     );
   },

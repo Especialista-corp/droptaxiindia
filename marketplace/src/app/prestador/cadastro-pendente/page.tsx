@@ -33,9 +33,9 @@ export default async function CadastroPendentePage() {
       <div className="mx-auto w-full max-w-sm">
         {suspensoPorStrikes ? (
           <div className="text-center">
-            <XCircle className="mx-auto mb-4 text-[#BB032A]" size={48} />
+            <XCircle className="mx-auto mb-4 text-danger-soft" size={48} />
             <h1 className="mb-2 text-2xl font-bold">Conta suspensa</h1>
-            <p className="text-[#545454]">
+            <p className="text-muted">
               Sua conta foi suspensa após {MAX_NO_SHOW_STRIKES} faltas em serviços agendados.
               Entre em contato com o suporte para mais informações.
             </p>
@@ -43,9 +43,9 @@ export default async function CadastroPendentePage() {
         ) : documentosPendentes ? (
           <>
             <div className="mb-6 text-center">
-              <Clock className="mx-auto mb-4 text-black" size={48} />
+              <Clock className="mx-auto mb-4 text-foreground" size={48} />
               <h1 className="mb-2 text-2xl font-bold">Conta suspensa temporariamente</h1>
-              <p className="text-[#545454]">
+              <p className="text-muted">
                 O prazo para envio dos documentos obrigatórios venceu. Envie-os abaixo e sua
                 conta será reativada automaticamente.
               </p>
@@ -69,7 +69,7 @@ export default async function CadastroPendentePage() {
                 href={CERTIDAO_ANTECEDENTES_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 flex items-center gap-2 text-sm font-bold text-black underline"
+                className="mt-3 flex items-center gap-2 text-sm font-bold text-foreground underline"
               >
                 <ExternalLink size={16} />
                 Emitir certidão de antecedentes criminais (gov.br — grátis)
@@ -78,9 +78,9 @@ export default async function CadastroPendentePage() {
           </>
         ) : (
           <div className="text-center">
-            <Clock className="mx-auto mb-4 text-black" size={48} />
+            <Clock className="mx-auto mb-4 text-foreground" size={48} />
             <h1 className="mb-2 text-2xl font-bold">Conta em análise</h1>
-            <p className="text-[#545454]">
+            <p className="text-muted">
               Seus documentos foram recebidos e estão em revisão pela nossa equipe. Você será
               avisado assim que sua conta for liberada.
             </p>

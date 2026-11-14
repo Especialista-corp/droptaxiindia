@@ -58,7 +58,7 @@ export default async function PrestadorPedidosPage() {
           </Link>
         ))}
         {(meusPedidos ?? []).length === 0 && (
-          <p className="py-2 text-sm text-[#545454]">Nenhum pedido ativo no momento.</p>
+          <p className="py-2 text-sm text-muted">Nenhum pedido ativo no momento.</p>
         )}
       </Card>
 
@@ -73,7 +73,7 @@ export default async function PrestadorPedidosPage() {
           </Link>
         ))}
         {abertosNoRaio.length === 0 && (
-          <p className="py-2 text-sm text-[#545454]">
+          <p className="py-2 text-sm text-muted">
             Nenhum pedido disponível no seu raio de atuação agora.
           </p>
         )}

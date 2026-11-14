@@ -19,10 +19,10 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-full flex-1 flex-col justify-between px-6 py-12">
       <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center">
-        <h1 className="mb-3 text-4xl font-bold leading-tight text-black">
+        <h1 className="mb-3 text-4xl font-bold leading-tight text-foreground">
           O Uber dos Montadores
         </h1>
-        <p className="mb-10 text-lg text-[#545454]">
+        <p className="mb-10 text-lg text-muted">
           Comprou móvel na internet? Veja o preço, agende o horário e acompanhe o montador
           chegando em tempo real. Você só paga quando ficar pronto.
         </p>
@@ -33,7 +33,7 @@ export default async function HomePage() {
           <Link href="/cadastro/prestador">
             <Button variant="secondary">Sou montador, quero receber pedidos</Button>
           </Link>
-          <Link href="/login" className="mt-2 text-center text-sm font-medium text-[#545454]">
+          <Link href="/login" className="mt-2 text-center text-sm font-medium text-muted">
             Já tenho conta — Entrar
           </Link>
         </div>

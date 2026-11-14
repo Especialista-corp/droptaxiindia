@@ -1,16 +1,38 @@
-export const BRAND = {
-  name: "MontaJá",
-  tagline: "O Uber dos Montadores",
-};
+const APP_NAME = "MontaJá";
 
+/** Fonte única do nome e dos textos de marca. Para renomear o app, edite só aqui. */
+export const BRAND = {
+  name: APP_NAME,
+  tagline: "O Uber dos Montadores",
+  /** Título das abas do navegador. */
+  pageTitle: `${APP_NAME} — Montagem de móveis sob demanda`,
+  manifestName: `${APP_NAME} — Montagem de móveis`,
+  description:
+    "Agende um montador verificado em minutos. Pagamento em garantia: você só paga quando o serviço estiver pronto.",
+  manifestDescription:
+    "Agende um montador verificado, acompanhe a chegada em tempo real e pague em garantia.",
+  /** E-mail de contato (domínio é independente do nome; sobrescrito por VAPID_SUBJECT/RESEND_FROM_EMAIL). */
+  contactEmail: "contato@montaja.com.br",
+  /** Remetente padrão dos e-mails. */
+  emailFrom: `${APP_NAME} <contato@montaja.com.br>`,
+} as const;
+
+/**
+ * Paleta do app. Os valores aqui espelham os tokens de src/app/globals.css
+ * (usados pelas classes bg-*, text-*, border-*); só PWA/manifest leem este objeto.
+ */
 export const COLORS = {
-  primary: "#000000",
-  background: "#FFFFFF",
-  surface: "#F6F6F6",
-  border: "#E2E2E2",
-  textSecondary: "#545454",
-  success: "#127A3E",
-  danger: "#BB032A",
+  background: "#16161A",
+  surface: "#1F1F26",
+  surface2: "#272730",
+  line: "#2E2E38",
+  foreground: "#FEF8FB",
+  muted: "#A9A5B3",
+  violet: "#4B03CF",
+  magenta: "#BB0189",
+  orange: "#D2630D",
+  coral: "#D33D3A",
+  success: "#2BB673",
 } as const;
 
 /** Percentual de comissão padrão da plataforma sobre o valor do serviço. Configurável no admin. */

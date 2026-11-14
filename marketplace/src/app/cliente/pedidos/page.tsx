@@ -29,7 +29,7 @@ export default async function ClientePedidosPage() {
           </Link>
         ))}
         {(pedidos ?? []).length === 0 && (
-          <p className="py-2 text-sm text-[#545454]">Você ainda não fez nenhum pedido.</p>
+          <p className="py-2 text-sm text-muted">Você ainda não fez nenhum pedido.</p>
         )}
       </Card>
     </div>

@@ -43,8 +43,8 @@ export function CancelarPedidoButton({
   }
 
   return (
-    <div className="mt-4 rounded-lg border border-[#E2E2E2] p-4">
-      <p className="mb-3 text-sm text-[#545454]">
+    <div className="mt-4 rounded-lg border border-line p-4">
+      <p className="mb-3 text-sm text-muted">
         {gratuito
           ? "Cancelamento gratuito, ainda estamos fora da janela de 24h antes do agendamento."
           : `Estamos a menos de ${FREE_CANCELLATION_WINDOW_HOURS}h do agendamento — uma taxa de cancelamento pode ser retida.`}

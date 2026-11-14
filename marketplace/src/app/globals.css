@@ -1,24 +1,46 @@
 @import "tailwindcss";
 
-:root {
-  --color-primary: #000000;
-  --color-background: #ffffff;
-  --color-surface: #f6f6f6;
-  --color-border: #e2e2e2;
-  --color-text-secondary: #545454;
-  --color-success: #127a3e;
-  --color-danger: #bb032a;
+/*
+ * Tema do app (escuro). Para trocar a identidade visual edite só os valores
+ * abaixo; o app inteiro usa estes nomes (bg-surface, text-muted, bg-brand-gradient...).
+ * Mantenha src/lib/constants.ts (COLORS) alinhado: ele alimenta o manifest do PWA.
+ */
+@theme {
+  /* Estrutura */
+  --color-background: #16161a;
+  --color-surface: #1f1f26;
+  --color-surface-2: #272730;
+  --color-line: #2e2e38;
+
+  /* Texto */
+  --color-foreground: #fef8fb;
+  --color-muted: #a9a5b3;
+  --color-on-brand: #fef8fb;
+
+  /* Marca (degradê violeta → magenta → laranja) */
+  --color-brand-violet: #4b03cf;
+  --color-brand: #bb0189;
+  --color-brand-orange: #d2630d;
+  --color-brand-soft: #c99bff;
+
+  /* Estados */
+  --color-success: #2bb673;
+  --color-success-strong: #168a52;
+  --color-warning: #d2630d;
+  --color-warning-strong: #b85509;
+  --color-danger: #d33d3a;
+  --color-danger-strong: #b82e2c;
+  --color-danger-soft: #f0726e;
+
+  --font-sans: var(--font-inter);
 }
 
-@theme inline {
-  --color-primary: var(--color-primary);
-  --color-background: var(--color-background);
-  --color-surface: var(--color-surface);
-  --color-border: var(--color-border);
-  --color-text-secondary: var(--color-text-secondary);
-  --color-success: var(--color-success);
-  --color-danger: var(--color-danger);
-  --font-sans: var(--font-inter);
+@utility bg-brand-gradient {
+  background-image: linear-gradient(90deg, #4b03cf 0%, #bb0189 52%, #d2630d 100%);
+}
+
+:root {
+  color-scheme: dark;
 }
 
 html {
@@ -27,7 +49,7 @@ html {
 
 body {
   background: var(--color-background);
-  color: var(--color-primary);
+  color: var(--color-foreground);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: -0.01em;
 }

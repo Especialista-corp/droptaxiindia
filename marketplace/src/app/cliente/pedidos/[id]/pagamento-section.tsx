@@ -35,19 +35,19 @@ export function PagamentoSection({
       <p className="mb-2 font-bold">{labels.titulo}</p>
       {!pagamento || pagamento.status === "pendente" ? (
         <>
-          <p className="mb-3 text-sm text-[#545454]">{labels.descricao}</p>
+          <p className="mb-3 text-sm text-muted">{labels.descricao}</p>
           <GerarCobrancaButton orderId={orderId} tipo={tipo} />
         </>
       ) : pagamento.status === "retido" ? (
-        <p className="text-sm font-medium text-[#127A3E]">
+        <p className="text-sm font-medium text-success">
           {labels.retidoPrefixo} de {formatBRL(pagamento.valor)} pago e retido em garantia.
         </p>
       ) : pagamento.status === "liberado" ? (
-        <p className="text-sm font-medium text-[#127A3E]">
+        <p className="text-sm font-medium text-success">
           {labels.retidoPrefixo} de {formatBRL(pagamento.valor)} liberado ao montador.
         </p>
       ) : (
-        <p className="text-sm text-[#545454]">Status do pagamento: {pagamento.status}</p>
+        <p className="text-sm text-muted">Status do pagamento: {pagamento.status}</p>
       )}
     </Card>
   );

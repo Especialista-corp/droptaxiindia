@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-xl border border-[#E2E2E2] bg-white p-4", className)}
+      className={cn("rounded-xl border border-line bg-surface p-4", className)}
       {...props}
     />
   );
@@ -26,15 +26,15 @@ export function ListRow({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 border-b border-[#E2E2E2] py-3 last:border-b-0",
+        "flex items-center gap-3 border-b border-line py-3 last:border-b-0",
         className,
       )}
       {...props}
     >
-      {icon && <div className="shrink-0 text-black">{icon}</div>}
+      {icon && <div className="shrink-0 text-foreground">{icon}</div>}
       <div className="flex-1 min-w-0">
-        <p className="truncate font-medium text-black">{title}</p>
-        {subtitle && <p className="truncate text-sm text-[#545454]">{subtitle}</p>}
+        <p className="truncate font-medium text-foreground">{title}</p>
+        {subtitle && <p className="truncate text-sm text-muted">{subtitle}</p>}
       </div>
       {trailing}
     </div>

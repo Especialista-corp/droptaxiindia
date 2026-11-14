@@ -23,8 +23,8 @@ export default async function ClientePerfilPage() {
       <h1 className="mb-6 text-2xl font-bold">Meu perfil</h1>
       <Card className="mb-6">
         <p className="font-bold">{profile?.nome}</p>
-        <p className="text-sm text-[#545454]">{profile?.email}</p>
-        <p className="text-sm text-[#545454]">{profile?.telefone}</p>
+        <p className="text-sm text-muted">{profile?.email}</p>
+        <p className="text-sm text-muted">{profile?.telefone}</p>
       </Card>
       <div className="mb-4">
         <AtivarNotificacoesButton />

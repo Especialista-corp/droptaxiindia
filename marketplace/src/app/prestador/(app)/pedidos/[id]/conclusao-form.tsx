@@ -32,13 +32,13 @@ export function ConclusaoForm({ orderId }: { orderId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 rounded-xl border border-[#E2E2E2] p-4">
+    <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 rounded-xl border border-line p-4">
       <p className="font-bold">Concluir serviço</p>
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Fotos do móvel montado
         <input type="file" name="fotos" accept="image/*" multiple required />
       </label>
-      {error && <p className="text-sm text-[#BB032A]">{error}</p>}
+      {error && <p className="text-sm text-danger-soft">{error}</p>}
       <Button type="submit" disabled={pending}>
         {pending ? "Enviando…" : "Marcar como concluído"}
       </Button>

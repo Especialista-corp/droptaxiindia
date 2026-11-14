@@ -31,7 +31,7 @@ export default async function PrestadorLayout({ children }: { children: React.Re
       {documentosPendentes && (
         <Link
           href="/prestador/documentos"
-          className="flex items-center gap-2 bg-black px-4 py-3 text-sm font-medium text-white"
+          className="flex items-center gap-2 bg-warning-strong px-4 py-3 text-sm font-medium text-on-brand"
         >
           <AlertTriangle size={18} className="shrink-0" />
           <span>

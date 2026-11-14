@@ -43,7 +43,7 @@ export function AvaliacaoForm({
             <button key={valor} type="button" onClick={() => setNota(valor)}>
               <Star
                 size={28}
-                className={cn(valor <= nota ? "fill-black text-black" : "text-[#E2E2E2]")}
+                className={cn(valor <= nota ? "fill-warning text-warning" : "text-line")}
               />
             </button>
           ))}
@@ -52,7 +52,7 @@ export function AvaliacaoForm({
           name="comentario"
           rows={2}
           placeholder="Comentário (opcional)"
-          className="rounded-lg border border-[#E2E2E2] p-2 text-sm"
+          className="rounded-lg border border-line p-2 text-sm"
         />
         <Button type="submit" disabled={pending}>
           {pending ? "Enviando…" : "Enviar avaliação"}

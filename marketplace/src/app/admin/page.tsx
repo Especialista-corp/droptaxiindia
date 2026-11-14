@@ -5,9 +5,9 @@ import { formatBRL, cn } from "@/lib/utils";
 import { obterUsoDaPlataforma, type NivelDeUso } from "@/lib/usage";
 
 const COR_DA_BARRA: Record<NivelDeUso, string> = {
-  ok: "bg-[#127A3E]",
-  atencao: "bg-black",
-  critico: "bg-[#BB032A]",
+  ok: "bg-success",
+  atencao: "bg-warning",
+  critico: "bg-danger",
 };
 
 export default async function AdminDashboardPage() {
@@ -64,8 +64,8 @@ export default async function AdminDashboardPage() {
       {piorNivel !== "ok" && (
         <div
           className={cn(
-            "mb-6 rounded-lg p-4 text-sm font-medium text-white",
-            piorNivel === "critico" ? "bg-[#BB032A]" : "bg-black",
+            "mb-6 rounded-lg p-4 text-sm font-medium text-on-brand",
+            piorNivel === "critico" ? "bg-danger-strong" : "bg-warning-strong",
           )}
         >
           {piorNivel === "critico"
@@ -77,7 +77,7 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         {metrics.map((metric) => (
           <Card key={metric.label}>
-            <p className="text-sm text-[#545454]">{metric.label}</p>
+            <p className="text-sm text-muted">{metric.label}</p>
             <p className="mt-1 text-2xl font-bold">{metric.value}</p>
           </Card>
         ))}
@@ -91,11 +91,11 @@ export default async function AdminDashboardPage() {
               <div key={metrica.chave}>
                 <div className="mb-1.5 flex items-baseline justify-between gap-3 text-sm">
                   <span className="font-medium">{metrica.rotulo}</span>
-                  <span className="text-[#545454]">
+                  <span className="text-muted">
                     {metrica.usadoTexto} de {metrica.limiteTexto} · {metrica.percent}%
                   </span>
                 </div>
-                <div className="h-2 overflow-hidden rounded-full bg-[#F6F6F6]">
+                <div className="h-2 overflow-hidden rounded-full bg-surface">
                   <div
                     className={cn("h-full rounded-full", COR_DA_BARRA[metrica.nivel])}
                     style={{ width: `${Math.max(metrica.percent, 1)}%` }}
@@ -103,13 +103,13 @@ export default async function AdminDashboardPage() {
                 </div>
               </div>
             ))}
-            <p className="text-xs text-[#545454]">
+            <p className="text-xs text-muted">
               Você é avisado por notificação quando qualquer item passar de 70% e de novo em 90%.
               O tráfego de dados (egress) não é medido aqui — confira no painel do Supabase.
             </p>
           </div>
         ) : (
-          <p className="text-sm text-[#545454]">
+          <p className="text-sm text-muted">
             Medição indisponível. Aplique a migração 0004_uso_plataforma.sql no banco.
           </p>
         )}

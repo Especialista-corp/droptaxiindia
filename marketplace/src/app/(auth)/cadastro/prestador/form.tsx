@@ -79,8 +79,8 @@ export function PrestadorSignupForm({
             }
           }}
         />
-        {buscandoCep && <span className="text-sm text-[#545454]">Buscando endereço…</span>}
-        {cepErro && <span className="text-sm text-[#BB032A]">{cepErro}</span>}
+        {buscandoCep && <span className="text-sm text-muted">Buscando endereço…</span>}
+        {cepErro && <span className="text-sm text-danger-soft">{cepErro}</span>}
       </div>
 
       <Input
@@ -134,8 +134,8 @@ export function PrestadorSignupForm({
       />
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-black">Categorias que você atende</span>
-        <div className="flex flex-col gap-2 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] p-3">
+        <span className="text-sm font-medium text-foreground">Categorias que você atende</span>
+        <div className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
           {categorias.map((categoria) => (
             <label key={categoria.id} className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="categoriaIds" value={categoria.id} />
@@ -143,7 +143,7 @@ export function PrestadorSignupForm({
             </label>
           ))}
           {categorias.length === 0 && (
-            <p className="text-sm text-[#545454]">
+            <p className="text-sm text-muted">
               Nenhuma categoria cadastrada ainda. Rode o seed do catálogo.
             </p>
           )}
@@ -156,18 +156,18 @@ export function PrestadorSignupForm({
         <button
           type="button"
           onClick={() => setTemSegundoVeiculo(true)}
-          className="text-left text-sm font-bold text-black underline"
+          className="text-left text-sm font-bold text-foreground underline"
         >
           + Adicionar segundo veículo (opcional)
         </button>
       ) : (
         <>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-black">Segundo veículo</span>
+            <span className="text-sm font-bold text-foreground">Segundo veículo</span>
             <button
               type="button"
               onClick={() => setTemSegundoVeiculo(false)}
-              className="text-sm font-medium text-[#BB032A]"
+              className="text-sm font-medium text-danger-soft"
             >
               Remover
             </button>
@@ -177,15 +177,15 @@ export function PrestadorSignupForm({
       )}
       <input type="hidden" name="temSegundoVeiculo" value={temSegundoVeiculo ? "1" : ""} />
 
-      {state?.error && <p className="text-sm text-[#BB032A]">{state.error}</p>}
+      {state?.error && <p className="text-sm text-danger-soft">{state.error}</p>}
 
       <Button type="submit" disabled={pending} className="mt-2">
         {pending ? "Criando conta…" : "Criar conta de montador"}
       </Button>
 
-      <p className="text-center text-sm text-[#545454]">
+      <p className="text-center text-sm text-muted">
         Já tem conta?{" "}
-        <Link href="/login" className="font-bold text-black">
+        <Link href="/login" className="font-bold text-foreground">
           Entrar
         </Link>
       </p>
@@ -204,16 +204,16 @@ function VeiculoFields({
 }) {
   const prefixo = `veiculo${indice}`;
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-[#E2E2E2] p-4">
+    <div className="flex flex-col gap-4 rounded-xl border border-line p-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-black">
+        <span className="text-sm font-medium text-foreground">
           {indice === 1 ? "Veículo principal" : "Tipo do segundo veículo"}
         </span>
         <select
           name={`${prefixo}Tipo`}
           value={tipo}
           onChange={(event) => onTipoChange(event.target.value as VehicleType)}
-          className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+          className="h-14 rounded-lg border border-line bg-surface px-4 text-base"
         >
           {VEHICLE_TYPES.map((tipoOpcao) => (
             <option key={tipoOpcao} value={tipoOpcao}>
@@ -227,10 +227,10 @@ function VeiculoFields({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-black">Cor</span>
+        <span className="text-sm font-medium text-foreground">Cor</span>
         <select
           name={`${prefixo}Cor`}
-          className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+          className="h-14 rounded-lg border border-line bg-surface px-4 text-base"
         >
           {VEHICLE_COLORS[tipo].map((cor) => (
             <option key={cor} value={cor}>
@@ -242,10 +242,10 @@ function VeiculoFields({
 
       {tipo === "caminhao" && (
         <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-black">Porte do caminhão</span>
+          <span className="text-sm font-medium text-foreground">Porte do caminhão</span>
           <select
             name={`${prefixo}Porte`}
-            className="h-14 rounded-lg border border-[#E2E2E2] bg-[#F6F6F6] px-4 text-base"
+            className="h-14 rounded-lg border border-line bg-surface px-4 text-base"
           >
             {TRUCK_SIZES.map((porte) => (
               <option key={porte} value={porte}>

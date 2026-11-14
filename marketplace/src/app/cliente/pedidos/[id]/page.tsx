@@ -97,7 +97,7 @@ export default async function ClientePedidoDetalhePage({
   return (
     <div className="px-6 py-8">
       <h1 className="mb-1 text-2xl font-bold">{formatDataAgendada(order.data_agendada)}</h1>
-      <p className="mb-6 text-[#545454]">
+      <p className="mb-6 text-muted">
         {order.janela_inicio.slice(0, 5)}–{order.janela_fim.slice(0, 5)}
       </p>
 
@@ -115,7 +115,7 @@ export default async function ClientePedidoDetalhePage({
             <span>{formatBRL(item.valor_unitario * item.quantidade)}</span>
           </div>
         ))}
-        <div className="mt-2 flex justify-between border-t border-[#E2E2E2] pt-2 font-bold">
+        <div className="mt-2 flex justify-between border-t border-line pt-2 font-bold">
           <span>{order.valor_acordado ? "Acordado" : "Tabela"}</span>
           <span>{formatBRL(order.valor_acordado ?? order.valor_tabela)}</span>
         </div>
@@ -124,7 +124,7 @@ export default async function ClientePedidoDetalhePage({
       {prestador && (
         <Card className="mb-4">
           <p className="mb-1 font-bold">Montador</p>
-          <p className="text-sm text-[#545454]">
+          <p className="text-sm text-muted">
             {prestador.nome} · {prestador.telefone}
           </p>
           {(order.status === "confirmado" || order.status === "em_deslocamento") && (
@@ -135,7 +135,7 @@ export default async function ClientePedidoDetalhePage({
               }}
               className="mt-3"
             >
-              <button className="text-sm font-medium text-[#BB032A]" type="submit">
+              <button className="text-sm font-medium text-danger-soft" type="submit">
                 O montador não apareceu
               </button>
             </form>
@@ -152,7 +152,7 @@ export default async function ClientePedidoDetalhePage({
             veiculoCor={veiculoEmUso.cor}
             veiculoPorte={veiculoEmUso.porte}
           />
-          <p className="px-4 py-2 text-sm text-[#545454]">
+          <p className="px-4 py-2 text-sm text-muted">
             {veiculoEmUso.tipo} {veiculoEmUso.cor} · placa {veiculoEmUso.placa}
           </p>
         </Card>
@@ -168,25 +168,25 @@ export default async function ClientePedidoDetalhePage({
             return (
               <div
                 key={proposta.id}
-                className="flex items-center justify-between border-b border-[#E2E2E2] py-3 last:border-b-0"
+                className="flex items-center justify-between border-b border-line py-3 last:border-b-0"
               >
                 <div>
                   <p className="font-medium">
                     {prestadorProposta?.nome ?? "Montador"}
                     {prestadorProposta?.selo_verificado && (
-                      <span className="ml-2 rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">
+                      <span className="ml-2 rounded-full bg-brand px-2 py-0.5 text-xs font-bold text-on-brand">
                         Verificado
                       </span>
                     )}
                   </p>
-                  <p className="text-sm text-[#545454]">
+                  <p className="text-sm text-muted">
                     {prestadorProposta && prestadorProposta.total_avaliacoes > 0
                       ? `★ ${Number(prestadorProposta.nota_media).toFixed(1)} · ${prestadorProposta.total_avaliacoes} avaliações`
                       : "Novo na plataforma"}
                   </p>
-                  <p className="text-sm text-[#545454]">{formatBRL(proposta.valor)}</p>
+                  <p className="text-sm text-muted">{formatBRL(proposta.valor)}</p>
                   {proposta.mensagem && (
-                    <p className="text-sm text-[#545454]">&ldquo;{proposta.mensagem}&rdquo;</p>
+                    <p className="text-sm text-muted">&ldquo;{proposta.mensagem}&rdquo;</p>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -196,7 +196,7 @@ export default async function ClientePedidoDetalhePage({
                       await aceitarPropostaAction(order.id, proposta.id);
                     }}
                   >
-                    <button className="rounded-lg bg-[#127A3E] px-3 py-1.5 text-sm font-bold text-white">
+                    <button className="rounded-lg bg-success-strong px-3 py-1.5 text-sm font-bold text-on-brand">
                       Aceitar
                     </button>
                   </form>
@@ -206,7 +206,7 @@ export default async function ClientePedidoDetalhePage({
                       await recusarPropostaAction(order.id, proposta.id);
                     }}
                   >
-                    <button className="rounded-lg border border-[#E2E2E2] px-3 py-1.5 text-sm font-medium">
+                    <button className="rounded-lg border border-line px-3 py-1.5 text-sm font-medium">
                       Recusar
                     </button>
                   </form>
@@ -215,7 +215,7 @@ export default async function ClientePedidoDetalhePage({
             );
           })}
           {(propostas ?? []).length === 0 && (
-            <p className="text-sm text-[#545454]">
+            <p className="text-sm text-muted">
               Aguardando propostas de montadores da sua região.
             </p>
           )}
@@ -241,7 +241,7 @@ export default async function ClientePedidoDetalhePage({
                   <img
                     src={foto.signedUrl}
                     alt="Foto do serviço concluído"
-                    className="aspect-square w-full rounded-lg bg-[#F6F6F6] object-cover"
+                    className="aspect-square w-full rounded-lg bg-surface object-cover"
                   />
                 </a>
               ) : null,
