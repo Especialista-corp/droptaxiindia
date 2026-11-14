@@ -30,32 +30,32 @@ Nunca peça chaves no chat para serem guardadas no repositório: elas ficam só 
 - [ ] 11. (Claude) Subir o app e o agendador de tarefas
 - [ ] 12. (Claude) Repetir o ciclo completo no endereço real
 
-## Etapa 3: Pagamentos (Asaas)
-- [ ] 13. (Dono) Criar a conta Asaas sandbox e enviar a chave de API
-- [ ] 14. (Claude) Testar cobrança Pix real no sandbox e o retorno automático (webhook)
-- [ ] 15. (Claude) Implementar o repasse ao montador (subconta e divisão)
-- [ ] 16. (Claude) Testar cancelamento e reembolso
-- [ ] 17. (Dono) Abrir a conta Asaas de produção (documentos da empresa)
+## Etapa 3: Mapa e notificações
+- [ ] 13. (Dono) Criar a chave do Google Maps
+- [ ] 14. (Claude) Ligar o mapa ao vivo e testar com dois celulares
+- [ ] 15. (Claude) Trocar o mapa claro por mapa escuro
+- [ ] 16. (Dono) Criar a conta Resend e configurar o e-mail do domínio
+- [ ] 17. (Claude) Testar notificações no celular e por e-mail
 
-## Etapa 4: Mapa e notificações
-- [ ] 18. (Dono) Criar a chave do Google Maps
-- [ ] 19. (Claude) Ligar o mapa ao vivo e testar com dois celulares
-- [ ] 20. (Claude) Trocar o mapa claro por mapa escuro
-- [ ] 21. (Dono) Criar a conta Resend e configurar o e-mail do domínio
-- [ ] 22. (Claude) Testar notificações no celular e por e-mail
+## Etapa 4: Funcionalidades que faltam
+- [ ] 18. (Claude) Fluxo de disputas: cliente abre, pagamento congela, admin resolve
+- [ ] 19. (Claude) Corrigir a lista de itens que o montador vê no pedido
+- [ ] 20. (Dono) Contratar o serviço de SMS
+- [ ] 21. (Claude) Verificação do telefone do montador por SMS
+- [ ] 22. (Claude) Gerar os ícones PNG para iPhone e Android
 
-## Etapa 5: Funcionalidades que faltam
-- [ ] 23. (Claude) Fluxo de disputas: cliente abre, pagamento congela, admin resolve
-- [ ] 24. (Claude) Corrigir a lista de itens que o montador vê no pedido
-- [ ] 25. (Dono) Contratar o serviço de SMS
-- [ ] 26. (Claude) Verificação do telefone do montador por SMS
-- [ ] 27. (Claude) Gerar os ícones PNG para iPhone e Android
+## Etapa 5: Qualidade e segurança
+- [ ] 23. (Claude) Criar os testes automáticos do fluxo principal
+- [ ] 24. (Claude) Revisão de segurança (acesso, ações do servidor, pagamento)
+- [ ] 25. (Dono) Testar em iPhone e Android reais
+- [ ] 26. (Claude) Limpar a cópia antiga: pasta marketplace do droptaxiindia e a PR #1
 
-## Etapa 6: Qualidade e segurança
-- [ ] 28. (Claude) Criar os testes automáticos do fluxo principal
-- [ ] 29. (Claude) Revisão de segurança (acesso, ações do servidor, pagamento)
-- [ ] 30. (Dono) Testar em iPhone e Android reais
-- [ ] 31. (Claude) Limpar a cópia antiga: pasta marketplace do droptaxiindia e a PR #1
+## Etapa 6: Pagamentos (Asaas)
+- [ ] 27. (Dono) Criar a conta Asaas sandbox e enviar a chave de API
+- [ ] 28. (Claude) Testar cobrança Pix real no sandbox e o retorno automático (webhook)
+- [ ] 29. (Claude) Implementar o repasse ao montador (subconta e divisão)
+- [ ] 30. (Claude) Testar cancelamento e reembolso
+- [ ] 31. (Dono) Abrir a conta Asaas de produção (documentos da empresa), cerca de 1 semana antes do piloto
 
 ## Etapa 7: Lançamento
 - [ ] 32. (Dono) Decidir o nome definitivo e consultar a marca no INPI
