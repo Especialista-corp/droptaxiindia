@@ -2,7 +2,7 @@
 
 **"Um amigo instala, usa uma semana inteira e não volta para o WhatsApp para falar com você."**
 
-Status: proposto, aguardando aprovação do dono.
+Status: **Dia 1 entregue** (14/11). Dias 2 e 3 pendentes.
 
 ## 1. Por que este plano existe
 
@@ -45,11 +45,11 @@ planos de assinatura, modo escuro, instalação como aplicativo.
 
 ## 3. O plano
 
-### Dia 1 · Entrar e ser avisado
+### Dia 1 · Entrar e ser avisado ✅ ENTREGUE
 
 Os dois bloqueios que não têm volta, mais a busca.
 
-**1.1 Notificação de verdade (Web Push)** · meio dia
+**1.1 Notificação de verdade (Web Push)** · ✅ feito
 - Chaves VAPID geradas uma vez e guardadas como variável de ambiente.
 - Tabela `push_subscriptions`: endpoint, chaves, usuário, aparelho.
 - Service worker passa a tratar o evento `push` e a abrir a conversa certa no clique.
@@ -61,7 +61,7 @@ Os dois bloqueios que não têm volta, mais a busca.
 - *Observação:* no iPhone exige que o aplicativo tenha sido instalado na tela inicial.
   Isso é limitação da Apple, não nossa, e precisa aparecer na tela de boas-vindas.
 
-**1.2 Modo convite** · meio dia
+**1.2 Modo convite** · ✅ feito
 - Tabela `invites`: código de seis letras, quem criou, quantos usos, validade.
 - Entrada por código em vez de SMS, para o piloto. Dispensa contratar disparo de SMS.
 - `DEV_SHOW_OTP` deixa de existir. O caminho de SMS real (`SMS_WEBHOOK_URL`) continua
@@ -70,11 +70,20 @@ Os dois bloqueios que não têm volta, mais a busca.
 - *Aceite:* pessoa recebe um link com código, entra, escolhe o `@usuário` e conversa.
   Sem o código, ninguém entra.
 
-**1.3 Busca** · meio dia
+**1.3 Busca** · ✅ feito
 - Índice de texto do SQLite (FTS5) sobre as mensagens, respeitando quem pode ver o quê.
 - Busca global na lista de conversas e busca dentro de uma conversa, com salto para a
   mensagem.
 - *Aceite:* achar uma mensagem de duas semanas atrás em menos de um segundo.
+
+> **Como ficou, na prática.** `ACCESS_MODE=invite` liga o piloto. O servidor vazio
+> imprime no terminal um código de primeiro acesso; quem o usa vira administrador e
+> passa a emitir convites pelo menu. Cada conta nova recebe um código de recuperação,
+> mostrado uma única vez, que é como ela volta a entrar sem SMS. `DEV_SHOW_OTP` deixou
+> de ser o único caminho sem SMS. A busca usa o índice FTS5 do próprio SQLite, ignora
+> acento e maiúscula, respeita quem participa de cada conversa e some com a mensagem
+> apagada. O aviso com o aplicativo fechado sai pelo Web Push e não é enviado para quem
+> já está com a tela aberta.
 
 ### Dia 2 · Parecer o WhatsApp
 

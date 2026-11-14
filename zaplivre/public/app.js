@@ -20,7 +20,11 @@ const state = {
   currentWorkspace: null,
   mediaFilter: 'all',
   recorder: null,
+  config: null,
+  searchHits: [],
+  pendingRecovery: null,
 };
+let usernameTimer;
 const TAB_LABEL = { social: 'Social', work: 'Trabalho', desk: 'Atendimento' };
 const STATUS_LABEL = { open: 'Em aberto', in_progress: 'Em atendimento', done: 'Concluído' };
 
@@ -117,29 +121,81 @@ function resizeImage(file, max = 1280, quality = 0.82, asBlob = false) {
 function showAuth() { $('#auth').classList.remove('hidden'); $('#app').classList.add('hidden'); }
 function showApp() { $('#auth').classList.add('hidden'); $('#app').classList.remove('hidden'); }
 
+// Como é a entrada neste servidor: por SMS ou por convite. O cliente não decide,
+// só obedece ao que o servidor informa.
+async function loadConfig() {
+  try {
+    state.config = await api('/config');
+  } catch {
+    state.config = { accessMode: 'open', inviteRequired: false, pushPublicKey: '' };
+  }
+  const invite = state.config.inviteRequired;
+  $('#invite-group').classList.toggle('hidden', !invite);
+  $('#btn-request').textContent = invite ? 'Continuar' : 'Receber código';
+  $('#auth-notice').textContent = state.config.encryptionNotice || '';
+  // Convite vindo pelo link: /entrar/XXXXXXX
+  const m = /^\/entrar\/([A-Za-z0-9]{7})$/.exec(location.pathname);
+  if (m) {
+    $('#invite').value = m[1].toUpperCase();
+    history.replaceState(null, '', '/');
+    checkInvite();
+  }
+  return state.config;
+}
+
+async function checkInvite() {
+  const code = $('#invite').value.trim().toUpperCase();
+  if (code.length !== 7) return;
+  try {
+    const r = await api('/invites/' + encodeURIComponent(code));
+    $('#invite-hint').textContent = r.valid ? (r.note ? `Convite válido: ${r.note}` : 'Convite válido.') : r.reason;
+    $('#invite-hint').style.color = r.valid ? 'var(--ok)' : 'var(--danger)';
+  } catch { /* ignora */ }
+}
+$('#invite').addEventListener('input', () => {
+  $('#invite').value = $('#invite').value.toUpperCase();
+  clearTimeout(usernameTimer);
+  usernameTimer = setTimeout(checkInvite, 300);
+});
+
 $('#form-phone').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
+  const btn = $('#btn-request');
   btn.disabled = true;
   $('#auth-error').textContent = '';
   try {
-    const { phone, devCode, isNew } = await api('/auth/request-code', { method: 'POST', body: { phone: $('#phone').value } });
+    const body = { phone: $('#phone').value };
+    if (state.config?.inviteRequired) body.invite = $('#invite').value.trim().toUpperCase();
+    const { phone, devCode, isNew, mode } = await api('/auth/request-code', { method: 'POST', body });
     $('#code-phone').textContent = fmtPhone(phone);
     $('#form-phone').classList.add('hidden');
     $('#form-code').classList.remove('hidden');
     $('#new-user-fields').classList.toggle('hidden', !isNew);
-    if (devCode) {
+
+    const byInvite = mode === 'invite';
+    // No modo convite não há SMS: o convite (conta nova) ou o código de
+    // recuperação (conta existente) faz o papel do código.
+    $('#code').classList.toggle('hidden', byInvite);
+    $('#code').required = !byInvite;
+    $('#form-code').querySelector('label[for="code"]').classList.toggle('hidden', byInvite);
+    $('#recovery-group').classList.toggle('hidden', !byInvite || isNew);
+    if (byInvite) {
+      $('#code-hint').textContent = isNew
+        ? 'Escolha como você vai aparecer para as outras pessoas.'
+        : 'Você já tem conta aqui. Entre com o seu código de recuperação.';
+    } else if (devCode) {
       $('#code').value = devCode;
       $('#code-hint').innerHTML = `<b>Modo de desenvolvimento:</b> seu código é <b>${devCode}</b> (já preenchido).`;
+    } else {
+      $('#code-hint').innerHTML = `Digite o código de 6 dígitos que enviamos para <b>${escapeHtml(fmtPhone(phone))}</b>.`;
     }
-    (isNew ? $('#username') : $('#code')).focus();
+    (isNew ? $('#username') : byInvite ? $('#recovery') : $('#code')).focus();
   } catch (err) {
     $('#auth-error').textContent = err.message;
   } finally {
     btn.disabled = false;
   }
 });
-let usernameTimer;
 $('#username').addEventListener('input', () => {
   clearTimeout(usernameTimer);
   const u = $('#username').value.trim();
@@ -153,18 +209,46 @@ $('#username').addEventListener('input', () => {
 $('#form-code').addEventListener('submit', async (e) => {
   e.preventDefault();
   $('#auth-error').textContent = '';
+  const byInvite = state.config?.inviteRequired;
+  // No modo convite o "código" é o convite (conta nova) ou a recuperação (conta existente).
+  const code = byInvite
+    ? ($('#recovery-group').classList.contains('hidden') ? $('#invite').value : $('#recovery').value)
+    : $('#code').value;
   try {
-    const { token, user } = await api('/auth/verify', {
+    const { token, user, recoveryCode } = await api('/auth/verify', {
       method: 'POST',
-      body: { phone: $('#phone').value, code: $('#code').value, name: $('#name').value, username: $('#username').value },
+      body: { phone: $('#phone').value, code: code.trim(), name: $('#name').value, username: $('#username').value },
     });
     state.token = token;
     localStorage.setItem('zl_token', token);
     state.me = user;
+    if (recoveryCode) return showRecoveryCode(recoveryCode, () => boot());
     await boot();
   } catch (err) {
     $('#auth-error').textContent = err.message;
   }
+});
+
+// O código de recuperação aparece uma única vez. Sem ele, quem sair do
+// aplicativo num servidor em modo convite não consegue voltar.
+function showRecoveryCode(code, done) {
+  state.pendingRecovery = code;
+  $('#form-code').classList.add('hidden');
+  $('#form-phone').classList.add('hidden');
+  $('#recovery-code').textContent = code;
+  $('#recovery-ok').checked = false;
+  $('#btn-recovery-done').disabled = true;
+  $('#form-recovery-done').classList.remove('hidden');
+  $('#btn-recovery-done').onclick = () => {
+    $('#form-recovery-done').classList.add('hidden');
+    state.pendingRecovery = null;
+    done();
+  };
+}
+$('#recovery-ok').addEventListener('change', (e) => { $('#btn-recovery-done').disabled = !e.target.checked; });
+$('#btn-copy-recovery').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('#recovery-code').textContent); toast('Código copiado.'); }
+  catch { toast('Copie o código manualmente.'); }
 });
 $('#btn-back').addEventListener('click', () => { $('#form-code').classList.add('hidden'); $('#form-phone').classList.remove('hidden'); });
 
@@ -180,6 +264,7 @@ $('#menu-logout').addEventListener('click', () => doLogout());
 
 // ---------- inicialização ----------
 async function boot() {
+  if (!state.config) await loadConfig();
   if (!state.token) return showAuth();
   try {
     const { user, blocked } = await api('/me');
@@ -201,7 +286,45 @@ async function boot() {
     if (saved && state.chats.has(saved) && window.innerWidth > 760) openChat(saved);
   }
   if ('contacts' in navigator && 'select' in navigator.contacts) $('#btn-pick-contacts').classList.remove('hidden');
+  $('#menu-invites').classList.toggle('hidden', !state.me.isAdmin);
+  // Se a permissão já foi dada antes, renova a inscrição em silêncio: o
+  // navegador pode ter trocado o endereço do aparelho desde a última vez.
+  if (Notification?.permission === 'granted') enablePush({ silent: true });
+  const fromNotification = new URLSearchParams(location.search).get('chat');
+  if (fromNotification) { history.replaceState(null, '', '/'); if (state.chats.has(fromNotification)) openChat(fromNotification); }
 }
+
+// ---------- aviso com o aplicativo fechado ----------
+function urlBase64ToUint8Array(base64) {
+  const padded = (base64 + '='.repeat((4 - (base64.length % 4)) % 4)).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(padded);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+async function enablePush({ silent = false } = {}) {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    if (!silent) toast('Este navegador não entrega aviso com o aplicativo fechado.');
+    return false;
+  }
+  const key = state.config?.pushPublicKey;
+  if (!key) { if (!silent) toast('O servidor está sem chave de notificação.'); return false; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
+    const sub = existing || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+    await api('/push/subscribe', { method: 'POST', body: { subscription: sub.toJSON() } });
+    if (!silent) toast('Pronto: você será avisado mesmo com o aplicativo fechado.');
+    return true;
+  } catch (err) {
+    if (!silent) toast('Não foi possível ativar: ' + err.message);
+    return false;
+  }
+}
+
+// Toque na notificação com o aplicativo já aberto.
+navigator.serviceWorker?.addEventListener('message', (e) => {
+  if (e.data?.type === 'open-chat' && e.data.chatId) openChat(e.data.chatId);
+});
 
 function renderMe() {
   $('#me-avatar').src = avatarFor(state.me);
@@ -234,7 +357,10 @@ async function refreshChat(chatId) {
 function connectSocket() {
   const socket = io({ auth: { token: state.token } });
   state.socket = socket;
-  socket.on('connect', () => socket.emit('presence:who', (ids) => { state.online = new Set(ids); renderChatHeader(); }));
+  socket.on('connect', () => {
+    socket.emit('presence:who', (ids) => { state.online = new Set(ids); renderChatHeader(); });
+    sendFocus();
+  });
   socket.on('connect_error', (err) => { if (err.message === 'unauthorized') doLogout(false); });
 
   socket.on('message:new', ({ message, clientId }) => {
@@ -340,7 +466,12 @@ function previewText(chat) {
 function renderChatList() {
   const list = $('#chat-list');
   const chats = sortedChats();
-  $('#empty-list').classList.toggle('hidden', chats.length > 0);
+  // Durante a busca, "Nenhuma conversa ainda" é mentira: as conversas existem,
+  // só não casam com o que foi digitado. O convite para começar uma conversa
+  // também não cabe aqui.
+  const buscando = $('#search').value.trim().length >= 2;
+  $('#sidebar').classList.toggle('searching', buscando);
+  $('#empty-list').classList.toggle('hidden', chats.length > 0 || buscando);
   $('#empty-text').textContent = state.tab === 'desk' ? 'Nenhum atendimento ainda. Procure uma empresa pelo @dominio dela.' : state.tab === 'work' ? 'Nenhuma conversa de trabalho. Crie um grupo de Trabalho ou mova uma conversa para cá.' : 'Nenhuma conversa ainda.';
   list.innerHTML = chats.map((c) => `
       <button class="chat-item ${c.id === state.activeChatId ? 'active' : ''} ${c.unread ? 'unread' : ''}" data-id="${c.id}" role="listitem">
@@ -358,7 +489,93 @@ function renderChatList() {
   if (navigator.setAppBadge) (total ? navigator.setAppBadge(total) : navigator.clearAppBadge()).catch(() => {});
 }
 $('#chat-list').addEventListener('click', (e) => { const item = e.target.closest('.chat-item'); if (item) openChat(item.dataset.id); });
-$('#search').addEventListener('input', renderChatList);
+
+// ---------- busca de mensagens ----------
+// O filtro local acha conversa pelo nome. Isto acha o que foi dito dentro delas,
+// que é o que falta quando a conversa tem mais de uma semana.
+let searchTimer;
+$('#search').addEventListener('input', () => {
+  renderChatList();
+  clearTimeout(searchTimer);
+  const q = $('#search').value.trim();
+  if (q.length < 2) { state.searchHits = []; return renderSearchResults(); }
+  searchTimer = setTimeout(() => runSearch(q), 280);
+});
+
+async function runSearch(q) {
+  try {
+    const { results } = await api('/search?q=' + encodeURIComponent(q));
+    // Descarta resposta de uma busca que já ficou para trás.
+    if ($('#search').value.trim() !== q) return;
+    state.searchHits = results || [];
+  } catch {
+    state.searchHits = [];
+  }
+  renderSearchResults();
+}
+
+function renderSearchResults() {
+  const box = $('#search-results');
+  const hits = state.searchHits;
+  const buscando = $('#search').value.trim().length >= 2;
+  box.classList.toggle('hidden', !buscando);
+  if (!buscando) return;
+  if (!hits.length) {
+    box.innerHTML = '<p class="search-empty">Nada encontrado nas mensagens.</p>';
+    return;
+  }
+  box.innerHTML = `<div class="search-head">Mensagens (${hits.length})</div>` + hits.map((h) => `
+    <button class="search-hit" data-chat="${h.chatId}" data-message="${h.message.id}">
+      <img class="avatar" src="${avatarFor({ name: h.chatName, avatar: h.chatAvatar })}" alt="">
+      <div class="body">
+        <div class="top"><span class="name">${escapeHtml(h.chatName)}</span><span class="time">${fmtListTime(h.message.createdAt)}</span></div>
+        <div class="snippet">${highlightSnippet(h.snippet)}</div>
+      </div>
+    </button>`).join('');
+}
+
+// O servidor marca o trecho achado com [colchetes]; aqui vira destaque visual,
+// depois de escapar o texto para nada vindo da mensagem virar HTML.
+function highlightSnippet(raw) {
+  return escapeHtml(raw || '').replace(/\[([^\]]*)\]/g, '<mark>$1</mark>');
+}
+
+$('#search-results').addEventListener('click', async (e) => {
+  const hit = e.target.closest('.search-hit');
+  if (!hit) return;
+  const chat = state.chats.get(hit.dataset.chat);
+  if (chat && chat.category !== state.tab) setTab(chat.category);
+  await openChat(hit.dataset.chat);
+  $('#search').value = '';
+  state.searchHits = [];
+  renderSearchResults();
+  renderChatList();
+  highlightMessage(hit.dataset.message);
+});
+
+// Leva até a mensagem achada. Se ela for antiga demais para estar carregada,
+// carrega os lotes anteriores até alcançá-la.
+async function highlightMessage(messageId, tries = 0) {
+  const el = document.querySelector(`.msg[data-id="${CSS.escape(messageId)}"]`);
+  if (el) {
+    el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el.classList.add('found');
+    setTimeout(() => el.classList.remove('found'), 2200);
+    return;
+  }
+  if (tries >= 6) return toast('Mensagem antiga: role a conversa para encontrá-la.');
+  await loadOlder();
+  setTimeout(() => highlightMessage(messageId, tries + 1), 120);
+}
+
+// O servidor usa isto para não mandar aviso de sistema para quem já está
+// olhando a tela.
+function sendFocus() {
+  state.socket?.emit('presence:focus', {
+    visible: document.visibilityState === 'visible',
+    chatId: state.activeChatId,
+  });
+}
 
 // ---------- conversa aberta ----------
 async function openChat(chatId) {
@@ -381,6 +598,7 @@ async function openChat(chatId) {
   if (window.innerWidth > 760) $('#message-input').focus();
 }
 function markRead(chatId) {
+  sendFocus();
   const chat = state.chats.get(chatId);
   if (!chat) return;
   if (chat.unread) { chat.unread = 0; renderChatList(); }
@@ -939,6 +1157,66 @@ $('#board').addEventListener('dragover', (e) => { const col = e.target.closest('
 $('#board').addEventListener('dragleave', (e) => e.target.closest('.column')?.classList.remove('drop'));
 $('#board').addEventListener('drop', (e) => { const col = e.target.closest('.column'); if (!col) return; e.preventDefault(); col.classList.remove('drop'); moveTicket(e.dataTransfer.getData('text/plain'), col.dataset.status); });
 
+// ---------- convites (piloto) ----------
+$('#menu-invites').addEventListener('click', openInvites);
+async function openInvites() {
+  openPanel('#panel-invites');
+  await renderInvites();
+}
+async function renderInvites() {
+  try {
+    const { invites } = await api('/invites');
+    const box = $('#invite-list');
+    if (!invites.length) { box.innerHTML = '<p class="hint">Nenhum convite ainda.</p>'; return; }
+    box.innerHTML = invites.map((i) => {
+      const link = `${location.origin}/entrar/${i.code}`;
+      const quem = i.usedBy.filter((u) => u.username).map((u) => '@' + u.username).join(', ');
+      return `<div class="invite-card ${i.active ? '' : 'spent'}">
+        <div class="invite-top"><code>${i.code}</code><span class="invite-state">${i.active ? `${i.remaining} de ${i.maxUses} livre(s)` : 'esgotado'}</span></div>
+        ${i.note ? `<div class="invite-note">${escapeHtml(i.note)}</div>` : ''}
+        ${quem ? `<div class="invite-note">Entrou: ${escapeHtml(quem)}</div>` : ''}
+        <div class="invite-actions">
+          <button class="btn-secondary" data-copy="${escapeHtml(link)}">Copiar link</button>
+          ${i.active ? `<button class="btn-link danger" data-revoke="${i.code}">Cancelar</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) { toast(err.message); }
+}
+$('#form-invite').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await api('/invites', { method: 'POST', body: { note: $('#invite-note').value, maxUses: Number($('#invite-uses').value) || 1 } });
+    $('#invite-note').value = '';
+    await renderInvites();
+    toast('Convite criado.');
+  } catch (err) { toast(err.message); }
+});
+$('#invite-list').addEventListener('click', async (e) => {
+  const copy = e.target.closest('[data-copy]');
+  if (copy) {
+    try { await navigator.clipboard.writeText(copy.dataset.copy); toast('Link copiado.'); }
+    catch { toast(copy.dataset.copy); }
+    return;
+  }
+  const revoke = e.target.closest('[data-revoke]');
+  if (revoke && confirm('Cancelar este convite?')) {
+    await api('/invites/' + revoke.dataset.revoke, { method: 'DELETE' });
+    await renderInvites();
+  }
+});
+
+// Trocar o código de recuperação invalida o anterior; por isso a confirmação.
+$('#menu-recovery').addEventListener('click', async () => {
+  if (!confirm('Gerar um novo código de recuperação? O código anterior deixa de funcionar.')) return;
+  try {
+    const { recoveryCode } = await api('/auth/recovery', { method: 'POST' });
+    closePanels();
+    $('#auth').classList.remove('hidden');
+    showRecoveryCode(recoveryCode, () => $('#auth').classList.add('hidden'));
+  } catch (err) { toast(err.message); }
+});
+
 // ---------- notificações e instalação ----------
 function notify(chat, message) {
   if (!('Notification' in window) || Notification.permission !== 'granted' || document.visibilityState === 'visible') return;
@@ -950,11 +1228,20 @@ function notify(chat, message) {
 $('#menu-notifications').addEventListener('click', async () => {
   if (!('Notification' in window)) return toast('Seu navegador não suporta notificações.');
   const p = await Notification.requestPermission();
-  toast(p === 'granted' ? 'Notificações ativadas!' : 'Notificações não permitidas.');
+  if (p !== 'granted') return toast('Notificações não permitidas.');
+  // Pedir permissão não basta: sem a inscrição no servidor o aviso não chega
+  // com o aplicativo fechado.
+  const ok = await enablePush();
+  if (ok) closePanels();
 });
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); state.installPrompt = e; $('#menu-install').classList.remove('hidden'); });
 $('#menu-install').addEventListener('click', async () => { await state.installPrompt?.prompt(); state.installPrompt = null; $('#menu-install').classList.add('hidden'); });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && state.activeChatId) markRead(state.activeChatId); });
+document.addEventListener('visibilitychange', () => {
+  sendFocus();
+  if (document.visibilityState === 'visible' && state.activeChatId) markRead(state.activeChatId);
+});
+window.addEventListener('focus', sendFocus);
+window.addEventListener('blur', sendFocus);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 
 boot();

@@ -20,19 +20,29 @@
       <p class="muted">Mensagens grátis, feitas para o Brasil.</p>
 
       <form id="form-phone" class="auth-step">
+        <div id="invite-group" class="hidden">
+          <label for="invite">Código do convite</label>
+          <input id="invite" type="text" maxlength="9" placeholder="XXXXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <p class="hint" id="invite-hint">O ZapLivre está em piloto fechado. Peça um convite a quem já usa.</p>
+        </div>
         <label for="phone">Seu número de celular</label>
         <div class="phone-row">
           <span class="ddi">+55</span>
           <input id="phone" type="tel" inputmode="tel" placeholder="(11) 91234-5678" autocomplete="tel-national" required>
         </div>
         <p class="hint">Usamos o número só para confirmar que é você. Ele nunca aparece para outras pessoas ou empresas.</p>
-        <button type="submit" class="btn-primary">Receber código</button>
+        <button type="submit" class="btn-primary" id="btn-request">Receber código</button>
       </form>
 
       <form id="form-code" class="auth-step hidden">
         <label for="code">Código de verificação</label>
         <input id="code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" autocomplete="one-time-code" required>
         <p class="hint" id="code-hint">Digite o código de 6 dígitos que enviamos para <b id="code-phone"></b>.</p>
+        <div id="recovery-group" class="hidden">
+          <label for="recovery">Código de recuperação</label>
+          <input id="recovery" type="text" maxlength="20" placeholder="XXXXXXX-XXXXXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+          <p class="hint">É o código que você guardou quando criou a conta.</p>
+        </div>
         <div id="new-user-fields">
           <label for="username">Escolha seu @usuário</label>
           <div class="phone-row"><span class="ddi">@</span><input id="username" type="text" maxlength="30" placeholder="seu.nome" autocomplete="username"></div>
@@ -43,7 +53,16 @@
         <button type="submit" class="btn-primary">Entrar</button>
         <button type="button" id="btn-back" class="btn-link">Trocar número</button>
       </form>
+      <div id="form-recovery-done" class="auth-step hidden">
+        <h2 class="recovery-title">Guarde este código</h2>
+        <p class="hint">É assim que você volta a entrar se sair do aplicativo ou trocar de celular. <b>Ele aparece uma única vez.</b></p>
+        <div class="recovery-code" id="recovery-code"></div>
+        <button type="button" class="btn-secondary" id="btn-copy-recovery">Copiar código</button>
+        <label class="check"><input type="checkbox" id="recovery-ok"> Anotei em lugar seguro</label>
+        <button type="button" class="btn-primary" id="btn-recovery-done" disabled>Continuar</button>
+      </div>
       <p id="auth-error" class="error" role="alert"></p>
+      <p class="hint auth-notice" id="auth-notice"></p>
     </div>
   </section>
 
@@ -70,6 +89,7 @@
         <input id="search" type="search" placeholder="Pesquisar">
       </div>
       <div id="chat-list" class="chat-list" role="list"></div>
+      <div id="search-results" class="search-results hidden"></div>
       <div id="empty-list" class="empty hidden">
         <p id="empty-text">Nenhuma conversa aqui ainda.</p>
         <button id="btn-empty-new" class="btn-primary">Começar uma conversa</button>
@@ -239,6 +259,21 @@
       <div class="panel-body stack" id="ws-body"></div>
     </div>
 
+    <div id="panel-invites" class="panel hidden">
+      <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3>Convites</h3></header>
+      <div class="panel-body stack">
+        <p class="hint">Cada convite libera a entrada de uma pessoa nova. Quem já tem conta entra com o código de recuperação, não com convite.</p>
+        <form id="form-invite" class="stack">
+          <label for="invite-note">Para quem é (só você vê)</label>
+          <input id="invite-note" type="text" maxlength="120" placeholder="Ex.: minha mãe">
+          <label for="invite-uses">Quantas pessoas podem usar</label>
+          <input id="invite-uses" type="number" min="1" max="500" value="1">
+          <button type="submit" class="btn-primary">Gerar convite</button>
+        </form>
+        <div id="invite-list" class="invite-list"></div>
+      </div>
+    </div>
+
     <div id="panel-board" class="panel full hidden">
       <header class="bar"><button class="icon-btn back-panel" aria-label="Voltar">←</button><h3 id="board-title">Painel de atendimento</h3></header>
       <div class="board" id="board"></div>
@@ -248,6 +283,8 @@
       <button id="menu-profile">Perfil</button>
       <button id="menu-workspaces">Minhas empresas</button>
       <button id="menu-notifications">Ativar notificações</button>
+      <button id="menu-recovery">Meu código de recuperação</button>
+      <button id="menu-invites" class="hidden">Convites</button>
       <button id="menu-install" class="hidden">Instalar aplicativo</button>
       <button id="menu-logout">Sair</button>
     </div>

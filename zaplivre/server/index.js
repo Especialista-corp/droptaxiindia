@@ -10,6 +10,8 @@ import { createAuth, httpError, publicUser, privateUser } from './auth.js';
 import { createChatService, TICKET_STATUSES } from './chats.js';
 import { createWorkspaceService, PLANS } from './workspaces.js';
 import { createFileService, buildTranscriber } from './files.js';
+import { createPushService } from './push.js';
+import { createInviteService } from './invites.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -18,13 +20,20 @@ export function createApp({
   uploadDir = process.env.UPLOAD_DIR || path.join(path.dirname(dbFile === ':memory:' ? path.join(__dirname, '..', 'data', 'x') : dbFile), 'uploads'),
   devShowOtp = process.env.DEV_SHOW_OTP === '1',
   smsWebhookUrl = process.env.SMS_WEBHOOK_URL || '',
+  // 'invite' = piloto sem SMS contratado. 'open' = telefone + código por SMS.
+  accessMode = process.env.ACCESS_MODE === 'invite' ? 'invite' : 'open',
+  adminUsernames = (process.env.ADMIN_USERNAMES || '').split(',').map((x) => x.trim()).filter(Boolean),
+  pushSender,
   billingSecret = process.env.BILLING_WEBHOOK_SECRET || '',
   transcriber = buildTranscriber(process.env),
   dnsResolver,
   logger = console,
 } = {}) {
   const db = openDatabase(dbFile);
-  const auth = createAuth(db, { devShowOtp, smsWebhookUrl, logger });
+  const invites = createInviteService(db, { logger });
+  const auth = createAuth(db, { devShowOtp, smsWebhookUrl, accessMode, invites, adminUsernames, logger });
+  const push = createPushService(db, { logger, send: pushSender });
+  const bootstrapInvite = accessMode === 'invite' ? invites.bootstrap() : null;
   const workspaces = createWorkspaceService(db, { dnsResolver, logger });
   const files = createFileService(db, { uploadDir, transcriber, logger });
   const chats = createChatService(db, { workspaces, files });
@@ -62,13 +71,45 @@ export function createApp({
   // ----- Autenticação -----
   app.post('/api/auth/request-code', wrap(async (req, res) => {
     if (!rateLimit('ip:' + req.ip, 20, 3600000) || !rateLimit('phone:' + req.body?.phone, 5, 900000)) throw httpError(429, 'Muitos pedidos. Aguarde alguns minutos.');
-    res.json(await auth.requestOtp(req.body?.phone));
+    res.json(await auth.requestOtp(req.body?.phone, { invite: req.body?.invite }));
   }));
   app.get('/api/auth/username-available', (req, res) => res.json(auth.usernameAvailable(req.query.u)));
   app.post('/api/auth/verify', wrap((req, res) => {
-    res.json(auth.verifyOtp(req.body?.phone, req.body?.code, { name: req.body?.name, username: req.body?.username }));
+    if (!rateLimit('verify:' + req.ip, 30, 900000)) throw httpError(429, 'Muitas tentativas. Aguarde alguns minutos.');
+    res.json(auth.verifyOtp(req.body?.phone, req.body?.code, { name: req.body?.name, username: req.body?.username, invite: req.body?.invite }));
   }));
   app.post('/api/auth/logout', requireAuth, (req, res) => { auth.logout(req.token); res.json({ ok: true }); });
+  // Novo código de recuperação para quem perdeu o antigo. Invalida o anterior.
+  app.post('/api/auth/recovery', requireAuth, wrap((req, res) => res.json({ recoveryCode: auth.rotateRecovery(req.user) })));
+
+  // O cliente precisa saber como é a entrada neste servidor e a chave de notificação.
+  app.get('/api/config', (req, res) => res.json({
+    accessMode: auth.accessMode,
+    inviteRequired: auth.inviteMode,
+    pushPublicKey: push.publicKey,
+    encryptionNotice: 'Ainda não há criptografia de ponta a ponta: quem opera o servidor consegue ler as mensagens.',
+  }));
+
+  // ----- Convites (piloto) -----
+  function requireAdmin(req, res, next) {
+    if (!req.user?.is_admin) return next(httpError(403, 'Só quem administra o servidor pode emitir convites.'));
+    next();
+  }
+  app.get('/api/invites/:code', (req, res) => res.json(invites.check(req.params.code)));
+  app.get('/api/invites', requireAuth, requireAdmin, (req, res) => res.json({ invites: invites.list() }));
+  app.post('/api/invites', requireAuth, requireAdmin, wrap((req, res) => res.status(201).json({ invite: invites.create(req.user.id, req.body || {}) })));
+  app.delete('/api/invites/:code', requireAuth, requireAdmin, wrap((req, res) => res.json(invites.revoke(req.params.code))));
+
+  // ----- Notificação com o aplicativo fechado -----
+  app.post('/api/push/subscribe', requireAuth, wrap((req, res) => {
+    res.json(push.subscribe(req.user.id, req.body?.subscription || req.body, req.get('user-agent') || ''));
+  }));
+  app.post('/api/push/unsubscribe', requireAuth, wrap((req, res) => res.json(push.unsubscribe(req.user.id, req.body?.endpoint))));
+
+  // ----- Busca de mensagens -----
+  app.get('/api/search', requireAuth, wrap((req, res) => {
+    res.json({ results: chats.searchMessages(req.user.id, req.query.q, { chatId: req.query.chatId || null, limit: req.query.limit }) });
+  }));
 
   // ----- Perfil, descoberta e bloqueio -----
   app.get('/api/me', requireAuth, (req, res) => res.json({ user: privateUser(req.user), blocked: chats.blockedIds(req.user.id) }));
@@ -310,6 +351,7 @@ export function createApp({
   async function deliver(userId, chatId, payload, { fromBot = false } = {}) {
     const message = chats.sendMessage(userId, chatId, payload, { asBot: fromBot });
     io.to(room(chatId)).emit('message:new', { message, clientId: payload.clientId || null });
+    notifyByPush(message, chatId, userId).catch((err) => logger.error?.('push:', err.message));
     const chat = chats.rawChat(chatId);
     if (chat.category === 'desk' && !chat.bot_paused) {
       const sender = chats.userById(message.senderId);
@@ -319,6 +361,43 @@ export function createApp({
       }
     }
     return message;
+  }
+
+  // Quem está com o aplicativo aberto e visível já vê a mensagem na tela; para os
+  // demais, este é o único caminho que entrega o aviso. Sem ele a mensagem fica
+  // parada até a pessoa abrir o aplicativo de novo.
+  async function notifyByPush(message, chatId, senderId) {
+    const audience = chats.audienceIds(chatId).filter((id) => id !== message.senderId && id !== senderId);
+    if (!audience.length) return;
+    const sender = chats.userById(message.senderId);
+    const chat = chats.rawChat(chatId);
+    const isGroup = chat.type === 'group';
+    const title = isGroup ? (chat.name || 'Grupo') : (sender?.name || 'Nova mensagem');
+    const prefix = isGroup && sender?.name ? `${sender.name}: ` : '';
+    const body = prefix + previewOf(message);
+
+    await Promise.all(audience.map((uid) => {
+      if (isVisibleSomewhere(uid)) return null; // já está vendo o aplicativo
+      return push.sendToUser(uid, { title, body, chatId, messageId: message.id, tag: 'chat:' + chatId });
+    }));
+  }
+
+  function previewOf(message) {
+    if (message.deleted) return 'Mensagem apagada';
+    switch (message.type) {
+      case 'image': return '📷 Foto';
+      case 'audio': return '🎤 Áudio';
+      case 'document': return '📎 ' + (message.attachment?.name || 'Documento');
+      default: return String(message.body || '').slice(0, 140) || 'Nova mensagem';
+    }
+  }
+
+  // Verdadeiro se alguma aba desta pessoa está aberta e em primeiro plano.
+  function isVisibleSomewhere(userId) {
+    for (const sid of io.sockets.adapter.rooms.get(userRoom(userId)) || []) {
+      if (io.sockets.sockets.get(sid)?.data?.visible) return true;
+    }
+    return false;
   }
 
   function fireWebhook(workspaceId, event, data) {
@@ -389,6 +468,13 @@ export function createApp({
       if (!chatId) return;
       socket.to(room(chatId)).emit('typing', { chatId, userId: user.id, name: user.name, typing: Boolean(payload?.typing) });
     });
+    // O cliente avisa quando está em primeiro plano, para não receber aviso de
+    // notificação do sistema por cima de uma mensagem que já apareceu na tela.
+    socket.data.visible = true;
+    socket.on('presence:focus', (payload) => {
+      socket.data.visible = Boolean(payload?.visible);
+      socket.data.activeChatId = payload?.chatId ? String(payload.chatId) : null;
+    });
     socket.on('presence:who', (ack) => {
       const ids = new Set();
       for (const chat of chats.listChats(user.id)) for (const m of chat.members) if (online.has(m.id)) ids.add(m.id);
@@ -404,7 +490,7 @@ export function createApp({
     });
   });
 
-  return { app, server, io, db, close: () => new Promise((r) => { io.close(); server.close(() => { db.close(); r(); }); }) };
+  return { app, server, io, db, bootstrapInvite, close: () => new Promise((r) => { io.close(); server.close(() => { db.close(); r(); }); }) };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

@@ -27,6 +27,9 @@ function migrate(db) {
       about TEXT NOT NULL DEFAULT 'Olá! Estou usando o ZapLivre.',
       avatar TEXT,
       discoverable_by_phone INTEGER NOT NULL DEFAULT 1,
+      recovery_hash TEXT,
+      is_admin INTEGER NOT NULL DEFAULT 0,
+      invite_code TEXT,
       created_at INTEGER NOT NULL,
       last_seen INTEGER
     );
@@ -159,6 +162,48 @@ function migrate(db) {
       created_at INTEGER NOT NULL
     );
 
+    -- Configuração do servidor que precisa sobreviver a reinício (ex.: chaves VAPID).
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
+    -- Aparelhos inscritos para receber aviso com o aplicativo fechado (Web Push).
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      endpoint TEXT NOT NULL UNIQUE,
+      p256dh TEXT NOT NULL,
+      auth TEXT NOT NULL,
+      user_agent TEXT NOT NULL DEFAULT '',
+      created_at INTEGER NOT NULL,
+      last_ok INTEGER,
+      failures INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+
+    -- Convites: entrada no piloto sem depender de disparo de SMS contratado.
+    CREATE TABLE IF NOT EXISTS invites (
+      code TEXT PRIMARY KEY,
+      created_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+      note TEXT NOT NULL DEFAULT '',
+      max_uses INTEGER NOT NULL DEFAULT 1,
+      uses INTEGER NOT NULL DEFAULT 0,
+      expires_at INTEGER,
+      revoked_at INTEGER,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS invite_uses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      used_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_invite_uses_code ON invite_uses(code);
+
     CREATE TABLE IF NOT EXISTS billing_events (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       workspace_id TEXT NOT NULL,
@@ -182,7 +227,65 @@ function migrate(db) {
   addColumnIfMissing(db, 'chats', 'tags', "TEXT NOT NULL DEFAULT '[]'");
   addColumnIfMissing(db, 'messages', 'agent_id', 'TEXT');
   addColumnIfMissing(db, 'messages', 'attachment_id', 'TEXT');
+  addColumnIfMissing(db, 'users', 'recovery_hash', 'TEXT');
+  addColumnIfMissing(db, 'users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'users', 'invite_code', 'TEXT');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)');
+
+  buildSearchIndex(db);
+}
+
+// Busca de mensagens: índice de texto do SQLite (FTS5), sem acentos e sem
+// diferenciar maiúsculas. Mantido em dia por gatilhos, para que nenhum caminho
+// de escrita precise lembrar de atualizar o índice.
+function buildSearchIndex(db) {
+  db.exec(`
+    CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(
+      message_id UNINDEXED,
+      chat_id UNINDEXED,
+      body,
+      tokenize = 'unicode61 remove_diacritics 2'
+    );
+
+    CREATE TRIGGER IF NOT EXISTS messages_fts_ins AFTER INSERT ON messages
+    WHEN new.type <> 'system' AND new.deleted_at IS NULL AND new.body <> ''
+    BEGIN
+      INSERT INTO messages_fts(message_id, chat_id, body) VALUES (new.id, new.chat_id, new.body);
+    END;
+
+    CREATE TRIGGER IF NOT EXISTS messages_fts_del AFTER DELETE ON messages BEGIN
+      DELETE FROM messages_fts WHERE message_id = old.id;
+    END;
+
+    -- Mensagem apagada sai da busca na hora.
+    CREATE TRIGGER IF NOT EXISTS messages_fts_upd AFTER UPDATE OF body, deleted_at ON messages BEGIN
+      DELETE FROM messages_fts WHERE message_id = old.id;
+      INSERT INTO messages_fts(message_id, chat_id, body)
+        SELECT new.id, new.chat_id, new.body
+        WHERE new.deleted_at IS NULL AND new.type <> 'system' AND new.body <> '';
+    END;
+  `);
+
+  // Banco que já existia antes da busca: preenche o índice uma vez.
+  const indexed = db.prepare('SELECT COUNT(*) AS n FROM messages_fts').get().n;
+  if (indexed === 0) {
+    db.exec(`
+      INSERT INTO messages_fts(message_id, chat_id, body)
+      SELECT id, chat_id, body FROM messages
+      WHERE deleted_at IS NULL AND type <> 'system' AND body <> ''
+    `);
+  }
+}
+
+// Guarda um valor de configuração do servidor no próprio banco.
+export function getSetting(db, key) {
+  return db.prepare('SELECT value FROM app_settings WHERE key = ?').get(key)?.value ?? null;
+}
+export function setSetting(db, key, value) {
+  db.prepare(`
+    INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+  `).run(key, value, Date.now());
 }
 
 function addColumnIfMissing(db, table, column, definition) {

@@ -25,7 +25,11 @@ Funciona como aplicativo instalável (PWA) no celular e no computador, pelo nave
   organizados, com categorias automáticas (comprovante, contrato, planilha...) e etiquetas.
 - Recibos ✓ ✓✓ ✓✓azul, online, visto por último, digitando, responder, apagar para todos.
 - Bloqueio de contatos e empresas. Link de convite `https://seu-servidor/@usuario`.
-- Notificações, contador no ícone, modo escuro, instalável como app.
+- **Aviso com o aplicativo fechado** (Web Push), contador no ícone, modo escuro,
+  instalável como app.
+- **Busca de mensagens** em todas as conversas, ignorando acento e maiúscula, com salto
+  para a mensagem encontrada.
+- **Modo convite** para piloto fechado, sem precisar contratar disparo de SMS.
 
 ### Para empresas (assinatura fixa, mensagens ilimitadas)
 
@@ -50,6 +54,16 @@ cd zaplivre
 npm install
 npm run dev      # código de verificação aparece na tela
 ```
+
+Para o piloto fechado, sem contratar SMS:
+
+```bash
+ACCESS_MODE=invite npm start
+```
+
+O servidor imprime no terminal o código de primeiro acesso. Quem o usar vira
+administrador e passa a emitir convites pelo menu. Cada conta recebe um código de
+recuperação, mostrado uma única vez, que é como ela volta a entrar depois.
 
 Abra <http://localhost:3000>. Para testar, abra uma janela anônima e cadastre outro
 número. Para testar atendimento: menu → *Minhas empresas* → cadastre um domínio, depois

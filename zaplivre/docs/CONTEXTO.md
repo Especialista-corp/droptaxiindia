@@ -37,15 +37,23 @@ com webhook de cobrança; notificações, modo escuro, instalação como aplicat
 
 Seis cenários de teste automatizado passando. Fluxo completo simulado no Chromium.
 
-## 3.1 Bloqueios conhecidos para uso real
+## 3.1 Bloqueios para uso real
 
-Levantados em 2026-11-14. Detalhe e plano de ataque em `PLANO-3-DIAS.md`.
+Levantados em 2026-11-14. Plano de ataque em `PLANO-3-DIAS.md`.
 
-1. **Não avisa com o aplicativo fechado.** Falta Web Push; hoje a notificação só aparece
-   com a aba aberta. É o bloqueio número um: mensageiro que não avisa não é mensageiro.
-2. **Entrada depende de `DEV_SHOW_OTP`**, que em produção seria falha de segurança.
-3. **Sem busca de mensagens.**
-4. **Sem servidor no ar** e **sem backup** do banco e das mídias.
+| # | Bloqueio | Situação |
+| --- | --- | --- |
+| 1 | Não avisa com o aplicativo fechado | ✅ resolvido: Web Push (`server/push.js`) |
+| 2 | Entrada dependia de `DEV_SHOW_OTP` | ✅ resolvido: modo convite (`server/invites.js`) |
+| 3 | Sem busca de mensagens | ✅ resolvido: índice FTS5 (`buildSearchIndex` em `db.js`) |
+| 4 | Sem servidor no ar e sem backup | ⬜ pendente (Dias 2 e 3) |
+
+### Como ligar o modo piloto
+
+`ACCESS_MODE=invite`. O servidor vazio imprime no terminal o código de primeiro acesso;
+quem o usa vira administrador e emite os demais convites pelo menu. Cada conta recebe um
+código de recuperação, mostrado uma única vez, que substitui o SMS no retorno. Com
+`ACCESS_MODE=open` mais `SMS_WEBHOOK_URL`, volta a ser telefone e código por SMS.
 
 ## 4. Decisões de produto já tomadas
 

@@ -42,6 +42,7 @@ export function createChatService(db, { workspaces, files }) {
     lastMessage: db.prepare('SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at DESC, id DESC LIMIT 1'),
     insertMessage: db.prepare('INSERT INTO messages (id, chat_id, sender_id, agent_id, type, body, attachment_id, reply_to, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'),
     messageById: db.prepare('SELECT * FROM messages WHERE id = ?'),
+    chatIdsOfMember: db.prepare('SELECT chat_id FROM chat_members WHERE user_id = ?'),
     messagesBefore: db.prepare('SELECT * FROM messages WHERE chat_id = ? AND created_at < ? ORDER BY created_at DESC, id DESC LIMIT ?'),
     softDelete: db.prepare("UPDATE messages SET deleted_at = ?, body = '' WHERE id = ?"),
     insertReceipt: db.prepare('INSERT OR IGNORE INTO message_receipts (message_id, user_id) VALUES (?, ?)'),
@@ -333,6 +334,77 @@ export function createChatService(db, { workspaces, files }) {
     };
   }
 
+  // --- Busca de mensagens -------------------------------------------------
+  // Usa o índice de texto do SQLite (ver buildSearchIndex em db.js). O filtro de
+  // permissão é feito pelas conversas de que a pessoa participa, incluindo as
+  // conversas das empresas em que ela atende.
+  function visibleChatIds(userId) {
+    const ids = new Set(s.chatIdsOfMember.all(userId).map((r) => r.chat_id));
+    for (const w of workspaces.listForUser(userId)) {
+      if (!w.businessUser) continue;
+      for (const r of s.chatIdsOfMember.all(w.businessUser.id)) ids.add(r.chat_id);
+    }
+    return ids;
+  }
+
+  // Monta a expressão do FTS5 a partir do que a pessoa digitou, sem deixar
+  // passar a sintaxe do próprio FTS (aspas, NEAR, parênteses).
+  function buildMatch(raw) {
+    const tokens = String(raw || '')
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((t) => t.length >= 2)
+      .slice(0, 8);
+    if (!tokens.length) return null;
+    return tokens.map((t, i) => (i === tokens.length - 1 ? `"${t}"*` : `"${t}"`)).join(' ');
+  }
+
+  function searchMessages(userId, raw, { chatId = null, limit = 40 } = {}) {
+    const match = buildMatch(raw);
+    if (!match) return [];
+    const lim = Math.min(Math.max(Number(limit) || 40, 1), 100);
+
+    let allowed;
+    if (chatId) {
+      access(chatId, userId); // lança se não puder ver
+      allowed = new Set([chatId]);
+    } else {
+      allowed = visibleChatIds(userId);
+    }
+    if (!allowed.size) return [];
+
+    const ids = [...allowed].slice(0, 900);
+    const placeholders = ids.map(() => '?').join(',');
+    let rows;
+    try {
+      rows = db.prepare(`
+        SELECT message_id, chat_id, snippet(messages_fts, 2, '[', ']', '…', 14) AS snippet
+        FROM messages_fts
+        WHERE messages_fts MATCH ? AND chat_id IN (${placeholders})
+        ORDER BY rank
+        LIMIT ?
+      `).all(match, ...ids, lim);
+    } catch {
+      return []; // expressão que o FTS recusou: trata como "nada encontrado"
+    }
+
+    return rows.map((r) => {
+      const m = s.messageById.get(r.message_id);
+      if (!m) return null;
+      const chat = s.chatById.get(r.chat_id);
+      const a = access(r.chat_id, userId);
+      const view = chatView(chat, userId, { viewerMemberId: a.actorId });
+      return {
+        chatId: r.chat_id,
+        chatName: view.name,
+        chatCategory: view.category,
+        chatAvatar: view.avatar,
+        snippet: r.snippet,
+        message: messageView(m),
+      };
+    }).filter(Boolean);
+  }
+
   function listMessages(userId, chatId, { before, limit = 50 } = {}) {
     access(chatId, userId);
     const cursor = Number(before) || Number.MAX_SAFE_INTEGER;
@@ -508,6 +580,7 @@ export function createChatService(db, { workspaces, files }) {
     listChats,
     getChat,
     listMessages,
+    searchMessages,
     sendMessage,
     systemMessage,
     deleteMessage,
