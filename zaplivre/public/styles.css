@@ -163,9 +163,25 @@ input:focus, textarea:focus { outline: 2px solid var(--brand); border-color: tra
 .bubble .ticks { font-size: 12px; letter-spacing: -3px; }
 .bubble .ticks.read { color: var(--tick-read); }
 .bubble .deleted { font-style: italic; color: var(--muted); }
-.msg .actions { position: absolute; top: 2px; right: 6px; display: none; gap: 2px; }
-.msg:hover .actions { display: flex; }
-.msg .actions button { background: rgba(0,0,0,.35); color: #fff; border: 0; border-radius: 50%; width: 22px; height: 22px; font-size: 11px; }
+/* Os botões de ação flutuam ACIMA da bolha, nunca por cima do texto. Ficavam
+   dentro dela e, com quatro botões, tapavam o que estava escrito. */
+.msg .actions {
+  position: absolute;
+  bottom: calc(100% - 9px);
+  right: 8px;
+  display: none;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(27, 20, 102, .16);
+  z-index: 2;
+}
+.msg.in .actions { right: auto; left: 8px; }
+.msg:hover .actions, .msg.acoes-abertas .actions { display: flex; }
+.msg .actions button { background: none; color: var(--muted); border: 0; border-radius: 50%; width: 27px; height: 27px; font-size: 13px; line-height: 1; cursor: pointer; }
+.msg .actions button:hover { background: var(--brand-soft); color: var(--brand); }
 .typing { color: var(--muted); font-size: 13px; padding: 2px 16px; min-height: 18px; }
 
 .reply-preview { display: flex; align-items: center; background: var(--panel); padding: 8px 16px; gap: 8px; }
@@ -213,7 +229,17 @@ h4 { margin: 8px 0 0; color: var(--brand); font-weight: 500; font-size: 14px; }
   .messages { padding: 12px 10px 8px; }
   .msg { max-width: 85%; }
   .menu { left: auto; right: 8px; }
-  .msg .actions { display: flex; opacity: .8; }
+  /* Sem mouse para passar por cima: um toque na mensagem abre os botões, e eles
+     entram abaixo da bolha, onde não tapam nem esta mensagem nem a de cima. */
+  .msg:hover .actions { display: none; }
+  .msg.acoes-abertas .actions {
+    display: inline-flex;
+    position: static;
+    margin-top: 5px;
+    align-self: flex-end;
+  }
+  .msg.in.acoes-abertas .actions { align-self: flex-start; }
+  .msg .actions button { width: 34px; height: 34px; font-size: 16px; }
 }
 
 /* ===== Abas ===== */
@@ -286,9 +312,12 @@ h4 { margin: 8px 0 0; color: var(--brand); font-weight: 500; font-size: 14px; }
 
 /* ===== Kanban ===== */
 .board { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 12px; overflow: auto; flex: 1; background: var(--bg); }
-.column { background: var(--panel); border-radius: 10px; display: flex; flex-direction: column; min-height: 200px; }
+/* min-width: 0 impede que o texto de um cartão empurre a coluna e faça o painel
+   inteiro vazar para o lado no celular. */
+.column { background: var(--panel); border-radius: 10px; display: flex; flex-direction: column; min-height: 200px; min-width: 0; }
 .column h4 { margin: 0; padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-.column .cards { padding: 8px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.column .cards { padding: 8px; display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
+.column .cards:empty::before { content: 'Nada aqui.'; color: var(--muted); font-size: 12.5px; padding: 4px; }
 .column.drop { outline: 2px dashed var(--brand); }
 .tcard { background: var(--bg); border-radius: 8px; padding: 10px; cursor: grab; border-left: 4px solid var(--brand); }
 .tcard.open { border-left-color: var(--accent); }
@@ -301,6 +330,11 @@ h4 { margin: 8px 0 0; color: var(--brand); font-weight: 500; font-size: 14px; }
 
 @media (max-width: 760px) {
   .board { grid-template-columns: 1fr; }
+  /* Empilhadas, as colunas crescem com o conteúdo em vez de dividir a tela em
+     três faixas vazias. */
+  .board { align-content: start; grid-auto-rows: min-content; }
+  .column { min-height: 0; }
+  .column .cards { flex: 0 0 auto; min-height: 0; }
   .media-hub { width: 100%; }
   .desk-controls select { display: none; }
 }

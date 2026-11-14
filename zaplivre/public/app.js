@@ -823,7 +823,19 @@ $('#messages').addEventListener('click', async (e) => {
   const img = e.target.closest('img[data-full]');
   if (img) { $('#lightbox img').src = img.src; $('#lightbox').classList.remove('hidden'); return; }
   const btn = e.target.closest('button[data-act]');
-  if (!btn) return;
+  if (!btn) {
+    // Toque na bolha abre os botões da mensagem. No celular não existe passar o
+    // mouse, e deixar os botões sempre visíveis tapava o texto.
+    const bolha = e.target.closest('.msg .bubble');
+    const msgEl = bolha?.closest('.msg');
+    if (msgEl && !e.target.closest('a, audio, video, input, select, textarea')) {
+      const abrir = !msgEl.classList.contains('acoes-abertas');
+      $$('.msg.acoes-abertas').forEach((m) => m.classList.remove('acoes-abertas'));
+      if (abrir && !msgEl.classList.contains('system')) msgEl.classList.add('acoes-abertas');
+    }
+    return;
+  }
+  $$('.msg.acoes-abertas').forEach((m) => m.classList.remove('acoes-abertas'));
   if (btn.dataset.act === 'transcribe') {
     btn.disabled = true; btn.textContent = 'Transcrevendo...';
     try { await api(`/attachments/${btn.dataset.att}/transcribe`, { method: 'POST' }); }
@@ -1321,6 +1333,7 @@ $('#emoji-picker').addEventListener('click', async (e) => {
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#emoji-picker') && !e.target.closest('[data-act="emoji"]')) $('#emoji-picker').classList.add('hidden');
+  if (!e.target.closest('.msg')) $$('.msg.acoes-abertas').forEach((m) => m.classList.remove('acoes-abertas'));
 });
 
 let encaminhando = null;
