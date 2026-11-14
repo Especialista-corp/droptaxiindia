@@ -20,43 +20,46 @@ Nunca peça chaves no chat para serem guardadas no repositório: elas ficam só 
 - [ ] 3. (Claude) Aplicar as migrações 0001 a 0005 no projeto
 - [ ] 4. (Claude) Conferir regras de acesso (RLS) e as pastas privadas de fotos
 - [ ] 5. (Claude) Criar o primeiro usuário administrador
+- [ ] 6. (Claude) Definir o backup do banco de dados real
 
 ## Etapa 2: Servidor (VPS Hostinger + Cloudflare)
-- [ ] 6. (Dono) Rodar o diagnóstico na VPS e colar o resultado
-- [ ] 7. (Dono) Escolher o domínio e apontá-lo pelo Cloudflare
-- [ ] 8. (Claude) Gerar CRON_SECRET e chaves de notificação (VAPID) e montar a configuração
-- [ ] 9. (Claude) Preparar Docker Compose com Traefik e HTTPS
-- [ ] 10. (Claude) Subir o app e o agendador de tarefas
-- [ ] 11. (Claude) Repetir o ciclo completo no endereço real
+- [ ] 7. (Dono) Rodar o diagnóstico na VPS e colar o resultado
+- [ ] 8. (Dono) Escolher o domínio e apontá-lo pelo Cloudflare
+- [ ] 9. (Claude) Gerar CRON_SECRET e chaves de notificação (VAPID) e montar a configuração
+- [ ] 10. (Claude) Preparar Docker Compose com Traefik e HTTPS
+- [ ] 11. (Claude) Subir o app e o agendador de tarefas
+- [ ] 12. (Claude) Repetir o ciclo completo no endereço real
 
 ## Etapa 3: Pagamentos (Asaas)
-- [ ] 12. (Dono) Criar a conta Asaas sandbox e enviar a chave de API
-- [ ] 13. (Claude) Testar cobrança Pix real no sandbox e o retorno automático (webhook)
-- [ ] 14. (Claude) Implementar o repasse ao montador (subconta e divisão)
-- [ ] 15. (Claude) Testar cancelamento e reembolso
-- [ ] 16. (Dono) Abrir a conta Asaas de produção (documentos da empresa)
+- [ ] 13. (Dono) Criar a conta Asaas sandbox e enviar a chave de API
+- [ ] 14. (Claude) Testar cobrança Pix real no sandbox e o retorno automático (webhook)
+- [ ] 15. (Claude) Implementar o repasse ao montador (subconta e divisão)
+- [ ] 16. (Claude) Testar cancelamento e reembolso
+- [ ] 17. (Dono) Abrir a conta Asaas de produção (documentos da empresa)
 
 ## Etapa 4: Mapa e notificações
-- [ ] 17. (Dono) Criar a chave do Google Maps
-- [ ] 18. (Claude) Ligar o mapa ao vivo e testar com dois celulares
-- [ ] 19. (Claude) Trocar o mapa claro por mapa escuro
-- [ ] 20. (Dono) Criar a conta Resend e configurar o e-mail do domínio
-- [ ] 21. (Claude) Testar notificações no celular e por e-mail
+- [ ] 18. (Dono) Criar a chave do Google Maps
+- [ ] 19. (Claude) Ligar o mapa ao vivo e testar com dois celulares
+- [ ] 20. (Claude) Trocar o mapa claro por mapa escuro
+- [ ] 21. (Dono) Criar a conta Resend e configurar o e-mail do domínio
+- [ ] 22. (Claude) Testar notificações no celular e por e-mail
 
 ## Etapa 5: Funcionalidades que faltam
-- [ ] 22. (Claude) Fluxo de disputas: cliente abre, pagamento congela, admin resolve
-- [ ] 23. (Claude) Corrigir a lista de itens que o montador vê no pedido
-- [ ] 24. (Dono) Contratar o serviço de SMS
-- [ ] 25. (Claude) Verificação do telefone do montador por SMS
-- [ ] 26. (Claude) Gerar os ícones PNG para iPhone e Android
+- [ ] 23. (Claude) Fluxo de disputas: cliente abre, pagamento congela, admin resolve
+- [ ] 24. (Claude) Corrigir a lista de itens que o montador vê no pedido
+- [ ] 25. (Dono) Contratar o serviço de SMS
+- [ ] 26. (Claude) Verificação do telefone do montador por SMS
+- [ ] 27. (Claude) Gerar os ícones PNG para iPhone e Android
 
 ## Etapa 6: Qualidade e segurança
-- [ ] 27. (Claude) Criar os testes automáticos do fluxo principal
-- [ ] 28. (Claude) Revisão de segurança (acesso, ações do servidor, pagamento)
-- [ ] 29. (Dono) Testar em iPhone e Android reais
+- [ ] 28. (Claude) Criar os testes automáticos do fluxo principal
+- [ ] 29. (Claude) Revisão de segurança (acesso, ações do servidor, pagamento)
+- [ ] 30. (Dono) Testar em iPhone e Android reais
+- [ ] 31. (Claude) Limpar a cópia antiga: pasta marketplace do droptaxiindia e a PR #1
 
 ## Etapa 7: Lançamento
-- [ ] 30. (Dono) Decidir o nome definitivo e consultar a marca no INPI
-- [ ] 31. (Dono) Termos de uso e política de privacidade (LGPD)
-- [ ] 32. (Claude) Guia de operação e lista de ideias da Fase 2
-- [ ] 33. (Dono) Piloto com poucos montadores e clientes
+- [ ] 32. (Dono) Decidir o nome definitivo e consultar a marca no INPI
+- [ ] 33. (Dono) Termos de uso e política de privacidade (LGPD)
+- [ ] 34. (Claude) Guia de operação e lista de ideias da Fase 2
+- [ ] 35. (Dono) Piloto com poucos montadores e clientes
+- [ ] 36. (Dono) Decidir quando migrar para o plano pago do Supabase
