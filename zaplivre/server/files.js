@@ -6,8 +6,12 @@ import { now, newId } from './db.js';
 import { httpError } from './auth.js';
 
 const MAX_SIZE = 25 * 1024 * 1024;
+// Vídeo é o único que precisa de folga: 25 MB não dá nem meio minuto de celular.
+const MAX_SIZE_VIDEO = 60 * 1024 * 1024;
 const KINDS = {
   image: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
+  // O que o navegador grava e toca sem plugin. O celular costuma entregar mp4.
+  video: ['video/mp4', 'video/webm', 'video/quicktime', 'video/3gpp'],
   audio: ['audio/webm', 'audio/ogg', 'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/x-m4a', 'audio/aac'],
   document: ['application/pdf', 'text/plain', 'text/csv', 'application/zip',
     'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -56,7 +60,8 @@ export function createFileService(db, { uploadDir, transcriber = null, logger = 
     const kind = kindOf(cleanMime);
     if (!kind) throw httpError(415, 'Tipo de arquivo não suportado.');
     if (!buffer?.length) throw httpError(400, 'Arquivo vazio.');
-    if (buffer.length > MAX_SIZE) throw httpError(413, 'Arquivo muito grande (máx. 25 MB).');
+    const limite = kind === 'video' ? MAX_SIZE_VIDEO : MAX_SIZE;
+    if (buffer.length > limite) throw httpError(413, `Arquivo muito grande (máx. ${Math.round(limite / 1048576)} MB).`);
     const id = newId();
     const accessKey = crypto.randomBytes(16).toString('base64url');
     const safeName = String(name || 'arquivo').replace(/[\\/\0]/g, '_').slice(0, 120);
@@ -97,6 +102,7 @@ export function createFileService(db, { uploadDir, transcriber = null, logger = 
     }
     return {
       images: files.filter((f) => f.kind === 'image'),
+      videos: files.filter((f) => f.kind === 'video'),
       audios: files.filter((f) => f.kind === 'audio'),
       documents: files.filter((f) => f.kind === 'document'),
       links,

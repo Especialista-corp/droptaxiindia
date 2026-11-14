@@ -89,7 +89,9 @@ function migrate(db) {
       ticket_status TEXT NOT NULL DEFAULT 'open' CHECK (ticket_status IN ('open', 'in_progress', 'done')),
       assignee_id TEXT REFERENCES users(id),
       bot_paused INTEGER NOT NULL DEFAULT 0,
-      tags TEXT NOT NULL DEFAULT '[]'
+      tags TEXT NOT NULL DEFAULT '[]',
+      -- Mensagens temporárias: 0 desligado, senão segundos de validade.
+      ephemeral_seconds INTEGER NOT NULL DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_chats_workspace ON chats(workspace_id);
 
@@ -99,6 +101,11 @@ function migrate(db) {
       role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('member', 'admin')),
       joined_at INTEGER NOT NULL,
       last_read_at INTEGER NOT NULL DEFAULT 0,
+      -- Organização da lista: cada pessoa fixa, silencia e arquiva a SUA visão
+      -- da conversa, sem mexer na do outro.
+      pinned_at INTEGER,
+      muted_until INTEGER,
+      archived INTEGER NOT NULL DEFAULT 0,
       PRIMARY KEY (chat_id, user_id)
     );
     CREATE INDEX IF NOT EXISTS idx_members_user ON chat_members(user_id);
@@ -108,14 +115,26 @@ function migrate(db) {
       chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
       sender_id TEXT REFERENCES users(id),
       agent_id TEXT REFERENCES users(id),
-      type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'image', 'audio', 'document', 'system')),
+      type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'image', 'video', 'audio', 'document', 'location', 'system')),
       body TEXT NOT NULL,
       attachment_id TEXT,
       reply_to TEXT REFERENCES messages(id),
+      forwarded INTEGER NOT NULL DEFAULT 0,
+      expires_at INTEGER,
       created_at INTEGER NOT NULL,
       deleted_at INTEGER
     );
     CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_id, created_at);
+
+    -- Uma reação por pessoa por mensagem, como no WhatsApp.
+    CREATE TABLE IF NOT EXISTS reactions (
+      message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      emoji TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (message_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_reactions_message ON reactions(message_id);
 
     CREATE TABLE IF NOT EXISTS message_receipts (
       message_id TEXT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
@@ -131,7 +150,7 @@ function migrate(db) {
       access_key TEXT NOT NULL,
       owner_id TEXT NOT NULL REFERENCES users(id),
       chat_id TEXT REFERENCES chats(id) ON DELETE CASCADE,
-      kind TEXT NOT NULL CHECK (kind IN ('image', 'audio', 'document')),
+      kind TEXT NOT NULL CHECK (kind IN ('image', 'video', 'audio', 'document')),
       mime TEXT NOT NULL,
       name TEXT NOT NULL,
       size INTEGER NOT NULL,
@@ -230,6 +249,13 @@ function migrate(db) {
   addColumnIfMissing(db, 'users', 'recovery_hash', 'TEXT');
   addColumnIfMissing(db, 'users', 'is_admin', 'INTEGER NOT NULL DEFAULT 0');
   addColumnIfMissing(db, 'users', 'invite_code', 'TEXT');
+  addColumnIfMissing(db, 'messages', 'forwarded', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'messages', 'expires_at', 'INTEGER');
+  addColumnIfMissing(db, 'chat_members', 'pinned_at', 'INTEGER');
+  addColumnIfMissing(db, 'chat_members', 'muted_until', 'INTEGER');
+  addColumnIfMissing(db, 'chat_members', 'archived', 'INTEGER NOT NULL DEFAULT 0');
+  addColumnIfMissing(db, 'chats', 'ephemeral_seconds', 'INTEGER NOT NULL DEFAULT 0');
+  widenTypeChecks(db);
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)');
 
   buildSearchIndex(db);
@@ -286,6 +312,70 @@ export function setSetting(db, key, value) {
     INSERT INTO app_settings (key, value, updated_at) VALUES (?, ?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
   `).run(key, value, Date.now());
+}
+
+// As restrições CHECK de 'messages.type' e 'attachments.kind' não podem ser
+// alteradas por ALTER TABLE. Um banco criado antes do vídeo e da localização
+// recusaria as mensagens novas em silêncio, então a tabela é reconstruída.
+function widenTypeChecks(db) {
+  const sqlOf = (t) => db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = ?").get(t)?.sql || '';
+  if (!sqlOf('messages').includes("'video'")) {
+    rebuildTable(db, 'messages', `
+      CREATE TABLE messages__novo (
+        id TEXT PRIMARY KEY,
+        chat_id TEXT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+        sender_id TEXT REFERENCES users(id),
+        agent_id TEXT REFERENCES users(id),
+        type TEXT NOT NULL DEFAULT 'text' CHECK (type IN ('text', 'image', 'video', 'audio', 'document', 'location', 'system')),
+        body TEXT NOT NULL,
+        attachment_id TEXT,
+        reply_to TEXT REFERENCES messages(id),
+        forwarded INTEGER NOT NULL DEFAULT 0,
+        expires_at INTEGER,
+        created_at INTEGER NOT NULL,
+        deleted_at INTEGER
+      )`, ['CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_id, created_at)']);
+  }
+  if (!sqlOf('attachments').includes("'video'")) {
+    rebuildTable(db, 'attachments', `
+      CREATE TABLE attachments__novo (
+        id TEXT PRIMARY KEY,
+        access_key TEXT NOT NULL,
+        owner_id TEXT NOT NULL REFERENCES users(id),
+        chat_id TEXT REFERENCES chats(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('image', 'video', 'audio', 'document')),
+        mime TEXT NOT NULL,
+        name TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        path TEXT NOT NULL,
+        category TEXT,
+        tags TEXT NOT NULL DEFAULT '[]',
+        duration INTEGER,
+        transcript TEXT,
+        summary TEXT,
+        created_at INTEGER NOT NULL
+      )`, ['CREATE INDEX IF NOT EXISTS idx_attachments_chat ON attachments(chat_id, created_at)']);
+  }
+}
+
+// Troca uma tabela por outra preservando as linhas, pelas colunas em comum.
+// Os gatilhos da busca caem junto com a tabela antiga e são refeitos logo
+// depois, em buildSearchIndex.
+function rebuildTable(db, table, createNewSql, indexes) {
+  const novo = table + '__novo';
+  db.exec('PRAGMA foreign_keys = OFF');
+  try {
+    db.exec(createNewSql);
+    const colsNovo = db.prepare(`PRAGMA table_info(${novo})`).all().map((c) => c.name);
+    const colsVelho = db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+    const comuns = colsNovo.filter((c) => colsVelho.includes(c)).join(', ');
+    db.exec(`INSERT INTO ${novo} (${comuns}) SELECT ${comuns} FROM ${table}`);
+    db.exec(`DROP TABLE ${table}`);
+    db.exec(`ALTER TABLE ${novo} RENAME TO ${table}`);
+    for (const sql of indexes) db.exec(sql);
+  } finally {
+    db.exec('PRAGMA foreign_keys = ON');
+  }
 }
 
 function addColumnIfMissing(db, table, column, definition) {

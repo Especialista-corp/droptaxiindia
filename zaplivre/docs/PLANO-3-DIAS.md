@@ -2,7 +2,7 @@
 
 **"Um amigo instala, usa uma semana inteira e não volta para o WhatsApp para falar com você."**
 
-Status: **Dia 1 entregue** (14/11). Dias 2 e 3 pendentes.
+Status: **Dias 1 e 2 entregues** (14/11). Dia 3 pendente.
 
 ## 1. Por que este plano existe
 
@@ -85,19 +85,31 @@ Os dois bloqueios que não têm volta, mais a busca.
 > apagada. O aviso com o aplicativo fechado sai pelo Web Push e não é enviado para quem
 > já está com a tela aberta.
 
-### Dia 2 · Parecer o WhatsApp
+### Dia 2 · Parecer o WhatsApp ✅ ENTREGUE
 
 Tudo aqui é curto. O valor está em serem muitos de uma vez.
 
-- **Vídeo** no envio, com miniatura e tocador dentro da conversa.
-- **Localização**, enviada como ponto no mapa.
-- **Reações com emoji**, tabela própria, tempo real.
-- **Encaminhar mensagem** para uma ou várias conversas.
-- **Fixar conversa** no topo, **silenciar** e **arquivar**.
-- **Mensagens temporárias** por conversa (24 horas, 7 dias, 90 dias).
-- **Backup automático** do banco e das mídias, com script de restauração testado.
+- ✅ **Vídeo** no envio, com tocador dentro da conversa e no painel de mídias. Limite
+  próprio de 60 MB, porque 25 MB não dá nem meio minuto de celular.
+- ✅ **Localização**, enviada como ponto que abre no mapa de quem recebe. O ZapLivre não
+  desenha mapa nem fala com serviço de mapa nenhum.
+- ✅ **Reações com emoji**, uma por pessoa, repetir desfaz, em tempo real.
+- ✅ **Encaminhar mensagem** para até 20 conversas de uma vez, com marca de origem. O
+  arquivo não é duplicado em disco.
+- ✅ **Fixar no topo**, **silenciar** e **arquivar**, cada um valendo só para quem fez.
+  Conversa silenciada não dispara aviso no celular.
+- ✅ **Mensagens temporárias** por conversa (24 horas, 7 dias, 90 dias), com relógio no
+  servidor para sumirem mesmo de quem não abrir a conversa.
+- ✅ **Backup e restauração** (`npm run backup`, `npm run restaurar`), com cópia
+  consistente do banco mesmo com o servidor rodando, conferência de integridade e
+  guarda do que estava no ar antes de restaurar.
 - *Aceite:* uma pessoa que usa WhatsApp abre o ZapLivre e não sente falta de nada no
   primeiro dia.
+
+> **Nota de migração.** As restrições do banco não aceitavam os tipos novos e não podem
+> ser alteradas por `ALTER TABLE`; um banco criado antes recusaria vídeo e localização em
+> silêncio. A tabela é reconstruída na subida, preservando linhas, índices e gatilhos da
+> busca. Testado sobre um banco da versão anterior.
 
 ### Dia 3 · Fundação e produção
 

@@ -20,7 +20,10 @@ Funciona como aplicativo instalável (PWA) no celular e no computador, pelo nave
 - **Três abas:** *Social* (amigos e família), *Trabalho* (equipes e projetos) e
   *Atendimento* (empresas). Empresas só existem na aba Atendimento; nunca poluem a Social.
 - Conversas individuais e grupos (até 256 pessoas) com administradores.
-- Texto, fotos, documentos e **áudios com transcrição e resumo sob demanda**.
+- Texto, fotos, **vídeos**, documentos, **localização** e **áudios com transcrição e
+  resumo sob demanda**.
+- **Reações com emoji**, **encaminhar** para várias conversas, **fixar no topo**,
+  **silenciar**, **arquivar** e **mensagens temporárias** (24 horas, 7 dias, 90 dias).
 - **Painel de mídias e documentos** por conversa: fotos, áudios, documentos e links
   organizados, com categorias automáticas (comprovante, contrato, planilha...) e etiquetas.
 - Recibos ✓ ✓✓ ✓✓azul, online, visto por último, digitando, responder, apagar para todos.
@@ -69,7 +72,18 @@ Abra <http://localhost:3000>. Para testar, abra uma janela anônima e cadastre o
 número. Para testar atendimento: menu → *Minhas empresas* → cadastre um domínio, depois
 na outra conta procure `@dominio` em *Nova conversa*.
 
-Testes automatizados (API, webhooks, robô, Kanban, arquivos, transcrição, tempo real):
+### Backup
+
+```bash
+npm run backup                                  # grava em data/backups
+npm run restaurar data/backups/2026-11-14T16-00-00
+```
+
+O banco é copiado com `VACUUM INTO`, que gera um arquivo consistente mesmo com o servidor
+rodando. Restaurar guarda o que estava no ar antes de sobrescrever.
+
+Testes automatizados (API, webhooks, robô, Kanban, arquivos, transcrição, tempo real,
+notificação, convites, busca, vídeo, localização, reações, encaminhar, temporárias):
 
 ```bash
 npm test

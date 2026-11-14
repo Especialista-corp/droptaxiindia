@@ -168,6 +168,30 @@ export function createApp({
   app.post('/api/chats/:id/messages', requireAuth, wrap(async (req, res) => {
     res.status(201).json({ message: await deliver(req.user.id, req.params.id, req.body || {}) });
   }));
+  // Reagir, encaminhar e organizar a lista.
+  app.post('/api/messages/:id/react', requireAuth, wrap((req, res) => {
+    const message = chats.react(req.user.id, req.params.id, req.body?.emoji);
+    io.to(room(message.chatId)).emit('message:updated', { message });
+    res.json({ message });
+  }));
+  app.post('/api/messages/:id/forward', requireAuth, wrap(async (req, res) => {
+    const enviadas = chats.forward(req.user.id, req.params.id, req.body?.chatIds);
+    for (const m of enviadas) {
+      io.to(room(m.chatId)).emit('message:new', { message: m });
+      notifyByPush(m, m.chatId, req.user.id).catch(() => {});
+    }
+    res.status(201).json({ messages: enviadas });
+  }));
+  app.post('/api/chats/:id/pin', requireAuth, wrap((req, res) => res.json({ chat: chats.setPinned(req.user.id, req.params.id, req.body?.pinned !== false) })));
+  app.post('/api/chats/:id/mute', requireAuth, wrap((req, res) => res.json({ chat: chats.setMuted(req.user.id, req.params.id, req.body?.hours) })));
+  app.post('/api/chats/:id/archive', requireAuth, wrap((req, res) => res.json({ chat: chats.setArchived(req.user.id, req.params.id, req.body?.archived !== false) })));
+  app.post('/api/chats/:id/ephemeral', requireAuth, wrap((req, res) => {
+    const { chat, message } = chats.setEphemeral(req.user.id, req.params.id, req.body?.seconds);
+    io.to(room(chat.id)).emit('message:new', { message });
+    io.to(room(chat.id)).emit('chat:updated', { chatId: chat.id });
+    res.json({ chat });
+  }));
+
   app.post('/api/chats/:id/read', requireAuth, wrap((req, res) => {
     const actorId = chats.markChatRead(req.user.id, req.params.id);
     io.to(room(req.params.id)).emit('chat:read', { chatId: req.params.id, userId: actorId });
@@ -378,6 +402,7 @@ export function createApp({
 
     await Promise.all(audience.map((uid) => {
       if (isVisibleSomewhere(uid)) return null; // já está vendo o aplicativo
+      if (chats.getChat(uid, chatId)?.muted) return null; // conversa silenciada
       return push.sendToUser(uid, { title, body, chatId, messageId: message.id, tag: 'chat:' + chatId });
     }));
   }
@@ -386,6 +411,8 @@ export function createApp({
     if (message.deleted) return 'Mensagem apagada';
     switch (message.type) {
       case 'image': return '📷 Foto';
+      case 'video': return '🎬 Vídeo';
+      case 'location': return '📍 Localização';
       case 'audio': return '🎤 Áudio';
       case 'document': return '📎 ' + (message.attachment?.name || 'Documento');
       default: return String(message.body || '').slice(0, 140) || 'Nova mensagem';
@@ -490,7 +517,17 @@ export function createApp({
     });
   });
 
-  return { app, server, io, db, bootstrapInvite, close: () => new Promise((r) => { io.close(); server.close(() => { db.close(); r(); }); }) };
+  // Relógio das mensagens temporárias: some mesmo de quem não abrir a conversa.
+  const sweeper = setInterval(() => {
+    try {
+      for (const { id, chat_id: chatId } of chats.sweepExpired()) {
+        io.to(room(chatId)).emit('message:deleted', { message: { id, chatId, deleted: true, body: '' } });
+      }
+    } catch (err) { logger.error?.('expira:', err.message); }
+  }, 30000);
+  sweeper.unref?.();
+
+  return { app, server, io, db, bootstrapInvite, close: () => new Promise((r) => { clearInterval(sweeper); io.close(); server.close(() => { db.close(); r(); }); }) };
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

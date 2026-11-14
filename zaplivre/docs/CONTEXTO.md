@@ -35,7 +35,12 @@ presença, digitando, responder, apagar, bloquear; API pública `/api/v1` com ch
 webhooks assinados; Kanban de atendimento; passagem robô para humano; planos de assinatura
 com webhook de cobrança; notificações, modo escuro, instalação como aplicativo.
 
-Seis cenários de teste automatizado passando. Fluxo completo simulado no Chromium.
+Mais, desde 14/11: aviso com o aplicativo fechado, entrada por convite, busca de
+mensagens, vídeo, localização, reações com emoji, encaminhar, fixar, silenciar, arquivar,
+mensagens temporárias e backup com restauração.
+
+Dezesseis cenários de teste automatizado passando. Fluxo completo simulado no Chromium,
+em computador e em celular, sem erro de JavaScript.
 
 ## 3.1 Bloqueios para uso real
 
@@ -46,7 +51,8 @@ Levantados em 2026-11-14. Plano de ataque em `PLANO-3-DIAS.md`.
 | 1 | Não avisa com o aplicativo fechado | ✅ resolvido: Web Push (`server/push.js`) |
 | 2 | Entrada dependia de `DEV_SHOW_OTP` | ✅ resolvido: modo convite (`server/invites.js`) |
 | 3 | Sem busca de mensagens | ✅ resolvido: índice FTS5 (`buildSearchIndex` em `db.js`) |
-| 4 | Sem servidor no ar e sem backup | ⬜ pendente (Dias 2 e 3) |
+| 4 | Sem backup | ✅ resolvido: `npm run backup` e `npm run restaurar` |
+| 5 | Sem servidor no ar | ⬜ pendente (Dia 3) |
 
 ### Como ligar o modo piloto
 

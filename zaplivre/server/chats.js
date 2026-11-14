@@ -36,11 +36,21 @@ export function createChatService(db, { workspaces, files }) {
     setAdmin: db.prepare("UPDATE chat_members SET role = 'admin' WHERE chat_id = ? AND user_id = ?"),
     chatsForUser: db.prepare(
       `SELECT c.*, m.last_read_at, m.role, m.category AS member_category, m.user_id AS viewer_member_id,
+        m.pinned_at, m.muted_until, m.archived,
         (SELECT COUNT(*) FROM messages x WHERE x.chat_id = c.id AND x.created_at > m.last_read_at AND x.sender_id != m.user_id AND x.deleted_at IS NULL AND x.type != 'system') AS unread
        FROM chats c JOIN chat_members m ON m.chat_id = c.id WHERE m.user_id = ?`
     ),
     lastMessage: db.prepare('SELECT * FROM messages WHERE chat_id = ? ORDER BY created_at DESC, id DESC LIMIT 1'),
-    insertMessage: db.prepare('INSERT INTO messages (id, chat_id, sender_id, agent_id, type, body, attachment_id, reply_to, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'),
+    insertMessage: db.prepare('INSERT INTO messages (id, chat_id, sender_id, agent_id, type, body, attachment_id, reply_to, forwarded, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'),
+    reactionsFor: db.prepare('SELECT user_id, emoji FROM reactions WHERE message_id = ?'),
+    setReaction: db.prepare(`INSERT INTO reactions (message_id, user_id, emoji, created_at) VALUES (?, ?, ?, ?)
+      ON CONFLICT(message_id, user_id) DO UPDATE SET emoji = excluded.emoji, created_at = excluded.created_at`),
+    clearReaction: db.prepare('DELETE FROM reactions WHERE message_id = ? AND user_id = ?'),
+    setPinned: db.prepare('UPDATE chat_members SET pinned_at = ? WHERE chat_id = ? AND user_id = ?'),
+    setMuted: db.prepare('UPDATE chat_members SET muted_until = ? WHERE chat_id = ? AND user_id = ?'),
+    setArchived: db.prepare('UPDATE chat_members SET archived = ? WHERE chat_id = ? AND user_id = ?'),
+    setEphemeral: db.prepare('UPDATE chats SET ephemeral_seconds = ? WHERE id = ?'),
+    expiredMessages: db.prepare("SELECT id, chat_id FROM messages WHERE expires_at IS NOT NULL AND expires_at <= ? AND deleted_at IS NULL"),
     messageById: db.prepare('SELECT * FROM messages WHERE id = ?'),
     chatIdsOfMember: db.prepare('SELECT chat_id FROM chat_members WHERE user_id = ?'),
     messagesBefore: db.prepare('SELECT * FROM messages WHERE chat_id = ? AND created_at < ? ORDER BY created_at DESC, id DESC LIMIT ?'),
@@ -257,6 +267,11 @@ export function createChatService(db, { workspaces, files }) {
 
   // ---------- visões ----------
   function chatView(chat, viewerId, { viewerMemberId = null, memberCategory = null } = {}) {
+    // A linha pode vir da consulta da lista (já traz os campos) ou de chats
+    // puro; neste caso busca-se a visão de quem está olhando.
+    const meu = chat.viewer_member_id === (viewerMemberId || viewerId)
+      ? chat
+      : s.member.get(chat.id, viewerMemberId || viewerId) || {};
     const membersRaw = s.members.all(chat.id);
     const members = membersRaw.map((u) => ({ ...publicUser(u), role: u.role }));
     let name = chat.name;
@@ -286,6 +301,11 @@ export function createChatService(db, { workspaces, files }) {
       business: business ? { id: business.id, workspaceId: business.workspaceId, handle: business.handle, name: business.name } : null,
       ticket: chat.category === 'desk' ? { status: chat.ticket_status, assigneeId: chat.assignee_id, botPaused: Boolean(chat.bot_paused), tags: JSON.parse(chat.tags || '[]') } : null,
       blocked: peer ? Boolean(s.isBlocked.get(viewerId, peer.id)) : false,
+      pinned: Boolean(meu.pinned_at),
+      muted: Boolean(meu.muted_until && meu.muted_until > now()),
+      mutedUntil: meu.muted_until && meu.muted_until > now() ? meu.muted_until : null,
+      archived: Boolean(meu.archived),
+      ephemeralSeconds: chat.ephemeral_seconds || 0,
     };
   }
 
@@ -302,7 +322,10 @@ export function createChatService(db, { workspaces, files }) {
         out.push({ ...chatView(row, userId, { viewerMemberId: bu.id }), unread: row.unread, viaWorkspace: w.id, actingAs: bu.id });
       }
     }
-    return out.sort((a, b) => (b.lastMessage?.createdAt || b.createdAt) - (a.lastMessage?.createdAt || a.createdAt));
+    return out.sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+      return (b.lastMessage?.createdAt || b.createdAt) - (a.lastMessage?.createdAt || a.createdAt);
+    });
   }
 
   function getChat(userId, chatId) {
@@ -328,6 +351,9 @@ export function createChatService(db, { workspaces, files }) {
       body: m.deleted_at ? '' : m.body,
       attachment: m.deleted_at ? null : attachment,
       replyTo: m.reply_to,
+      forwarded: Boolean(m.forwarded),
+      expiresAt: m.expires_at || null,
+      reactions: reactionsOf(m.id),
       createdAt: m.created_at,
       deleted: Boolean(m.deleted_at),
       status,
@@ -419,7 +445,7 @@ export function createChatService(db, { workspaces, files }) {
   }
 
   // Envio por usuário (pessoa, ou agente falando pela empresa).
-  function sendMessage(userId, chatId, { type = 'text', body, attachmentId = null, replyTo = null }, { asBot = false } = {}) {
+  function sendMessage(userId, chatId, { type = 'text', body, attachmentId = null, replyTo = null, forwarded = false }, { asBot = false } = {}) {
     const a = access(chatId, userId);
     const { chat, actorId } = a;
     const agentId = asBot ? null : a.agentId;
@@ -427,7 +453,7 @@ export function createChatService(db, { workspaces, files }) {
     if (actor.kind === 'business') enforceBusinessLimits(actor, chat);
     // Bloqueio: quem foi bloqueado não consegue enviar.
     for (const u of s.members.all(chatId)) if (u.id !== actorId && s.isBlocked.get(u.id, actorId)) throw httpError(403, 'Você não pode enviar mensagens para este contato.');
-    return insert(chatId, actorId, agentId, { type, body, attachmentId, replyTo });
+    return insert(chatId, actorId, agentId, { type, body, attachmentId, replyTo, forwarded });
   }
 
   // Empresas só respondem: precisam de conversa aberta pela pessoa e respeitam o limite por hora do plano.
@@ -439,14 +465,17 @@ export function createChatService(db, { workspaces, files }) {
     if (n >= plan.sendsPerHour) throw httpError(429, `Limite do plano: ${plan.sendsPerHour} mensagens por hora.`);
   }
 
-  function insert(chatId, senderId, agentId, { type = 'text', body, attachmentId = null, replyTo = null }) {
+  function insert(chatId, senderId, agentId, { type = 'text', body, attachmentId = null, replyTo = null, forwarded = false }) {
     let cleanBody;
     let attId = null;
     if (type === 'text' || type === 'system') {
       cleanBody = String(body ?? '').trim();
       if (!cleanBody) throw httpError(400, 'Mensagem vazia.');
       if (cleanBody.length > MAX_TEXT) throw httpError(400, 'Mensagem muito longa.');
-    } else if (['image', 'audio', 'document'].includes(type)) {
+    } else if (type === 'location') {
+      cleanBody = validateLocation(body);
+      if (!cleanBody) throw httpError(400, 'Localização inválida.');
+    } else if (['image', 'video', 'audio', 'document'].includes(type)) {
       if (attachmentId) {
         const a = files.get(attachmentId);
         if (!a || (a.chat_id && a.chat_id !== chatId)) throw httpError(400, 'Anexo inválido.');
@@ -470,9 +499,13 @@ export function createChatService(db, { workspaces, files }) {
     }
     const id = newId();
     const ts = now();
+    // Mensagens temporárias: o prazo é o da conversa no momento do envio, e
+    // fica gravado na mensagem para uma mudança de prazo não apagar o passado.
+    const chatRow = s.chatById.get(chatId);
+    const expiresAt = chatRow?.ephemeral_seconds > 0 ? ts + chatRow.ephemeral_seconds * 1000 : null;
     db.exec('BEGIN');
     try {
-      s.insertMessage.run(id, chatId, senderId, agentId, type, cleanBody, attId, replyTo || null, ts);
+      s.insertMessage.run(id, chatId, senderId, agentId, type, cleanBody, attId, replyTo || null, forwarded ? 1 : 0, expiresAt, ts);
       if (senderId) {
         for (const uid of memberIds(chatId)) if (uid !== senderId) s.insertReceipt.run(id, uid);
         s.setLastRead.run(ts, chatId, senderId);
@@ -483,6 +516,101 @@ export function createChatService(db, { workspaces, files }) {
       throw e;
     }
     return messageView(s.messageById.get(id));
+  }
+
+  // Agrupa as reações por emoji: [{ emoji, count, userIds }].
+  function reactionsOf(messageId) {
+    const rows = s.reactionsFor.all(messageId);
+    if (!rows.length) return [];
+    const porEmoji = new Map();
+    for (const r of rows) {
+      const atual = porEmoji.get(r.emoji) || { emoji: r.emoji, count: 0, userIds: [] };
+      atual.count += 1;
+      atual.userIds.push(r.user_id);
+      porEmoji.set(r.emoji, atual);
+    }
+    return [...porEmoji.values()].sort((a, b) => b.count - a.count);
+  }
+
+  // Uma reação por pessoa: reagir de novo com o mesmo emoji desfaz.
+  function react(userId, messageId, emoji) {
+    const m = s.messageById.get(messageId);
+    if (!m) throw httpError(404, 'Mensagem não encontrada.');
+    const { actorId } = access(m.chat_id, userId);
+    const limpo = normalizeEmoji(emoji);
+    const atual = s.reactionsFor.all(messageId).find((r) => r.user_id === actorId);
+    if (!limpo || atual?.emoji === limpo) s.clearReaction.run(messageId, actorId);
+    else s.setReaction.run(messageId, actorId, limpo, now());
+    return messageView(s.messageById.get(messageId));
+  }
+
+  // Encaminhar: copia o conteúdo para outra conversa, sem levar junto a
+  // resposta nem o histórico de quem falou o quê.
+  function forward(userId, messageId, chatIds) {
+    const origem = s.messageById.get(messageId);
+    if (!origem || origem.deleted_at) throw httpError(404, 'Mensagem não encontrada.');
+    access(origem.chat_id, userId); // precisa poder ver o que está encaminhando
+    if (origem.type === 'system') throw httpError(400, 'Mensagem do sistema não pode ser encaminhada.');
+    const alvos = [...new Set((Array.isArray(chatIds) ? chatIds : [chatIds]).map(String))].slice(0, 20);
+    if (!alvos.length) throw httpError(400, 'Escolha ao menos uma conversa.');
+
+    const enviadas = [];
+    for (const destino of alvos) {
+      // O anexo original é reaproveitado: encaminhar não duplica o arquivo em
+      // disco, e por isso o anexo não é amarrado à conversa de destino.
+      enviadas.push(sendMessage(userId, destino, {
+        type: origem.type,
+        body: origem.attachment_id ? origem.body : origem.body,
+        attachmentId: origem.attachment_id,
+        forwarded: true,
+      }));
+    }
+    return enviadas;
+  }
+
+  // Fixar, silenciar e arquivar valem só para quem fez: a conversa do outro
+  // continua como estava.
+  function setPinned(userId, chatId, pinned) {
+    const { actorId } = access(chatId, userId);
+    s.setPinned.run(pinned ? now() : null, chatId, actorId);
+    return getChat(userId, chatId);
+  }
+  function setMuted(userId, chatId, horas) {
+    const { actorId } = access(chatId, userId);
+    const h = Number(horas);
+    // 0 desliga o silêncio; -1 silencia para sempre.
+    const until = h === 0 ? null : h < 0 ? Number.MAX_SAFE_INTEGER : now() + Math.min(h, 24 * 365) * 3600000;
+    s.setMuted.run(until, chatId, actorId);
+    return getChat(userId, chatId);
+  }
+  function setArchived(userId, chatId, archived) {
+    const { actorId } = access(chatId, userId);
+    s.setArchived.run(archived ? 1 : 0, chatId, actorId);
+    return getChat(userId, chatId);
+  }
+
+  // Mensagens temporárias: prazo da conversa, valendo para os dois lados.
+  const EPHEMERAL_OPTIONS = [0, 86400, 7 * 86400, 90 * 86400];
+  function setEphemeral(userId, chatId, seconds) {
+    access(chatId, userId);
+    const sec = Number(seconds) || 0;
+    if (!EPHEMERAL_OPTIONS.includes(sec)) throw httpError(400, 'Prazo inválido.');
+    s.setEphemeral.run(sec, chatId);
+    const texto = sec === 0 ? 'desligou as mensagens temporárias'
+      : sec === 86400 ? 'ligou mensagens temporárias de 24 horas'
+      : sec === 7 * 86400 ? 'ligou mensagens temporárias de 7 dias'
+      : 'ligou mensagens temporárias de 90 dias';
+    const quem = s.userById.get(access(chatId, userId).actorId)?.name || 'Alguém';
+    const message = systemMessage(chatId, `${quem} ${texto}.`);
+    return { chat: getChat(userId, chatId), message };
+  }
+
+  // Varre o que venceu. Chamado por um relógio no servidor, não na leitura, para
+  // que a mensagem suma mesmo de quem nunca mais abrir a conversa.
+  function sweepExpired() {
+    const vencidas = s.expiredMessages.all(now());
+    for (const m of vencidas) s.softDelete.run(now(), m.id);
+    return vencidas;
   }
 
   function deleteMessage(userId, messageId) {
@@ -582,6 +710,14 @@ export function createChatService(db, { workspaces, files }) {
     listMessages,
     searchMessages,
     sendMessage,
+    react,
+    forward,
+    setPinned,
+    setMuted,
+    setArchived,
+    setEphemeral,
+    sweepExpired,
+    EPHEMERAL_OPTIONS,
     systemMessage,
     deleteMessage,
     markAllDelivered,
@@ -594,6 +730,28 @@ export function createChatService(db, { workspaces, files }) {
     userById: (id) => s.userById.get(id),
     rawChat: (id) => s.chatById.get(id),
   };
+}
+
+// Localização: guardada como JSON no corpo da mensagem. O aplicativo não é um
+// mapa, só carrega o ponto para abrir no mapa de quem recebe.
+// Aceita só um emoji curto: a reação é um símbolo, não um campo de texto.
+function normalizeEmoji(raw) {
+  const e = String(raw ?? '').trim();
+  if (!e) return null;
+  if ([...e].length > 3 || e.length > 16) return null;
+  if (!/\p{Extended_Pictographic}/u.test(e)) return null;
+  return e;
+}
+
+function validateLocation(raw) {
+  let data = raw;
+  if (typeof raw === 'string') { try { data = JSON.parse(raw); } catch { return null; } }
+  const lat = Number(data?.lat);
+  const lng = Number(data?.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  const label = String(data?.label || '').trim().slice(0, 120);
+  return JSON.stringify({ lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)), ...(label ? { label } : {}) });
 }
 
 function validateImage(dataUrl) {

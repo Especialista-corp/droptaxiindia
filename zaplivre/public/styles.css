@@ -431,3 +431,103 @@ h4 { margin: 8px 0 0; color: var(--brand); font-weight: 500; font-size: 14px; }
 
 /* Lista sem nenhuma conversa não deve ocupar espaço: o aviso fica centralizado. */
 .chat-list:empty { flex: 0 0 auto; }
+
+/* ---------- Vídeo e localização ---------- */
+.video-msg {
+  display: block;
+  max-width: min(380px, 70vw);
+  max-height: 440px;
+  border-radius: 10px;
+  background: #000;
+}
+.loc-msg {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg);
+  text-decoration: none;
+  color: inherit;
+  min-width: 190px;
+}
+.loc-pin { font-size: 24px; line-height: 1; }
+.loc-msg span span { display: block; }
+.loc-name { font-weight: 600; font-size: 14px; }
+.loc-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ---------- Reações ---------- */
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  /* Encostada na quina da bolha, como quem gruda um adesivo nela. */
+  margin: -11px 0 2px;
+  padding: 0 8px;
+  position: relative;
+  z-index: 1;
+}
+/* Deslocada para a esquerda do relógio, senão a reação o encobre. */
+.msg.out .reactions { justify-content: flex-end; padding-right: 48px; }
+.reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--panel);
+  font-size: 13px;
+  line-height: 1.5;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+.reaction.mine { border-color: var(--brand); background: var(--brand-soft); }
+.reaction span { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+.emoji-picker {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 24px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 28px rgba(27, 20, 102, .22);
+}
+.emoji-picker button {
+  border: 0;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  padding: 5px 6px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.emoji-picker button:hover { background: var(--brand-soft); transform: scale(1.18); }
+
+/* ---------- Encaminhada e temporária ---------- */
+.forwarded {
+  display: block;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.ephemeral { font-size: 11px; opacity: .7; margin: 0 4px 0 5px; }
+.forward-row { display: flex; align-items: center; gap: 10px; padding: 8px 2px; cursor: pointer; }
+.forward-row input { width: auto; margin: 0; flex: 0 0 auto; }
+.forward-row .avatar { width: 38px; height: 38px; flex: 0 0 38px; }
+.forward-row .body { min-width: 0; }
+.forward-row .name { display: block; font-size: 14px; font-weight: 600; }
+.forward-row .handle { display: block; font-size: 11px; color: var(--muted); }
+
+/* ---------- Fixar, silenciar, arquivar ---------- */
+.toggles { display: flex; flex-direction: column; gap: 8px; }
+.toggle { display: flex; align-items: center; gap: 9px; font-size: 14px; cursor: pointer; }
+.toggle input { width: auto; margin: 0; }
+.pin-mark, .mute-mark { font-size: 11px; margin-right: 4px; opacity: .75; }
+
+/* Vídeos no painel de mídias, no mesmo grid das fotos. */
+.media-grid video { width: 100%; border-radius: 6px; background: #000; display: block; }

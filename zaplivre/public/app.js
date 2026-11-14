@@ -381,6 +381,11 @@ function connectSocket() {
     const chat = state.chats.get(message.chatId);
     if (chat?.lastMessage?.id === message.id) { chat.lastMessage = message; renderChatList(); }
   });
+  // Reacao entra e sai sem recarregar a conversa.
+  socket.on('message:updated', ({ message }) => {
+    upsertMessage(message);
+    if (state.activeChatId === message.chatId) renderMessages(false);
+  });
   socket.on('message:delivered', ({ chatId, messageIds }) => {
     const chat = state.chats.get(chatId);
     for (const m of state.messages.get(chatId) || []) if (messageIds.includes(m.id) && m.status === 'sent' && chat?.type === 'direct') m.status = 'delivered';
@@ -444,6 +449,8 @@ function sortedChats() {
   const q = $('#search').value.trim().toLowerCase();
   return [...state.chats.values()]
     .filter((c) => c.category === state.tab)
+    // Arquivada some da lista, mas volta assim que chega mensagem nova.
+    .filter((c) => !c.archived || c.unread > 0 || c.id === state.activeChatId)
     .filter((c) => !q || c.name.toLowerCase().includes(q) || (c.lastMessage?.body || '').toLowerCase().includes(q))
     .sort((a, b) => (b.lastMessage?.createdAt || b.createdAt) - (a.lastMessage?.createdAt || a.createdAt));
 }
@@ -459,6 +466,8 @@ function previewText(chat) {
   if (m.deleted) return who + '<i>Mensagem apagada</i>';
   const ticks = isMine(chat, m) && chat.type === 'direct' ? ticksHtml(m) + ' ' : '';
   if (m.type === 'image') return ticks + who + '📷 Foto';
+  if (m.type === 'video') return ticks + who + '🎬 Vídeo';
+  if (m.type === 'location') return ticks + who + '📍 Localização';
   if (m.type === 'audio') return ticks + who + '🎤 Áudio';
   if (m.type === 'document') return ticks + who + '📄 ' + escapeHtml(m.attachment?.name || 'Documento');
   return ticks + who + escapeHtml(m.body);
@@ -477,7 +486,7 @@ function renderChatList() {
       <button class="chat-item ${c.id === state.activeChatId ? 'active' : ''} ${c.unread ? 'unread' : ''}" data-id="${c.id}" role="listitem">
         <img class="avatar" src="${avatarFor(c)}" alt="">
         <div class="body">
-          <div class="top"><span class="name">${escapeHtml(c.name)}${c.viaWorkspace ? `<span class="kind">via ${escapeHtml(c.business?.name || '')}</span>` : ''}${c.ticket && c.viaWorkspace ? `<span class="ticket-tag">${STATUS_LABEL[c.ticket.status]}</span>` : ''}</span><span class="time">${c.lastMessage ? fmtListTime(c.lastMessage.createdAt) : ''}</span></div>
+          <div class="top"><span class="name">${c.pinned ? '<span class="pin-mark" title="Fixada">\u{1F4CC}</span>' : ''}${c.muted ? '<span class="mute-mark" title="Silenciada">\u{1F507}</span>' : ''}${escapeHtml(c.name)}${c.viaWorkspace ? `<span class="kind">via ${escapeHtml(c.business?.name || '')}</span>` : ''}${c.ticket && c.viaWorkspace ? `<span class="ticket-tag">${STATUS_LABEL[c.ticket.status]}</span>` : ''}</span><span class="time">${c.lastMessage ? fmtListTime(c.lastMessage.createdAt) : ''}</span></div>
           <div class="bottom"><span class="preview">${previewText(c)}</span>${c.unread ? `<span class="badge">${c.unread}</span>` : ''}</div>
         </div>
       </button>`).join('');
@@ -683,6 +692,18 @@ function ticksHtml(m) {
 function attachmentHtml(m) {
   const a = m.attachment;
   if (m.type === 'image') return `<img src="${a ? a.url : m.body}" alt="Foto" loading="lazy" data-full="1">`;
+  if (m.type === 'video') return `<video class="video-msg" controls preload="metadata" playsinline src="${a.url}"></video>`;
+  if (m.type === 'location') {
+    let p = {};
+    try { p = JSON.parse(m.body); } catch { return '<span class="deleted">Localização inválida</span>'; }
+    // Abre no aplicativo de mapas de quem recebe; o ZapLivre não desenha mapa
+    // nem conversa com serviço de mapa nenhum.
+    const geo = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+    return `<a class="loc-msg" href="${geo}" target="_blank" rel="noopener">
+      <span class="loc-pin">📍</span>
+      <span><span class="loc-name">${escapeHtml(p.label || 'Localização')}</span>
+      <span class="loc-meta">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)} · abrir no mapa</span></span></a>`;
+  }
   if (m.type === 'audio') {
     return `<div class="audio-msg"><audio controls preload="none" src="${a.url}"></audio>
       ${a.transcript ? `<div class="transcript">${a.summary ? `<b>Resumo</b>${escapeHtml(a.summary)}\n` : ''}<b>Transcrição</b>${escapeHtml(a.transcript)}</div>` : `<button class="transcribe" data-act="transcribe" data-att="${a.id}">Transcrever e resumir</button>`}</div>`;
@@ -711,12 +732,23 @@ function renderMessages(scrollToEnd = true) {
       const p = byId.get(m.replyTo);
       inner += `<div class="quote"><b>${escapeHtml(p ? memberName(chat, p.senderId) : '')}</b>${p ? (p.type === 'text' ? escapeHtml(p.body).slice(0, 120) : '📎 Anexo') : 'Mensagem indisponível'}</div>`;
     }
+    if (m.forwarded && !m.deleted) inner += `<span class="forwarded">➦ Encaminhada</span>`;
     if (m.deleted) inner += `<span class="deleted">🚫 Mensagem apagada</span>`;
     else if (m.type === 'text') inner += linkify(m.body);
-    else { inner += attachmentHtml(m); if (m.body) inner += `<div>${linkify(m.body)}</div>`; }
+    // Localização guarda o ponto no próprio corpo da mensagem; ele já virou
+    // cartão e não deve reaparecer como legenda.
+    else { inner += attachmentHtml(m); if (m.body && m.type !== 'location') inner += `<div>${linkify(m.body)}</div>`; }
+    if (m.expiresAt) inner += `<span class="ephemeral" title="Esta mensagem vai sumir">⏳</span>`;
     inner += `<span class="meta">${fmtTime(m.createdAt)}${out && chat?.type === 'direct' ? ticksHtml(m) : ''}</span>`;
-    const actions = m.deleted ? '' : `<div class="actions"><button data-act="reply" data-id="${m.id}" title="Responder">↩</button>${out ? `<button data-act="delete" data-id="${m.id}" title="Apagar">🗑</button>` : ''}</div>`;
-    html += `<div class="msg ${out ? 'out' : 'in'} ${first ? 'first' : ''}" data-id="${m.id}"><div class="bubble">${inner}</div>${actions}</div>`;
+    const reacoes = (m.reactions || []).length
+      ? `<div class="reactions">${m.reactions.map((r) => `<button class="reaction ${r.userIds.includes(selfId(chat)) ? 'mine' : ''}" data-act="react" data-id="${m.id}" data-emoji="${escapeHtml(r.emoji)}">${escapeHtml(r.emoji)}${r.count > 1 ? `<span>${r.count}</span>` : ''}</button>`).join('')}</div>`
+      : '';
+    const actions = m.deleted ? '' : `<div class="actions">
+      <button data-act="emoji" data-id="${m.id}" title="Reagir">☺</button>
+      <button data-act="reply" data-id="${m.id}" title="Responder">↩</button>
+      <button data-act="forward" data-id="${m.id}" title="Encaminhar">➦</button>
+      ${out ? `<button data-act="delete" data-id="${m.id}" title="Apagar">🗑</button>` : ''}</div>`;
+    html += `<div class="msg ${out ? 'out' : 'in'} ${first ? 'first' : ''}" data-id="${m.id}"><div class="bubble">${inner}</div>${reacoes}${actions}</div>`;
   }
   el.innerHTML = html;
   if (scrollToEnd || atBottom) el.scrollTop = el.scrollHeight;
@@ -734,6 +766,13 @@ $('#messages').addEventListener('click', async (e) => {
   }
   const m = (state.messages.get(state.activeChatId) || []).find((x) => x.id === btn.dataset.id);
   if (!m) return;
+  if (btn.dataset.act === 'react') {
+    try { await api(`/messages/${m.id}/react`, { method: 'POST', body: { emoji: btn.dataset.emoji } }); }
+    catch (err) { toast(err.message); }
+    return;
+  }
+  if (btn.dataset.act === 'emoji') { abrirSeletorEmoji(btn, m.id); return; }
+  if (btn.dataset.act === 'forward') { abrirEncaminhar(m); return; }
   if (btn.dataset.act === 'reply') {
     state.replyTo = m;
     $('#reply-name').textContent = memberName(state.chats.get(state.activeChatId), m.senderId);
@@ -949,6 +988,10 @@ function openInfo() {
   $('#btn-leave').classList.toggle('hidden', !isGroup);
   $('#btn-block').classList.toggle('hidden', isGroup || Boolean(chat.viaWorkspace));
   $('#btn-block').textContent = chat.peer && state.blocked.has(chat.peer.id) ? 'Desbloquear' : peerIsBusiness ? 'Bloquear empresa' : 'Bloquear';
+  $('#chk-pin').checked = Boolean(chat.pinned);
+  $('#chk-mute').checked = Boolean(chat.muted);
+  $('#chk-archive').checked = Boolean(chat.archived);
+  $('#sel-ephemeral').value = String(chat.ephemeralSeconds || 0);
   $('#info-members-title').textContent = isGroup ? 'Participantes' : 'Contato';
   const people = isGroup ? chat.members : [chat.peer];
   $('#info-members').innerHTML = people.map((u) => `<div class="contact"><img class="avatar" src="${avatarFor(u)}" alt=""><div><div>${escapeHtml(u.id === state.me.id ? 'Você' : u.name)}</div><div class="sub">${escapeHtml(u.handle || '')}${u.about ? ' · ' + escapeHtml(u.about) : ''}</div></div>${u.role === 'admin' ? '<span class="tag">admin</span>' : ''}</div>`).join('');
@@ -998,6 +1041,32 @@ $('#btn-leave').addEventListener('click', async () => {
 // ---------- painel de mídias ----------
 $('#btn-media').addEventListener('click', () => openMedia());
 $('#btn-close-media').addEventListener('click', () => $('#media-hub').classList.add('hidden'));
+// Fixar, silenciar e arquivar: mudanca local, aplicada na hora.
+async function ajustarConversa(rota, body, mensagem) {
+  const chatId = state.activeChatId;
+  if (!chatId) return;
+  try {
+    const { chat } = await api(`/chats/${chatId}/${rota}`, { method: 'POST', body });
+    state.chats.set(chat.id, { ...state.chats.get(chat.id), ...chat });
+    renderChatList();
+    if (mensagem) toast(mensagem);
+  } catch (err) { toast(err.message); }
+}
+$('#chk-pin').addEventListener('change', (e) => ajustarConversa('pin', { pinned: e.target.checked }, e.target.checked ? 'Fixada no topo.' : 'Desafixada.'));
+$('#chk-mute').addEventListener('change', (e) => ajustarConversa('mute', { hours: e.target.checked ? -1 : 0 }, e.target.checked ? 'Avisos silenciados.' : 'Avisos religados.'));
+$('#chk-archive').addEventListener('change', (e) => {
+  ajustarConversa('archive', { archived: e.target.checked }, e.target.checked ? 'Conversa arquivada.' : 'Conversa desarquivada.');
+  if (e.target.checked) closePanels();
+});
+$('#sel-ephemeral').addEventListener('change', async (e) => {
+  const chatId = state.activeChatId;
+  if (!chatId) return;
+  try {
+    const { chat } = await api(`/chats/${chatId}/ephemeral`, { method: 'POST', body: { seconds: Number(e.target.value) } });
+    state.chats.set(chat.id, { ...state.chats.get(chat.id), ...chat });
+  } catch (err) { toast(err.message); e.target.value = String(state.chats.get(chatId)?.ephemeralSeconds || 0); }
+});
+
 async function openMedia() {
   if (!state.activeChatId) return;
   $('#media-hub').classList.remove('hidden');
@@ -1012,18 +1081,20 @@ function renderMedia() {
   const hub = state.mediaHub;
   const f = state.mediaFilter;
   const tagsHtml = (a) => `<div>${a.category ? `<span class="tag cat">${escapeHtml(a.category)}</span>` : ''}${a.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}<button class="tag-btn" data-tag="${a.id}">+ etiqueta</button></div>`;
-  const filters = ['all', 'image', 'document', 'audio', 'link', ...hub.categories];
-  const label = { all: 'Tudo', image: 'Fotos', document: 'Documentos', audio: 'Áudios', link: 'Links' };
+  const filters = ['all', 'image', 'video', 'document', 'audio', 'link', ...hub.categories];
+  const label = { all: 'Tudo', image: 'Fotos', video: 'Vídeos', document: 'Documentos', audio: 'Áudios', link: 'Links' };
   const show = (kind, a) => f === 'all' || f === kind || (a && a.category === f);
   let html = `<div class="media-filter">${filters.map((x) => `<button class="${f === x ? 'active' : ''}" data-filter="${x}">${label[x] || x}</button>`).join('')}</div>`;
   const imgs = hub.images.filter((a) => show('image', a));
   if (imgs.length) html += `<h4>Fotos</h4><div class="media-grid">${imgs.map((a) => `<img src="${a.url}" alt="" loading="lazy" data-full="1">`).join('')}</div>`;
+  const vids = (hub.videos || []).filter((a) => show('video', a));
+  if (vids.length) html += `<h4>Vídeos</h4><div class="media-grid">${vids.map((a) => `<video src="${a.url}" preload="metadata" controls playsinline></video>`).join('')}</div>`;
   const docs = hub.documents.filter((a) => show('document', a));
   if (docs.length) html += `<h4>Documentos</h4>` + docs.map((a) => `<div class="media-item"><span class="doc-icon">📄</span><div class="grow"><a class="doc-name" href="${a.url}" target="_blank" rel="noopener">${escapeHtml(a.name)}</a><div class="doc-meta">${fmtSize(a.size)} · ${new Date(a.createdAt).toLocaleDateString('pt-BR')}</div>${tagsHtml(a)}</div></div>`).join('');
   const auds = hub.audios.filter((a) => show('audio', a));
   if (auds.length) html += `<h4>Áudios</h4>` + auds.map((a) => `<div class="media-item"><span class="doc-icon">🎤</span><div class="grow"><audio controls preload="none" src="${a.url}" style="width:100%"></audio><div class="doc-meta">${fmtDur(a.duration)} · ${new Date(a.createdAt).toLocaleDateString('pt-BR')}</div>${a.transcript ? `<div class="transcript">${escapeHtml(a.summary || a.transcript.slice(0, 200))}</div>` : ''}${tagsHtml(a)}</div></div>`).join('');
   if (show('link') && hub.links.length) html += `<h4>Links</h4>` + hub.links.map((l) => `<div class="media-item"><span class="doc-icon">🔗</span><div class="grow"><a class="doc-name" href="${escapeHtml(l.url)}" target="_blank" rel="noopener">${escapeHtml(l.url)}</a><div class="doc-meta">${new Date(l.createdAt).toLocaleDateString('pt-BR')}</div></div></div>`).join('');
-  if (!imgs.length && !docs.length && !auds.length && !hub.links.length) html += '<p class="hint">Nada por aqui ainda. Fotos, áudios, documentos e links desta conversa aparecem organizados neste painel.</p>';
+  if (!imgs.length && !vids.length && !docs.length && !auds.length && !hub.links.length) html += '<p class="hint">Nada por aqui ainda. Fotos, áudios, documentos e links desta conversa aparecem organizados neste painel.</p>';
   $('#media-body').innerHTML = html;
 }
 $('#media-body').addEventListener('click', async (e) => {
@@ -1156,6 +1227,81 @@ $('#board').addEventListener('dragstart', (e) => { const c = e.target.closest('.
 $('#board').addEventListener('dragover', (e) => { const col = e.target.closest('.column'); if (col) { e.preventDefault(); col.classList.add('drop'); } });
 $('#board').addEventListener('dragleave', (e) => e.target.closest('.column')?.classList.remove('drop'));
 $('#board').addEventListener('drop', (e) => { const col = e.target.closest('.column'); if (!col) return; e.preventDefault(); col.classList.remove('drop'); moveTicket(e.dataTransfer.getData('text/plain'), col.dataset.status); });
+
+// ---------- reagir, encaminhar e localizacao ----------
+const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏', '👏', '🔥'];
+
+function abrirSeletorEmoji(botao, messageId) {
+  const box = $('#emoji-picker');
+  box.innerHTML = EMOJIS.map((e) => `<button data-emoji="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('');
+  box.dataset.message = messageId;
+  box.classList.remove('hidden');
+  // Posiciona junto do botao, sem sair da tela.
+  const r = botao.getBoundingClientRect();
+  const largura = box.offsetWidth || 280;
+  box.style.left = Math.max(8, Math.min(r.left, window.innerWidth - largura - 8)) + 'px';
+  box.style.top = Math.max(8, r.top - box.offsetHeight - 8) + 'px';
+}
+$('#emoji-picker').addEventListener('click', async (e) => {
+  const b = e.target.closest('button[data-emoji]');
+  if (!b) return;
+  const id = $('#emoji-picker').dataset.message;
+  $('#emoji-picker').classList.add('hidden');
+  try { await api(`/messages/${id}/react`, { method: 'POST', body: { emoji: b.dataset.emoji } }); }
+  catch (err) { toast(err.message); }
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#emoji-picker') && !e.target.closest('[data-act="emoji"]')) $('#emoji-picker').classList.add('hidden');
+});
+
+let encaminhando = null;
+function abrirEncaminhar(m) {
+  encaminhando = m;
+  const resumo = m.type === 'text' ? m.body.slice(0, 80)
+    : m.type === 'image' ? '📷 Foto' : m.type === 'video' ? '🎬 Video'
+    : m.type === 'audio' ? '🎤 Audio' : m.type === 'location' ? '📍 Localizacao'
+    : '📄 ' + (m.attachment?.name || 'Documento');
+  $('#forward-preview').textContent = 'Encaminhando: ' + resumo;
+  const destinos = [...state.chats.values()]
+    .filter((c) => c.id !== m.chatId && !c.viaWorkspace)
+    .sort((a, b) => (b.lastMessage?.createdAt || b.createdAt) - (a.lastMessage?.createdAt || a.createdAt));
+  $('#forward-list').innerHTML = destinos.map((c) => `
+    <label class="contact-row forward-row">
+      <input type="checkbox" value="${c.id}">
+      <img class="avatar" src="${avatarFor(c)}" alt="">
+      <span class="body"><span class="name">${escapeHtml(c.name)}</span><span class="handle">${TAB_LABEL[c.category] || ''}</span></span>
+    </label>`).join('') || '<p class="hint">Nenhuma outra conversa para encaminhar.</p>';
+  $('#btn-forward-send').disabled = true;
+  openPanel('#panel-forward');
+}
+$('#forward-list').addEventListener('change', () => {
+  $('#btn-forward-send').disabled = !selecionadosParaEncaminhar().length;
+});
+const selecionadosParaEncaminhar = () => $$('#forward-list input:checked').map((i) => i.value);
+$('#btn-forward-send').addEventListener('click', async () => {
+  const chatIds = selecionadosParaEncaminhar();
+  if (!encaminhando || !chatIds.length) return;
+  $('#btn-forward-send').disabled = true;
+  try {
+    await api(`/messages/${encaminhando.id}/forward`, { method: 'POST', body: { chatIds } });
+    closePanels();
+    toast(chatIds.length === 1 ? 'Encaminhada.' : `Encaminhada para ${chatIds.length} conversas.`);
+  } catch (err) { toast(err.message); $('#btn-forward-send').disabled = false; }
+});
+
+$('#btn-location').addEventListener('click', () => {
+  if (!navigator.geolocation) return toast('Seu aparelho nao informa a localizacao.');
+  if (!state.activeChatId) return;
+  toast('Procurando sua localizacao...');
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      sendMessage({ type: 'location', body: JSON.stringify({ lat, lng }) });
+    },
+    (err) => toast(err.code === err.PERMISSION_DENIED ? 'Voce nao permitiu o acesso a localizacao.' : 'Nao consegui obter a localizacao.'),
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+  );
+});
 
 // ---------- convites (piloto) ----------
 $('#menu-invites').addEventListener('click', openInvites);

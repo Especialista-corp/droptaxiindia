@@ -8,7 +8,9 @@
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning server/index.js",
     "dev": "DEV_SHOW_OTP=1 node --no-warnings=ExperimentalWarning --watch server/index.js",
-    "test": "DEV_SHOW_OTP=1 node --no-warnings=ExperimentalWarning --test test/*.test.js"
+    "test": "DEV_SHOW_OTP=1 node --no-warnings=ExperimentalWarning --test test/*.test.js",
+    "backup": "node --no-warnings=ExperimentalWarning scripts/backup.js",
+    "restaurar": "node --no-warnings=ExperimentalWarning scripts/restaurar.js"
   },
   "engines": {
     "node": ">=22.13"
