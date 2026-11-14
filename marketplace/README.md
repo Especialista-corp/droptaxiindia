@@ -17,6 +17,7 @@ fases exige apenas cadastro de categoria/preços, sem refatoração.
 - Google Maps JS API (rastreamento ao vivo) — opcional
 - Web Push + Resend (notificações) — opcionais
 - PWA instalável (manifest + service worker)
+- Deploy em Docker (VPS própria), com agendador de tarefas em container
 
 ## Setup
 
@@ -78,18 +79,25 @@ sem eles (mapa mostra aviso, notificações ficam só in-app).
 npm run dev
 ```
 
-## Cron jobs (regras de negócio automáticas)
+## Tarefas automáticas (regras de negócio)
 
-As rotas abaixo implementam as regras de negócio 1, 2 e 3 da especificação
-(sinal vencido, confirmação D-1, liberação automática após 72h). Em produção
-na Vercel elas são acionadas pelo `vercel.json` já incluso no projeto. Para
-rodar localmente ou em outro provedor, chame-as periodicamente com um cron
-externo, enviando `Authorization: Bearer $CRON_SECRET`:
+As rotas `/api/cron/*` implementam as regras automáticas. Na VPS quem as chama
+é o container `cron` (`deploy/cron.sh`), pela rede interna do Docker, enviando
+`Authorization: Bearer $CRON_SECRET`. Em produção, sem `CRON_SECRET` definido
+as rotas respondem 503.
 
-- `GET /api/cron/requeue-sinal-vencido` — a cada 15 min
-- `GET /api/cron/d1-confirmacao` — 1x/dia
-- `GET /api/cron/d1-realocacao` — a cada hora
-- `GET /api/cron/auto-release` — a cada hora
+| Rota | Frequência | O que faz |
+|---|---|---|
+| `requeue-sinal-vencido` | a cada 15 min | devolve à fila o pedido cujo sinal não foi pago em 2h |
+| `d1-realocacao` | a cada hora | tira o pedido do montador que não confirmou presença |
+| `auto-release` | a cada hora | libera o pagamento 72h após as fotos, sem contestação |
+| `d1-confirmacao` | 1x/dia (9h de Brasília) | pede ao montador para confirmar o serviço de amanhã |
+| `documentos-vencidos` | 1x/dia (8h) | suspende quem não enviou os documentos em 7 dias |
+| `uso-plataforma` | 1x/dia (9h) | avisa os admins quando o consumo do Supabase passa de 70% / 90% |
+| `limpar-rastreamento` | 1x/dia (0h) | apaga posições de GPS com mais de 7 dias |
+
+As chamadas de hora em hora também mantêm o projeto gratuito do Supabase
+ativo (ele pausa após 7 dias sem consultas).
 
 ## Estrutura
 
@@ -107,14 +115,34 @@ src/
 supabase/migrations/   schema SQL + RLS + seed do catálogo
 ```
 
-## Deploy
+## Deploy (VPS com Docker)
 
-1. Importe o repositório na [Vercel](https://vercel.com/new).
-2. Configure as variáveis de ambiente (seção 5 acima) no projeto Vercel.
-3. Defina `CRON_SECRET` no projeto — a Vercel injeta automaticamente o header
-   `Authorization: Bearer $CRON_SECRET` nas chamadas de cron quando essa
-   variável existe.
-4. Deploy. Os cron jobs em `vercel.json` já ficam agendados automaticamente.
+O app roda como container Docker em uma VPS própria; o Supabase continua
+sendo o banco/auth/storage. Não há dependência da Vercel.
+
+```bash
+cd deploy
+cp ../.env.example .env        # preencha as chaves
+docker compose up -d --build   # constrói a imagem e sobe app + agendador
+```
+
+- As variáveis `NEXT_PUBLIC_*` são embutidas no build: ao alterá-las é preciso
+  reconstruir (`docker compose up -d --build`).
+- O container `app` expõe a porta 3000 só na rede do Docker; o proxy reverso
+  (Traefik) publica em HTTPS. Recomenda-se a Cloudflare na frente do domínio.
+- Healthcheck: `GET /api/health`.
+- Aplique as migrações de `supabase/migrations/` no projeto Supabase antes do
+  primeiro deploy e a cada nova migração.
+
+### Limites do plano do Supabase
+
+O painel admin mostra o consumo de banco, arquivos e usuários ativos frente
+aos limites do plano, e o cron `uso-plataforma` notifica os admins em 70% e
+90%. Os limites vêm das variáveis `SUPABASE_LIMITE_*` (padrão: plano gratuito).
+O tráfego (egress) não é mensurável por SQL — acompanhe no painel do Supabase.
+
+As fotos são reduzidas no aparelho antes do envio (`src/lib/compress-image.ts`,
+~350 KB cada), o que poupa o armazenamento e acelera o upload no 4G.
 
 ## O que falta para produção real
 

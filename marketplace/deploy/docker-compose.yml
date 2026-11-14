@@ -1,0 +1,32 @@
+# Deploy na VPS: app + agendador de tarefas.
+#
+#   cp ../.env.example .env    # e preencha
+#   docker compose up -d --build
+#
+# O compose lê o arquivo .env desta pasta tanto para os build args (valores
+# públicos embutidos no build) quanto para as variáveis do container.
+services:
+  app:
+    build:
+      context: ..
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?defina no .env}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:?defina no .env}
+        NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ${NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:-}
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}
+    env_file: .env
+    restart: unless-stopped
+    expose:
+      - "3000"
+
+  cron:
+    image: alpine:3.22
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?defina no .env}
+    volumes:
+      - ./cron.sh:/cron.sh:ro
+    command: ["sh", "/cron.sh"]
