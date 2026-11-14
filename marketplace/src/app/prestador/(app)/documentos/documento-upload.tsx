@@ -4,6 +4,7 @@ import { useState, type ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/compress-image";
 import { salvarDocumentoAction, type TipoDocumento } from "./actions";
 
 export function DocumentoUpload({
@@ -24,12 +25,13 @@ export function DocumentoUpload({
   const [error, setError] = useState<string>();
 
   async function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const original = event.target.files?.[0];
+    if (!original) return;
     setPending(true);
     setError(undefined);
 
     try {
+      const file = await compressImage(original);
       const supabase = createClient();
       const path = `${userId}/${tipo}-${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage

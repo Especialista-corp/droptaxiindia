@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useActionState } from "react";
 import { criarPedidoAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatBRL } from "@/lib/utils";
+import { compressInputFiles } from "@/lib/compress-image";
 import type { ServiceItemsRow } from "@/types/database";
 
 const STEPS = ["Itens", "Detalhes", "Data e hora", "Endereço", "Revisão"] as const;
@@ -19,6 +20,7 @@ export function NovoPedidoWizard({
   categoryNome: string;
   itens: ServiceItemsRow[];
 }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [step, setStep] = useState(0);
   const [quantidades, setQuantidades] = useState<Record<string, number>>({});
   const [coords, setCoords] = useState<{ lat: number; lng: number }>();
@@ -54,6 +56,16 @@ export function NovoPedidoWizard({
     });
   }
 
+  /** Só avança se os campos obrigatórios da etapa visível estiverem preenchidos. */
+  function avancar() {
+    const etapa = formRef.current?.querySelector(`[data-step="${step}"]`);
+    const campos = etapa?.querySelectorAll<HTMLInputElement>("input, textarea") ?? [];
+    for (const campo of campos) {
+      if (!campo.reportValidity()) return;
+    }
+    setStep((s) => s + 1);
+  }
+
   return (
     <div className="px-6 py-8">
       <h1 className="mb-1 text-2xl font-bold">Novo pedido</h1>
@@ -68,11 +80,11 @@ export function NovoPedidoWizard({
         ))}
       </div>
 
-      <form action={formAction}>
+      <form ref={formRef} action={formAction}>
         <input type="hidden" name="categoryId" value={categoryId} />
         <input type="hidden" name="itensJson" value={JSON.stringify(itensSelecionados)} />
 
-        <div hidden={step !== 0} className="flex flex-col gap-6">
+        <div data-step={0} hidden={step !== 0} className="flex flex-col gap-6">
           <ItemGroup
             titulo="Móveis"
             itens={itensPadrao}
@@ -89,7 +101,7 @@ export function NovoPedidoWizard({
           )}
         </div>
 
-        <div hidden={step !== 1} className="flex flex-col gap-4">
+        <div data-step={1} hidden={step !== 1} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-black">Descrição (opcional)</span>
             <textarea
@@ -101,11 +113,17 @@ export function NovoPedidoWizard({
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-black">Fotos (opcional)</span>
-            <input type="file" name="fotos" accept="image/*" multiple />
+            <input
+              type="file"
+              name="fotos"
+              accept="image/*"
+              multiple
+              onChange={(event) => compressInputFiles(event.currentTarget)}
+            />
           </label>
         </div>
 
-        <div hidden={step !== 2} className="flex flex-col gap-4">
+        <div data-step={2} hidden={step !== 2} className="flex flex-col gap-4">
           <Input label="Data" name="dataAgendada" type="date" required={step === 2} />
           <div className="flex gap-3">
             <Input label="Das" name="janelaInicio" type="time" required={step === 2} />
@@ -113,7 +131,7 @@ export function NovoPedidoWizard({
           </div>
         </div>
 
-        <div hidden={step !== 3} className="flex flex-col gap-4">
+        <div data-step={3} hidden={step !== 3} className="flex flex-col gap-4">
           <Input label="Endereço" name="endereco" required={step === 3} />
           <div className="flex gap-3">
             <Input label="Número" name="numero" className="flex-1" />
@@ -143,7 +161,7 @@ export function NovoPedidoWizard({
           </p>
         </div>
 
-        <div hidden={step !== 4} className="flex flex-col gap-4">
+        <div data-step={4} hidden={step !== 4} className="flex flex-col gap-4">
           <div className="rounded-xl border border-[#E2E2E2] p-4">
             <p className="mb-2 font-bold">Resumo</p>
             {itensSelecionados.map(({ serviceItemId, quantidade }) => {
@@ -176,12 +194,15 @@ export function NovoPedidoWizard({
               Voltar
             </Button>
           )}
+          {/* As `key` distintas são essenciais: sem elas o React reaproveita o
+              mesmo <button> e troca o type para "submit" durante o clique em
+              "Continuar", publicando o pedido sem passar pela revisão. */}
           {step < STEPS.length - 1 ? (
-            <Button type="button" disabled={!podeAvancar} onClick={() => setStep((s) => s + 1)}>
+            <Button key="continuar" type="button" disabled={!podeAvancar} onClick={avancar}>
               Continuar
             </Button>
           ) : (
-            <Button type="submit" disabled={pending}>
+            <Button key="publicar" type="submit" disabled={pending}>
               {pending ? "Publicando…" : "Publicar pedido"}
             </Button>
           )}

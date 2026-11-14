@@ -22,13 +22,20 @@ export function useBroadcastPosition(orderId: string, prestadorId: string, ativo
         if (agora - ultimaGravacao.current < 4000) return; // throttle ~4s
         ultimaGravacao.current = agora;
 
-        supabase.from("tracking_positions").insert({
-          order_id: orderId,
-          prestador_id: prestadorId,
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-          heading: position.coords.heading ?? null,
-        });
+        // O builder do Supabase só dispara a requisição quando é aguardado:
+        // sem o .then() nenhuma posição chega ao banco.
+        supabase
+          .from("tracking_positions")
+          .insert({
+            order_id: orderId,
+            prestador_id: prestadorId,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+            heading: position.coords.heading ?? null,
+          })
+          .then(({ error }) => {
+            if (error) setErro(error.message);
+          });
       },
       (geoError) => setErro(geoError.message),
       { enableHighAccuracy: true, maximumAge: 5000 },

@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { compressImages } from "@/lib/compress-image";
 import { concluirServicoAction } from "../../actions-execucao";
 
 export function ConclusaoForm({ orderId }: { orderId: string }) {
@@ -15,9 +16,12 @@ export function ConclusaoForm({ orderId }: { orderId: string }) {
     setPending(true);
     setError(undefined);
     const formData = new FormData(event.currentTarget);
-    const fotos = formData.getAll("fotos").filter((f): f is File => f instanceof File && f.size > 0);
+    const originais = formData
+      .getAll("fotos")
+      .filter((f): f is File => f instanceof File && f.size > 0);
 
     try {
+      const fotos = await compressImages(originais);
       await concluirServicoAction(orderId, fotos);
       router.refresh();
     } catch (submitError) {

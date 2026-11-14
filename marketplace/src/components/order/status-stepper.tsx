@@ -16,7 +16,12 @@ export function OrderStatusStepper({ status }: { status: OrderStatus }) {
     );
   }
 
-  const currentIndex = ORDER_TRACKING_STEPS.indexOf(status);
+  // "concluido_prestador" não é uma etapa própria: o serviço terminou e a
+  // etapa "Concluído" fica ativa enquanto aguarda o aceite do cliente.
+  const currentIndex =
+    status === "concluido_prestador"
+      ? ORDER_TRACKING_STEPS.length - 1
+      : ORDER_TRACKING_STEPS.indexOf(status);
 
   return (
     <div className="flex items-center justify-between gap-1">

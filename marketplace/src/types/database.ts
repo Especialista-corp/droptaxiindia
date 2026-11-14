@@ -462,6 +462,15 @@ export type Database = {
         Args: Record<string, never>;
         Returns: UserRole;
       };
+      platform_usage: {
+        Args: Record<string, never>;
+        Returns: {
+          db_bytes: number;
+          storage_bytes: number;
+          usuarios_ativos_30d: number;
+          posicoes_rastreamento: number;
+        }[];
+      };
     };
     Enums: {
       user_role: UserRole;

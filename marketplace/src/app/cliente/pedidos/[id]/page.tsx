@@ -43,16 +43,36 @@ export default async function ClientePedidoDetalhePage({
     order.status === "aberto" || order.status === "proposto"
       ? await supabase
           .from("proposals")
-          .select("*, prestador:prestador_id(nome)")
+          .select("*")
           .eq("order_id", order.id)
           .eq("status", "pendente")
           .order("criado_em", { ascending: false })
       : { data: [] };
 
+  // Antes de fechar o pedido o cliente só enxerga a vitrine pública de quem
+  // propôs (nome, nota, selo) — telefone só aparece depois da proposta aceita.
+  const { data: perfisDasPropostas } = propostas?.length
+    ? await supabase
+        .from("provider_public_profiles")
+        .select("user_id, nome, nota_media, total_avaliacoes, selo_verificado")
+        .in(
+          "user_id",
+          propostas.map((proposta) => proposta.prestador_id),
+        )
+    : { data: [] };
+
   const { data: fotosConclusao } =
     order.status === "concluido_prestador" || order.status === "aceito_cliente"
       ? await supabase.from("completion_photos").select("url").eq("order_id", order.id)
       : { data: [] };
+
+  // O bucket é privado: as fotos só abrem por links assinados de curta duração.
+  const { data: fotosAssinadas } = fotosConclusao?.length
+    ? await supabase.storage.from("conclusao-fotos").createSignedUrls(
+        fotosConclusao.map((foto) => foto.url),
+        3600,
+      )
+    : { data: [] };
 
   const { data: veiculoEmUso } =
     order.status === "em_deslocamento" && order.prestador_id
@@ -142,16 +162,28 @@ export default async function ClientePedidoDetalhePage({
         <Card className="mb-4">
           <p className="mb-3 font-bold">Propostas recebidas</p>
           {(propostas ?? []).map((proposta) => {
-            const prestadorProposta = Array.isArray(proposta.prestador)
-              ? proposta.prestador[0]
-              : proposta.prestador;
+            const prestadorProposta = perfisDasPropostas?.find(
+              (perfil) => perfil.user_id === proposta.prestador_id,
+            );
             return (
               <div
                 key={proposta.id}
                 className="flex items-center justify-between border-b border-[#E2E2E2] py-3 last:border-b-0"
               >
                 <div>
-                  <p className="font-medium">{prestadorProposta?.nome}</p>
+                  <p className="font-medium">
+                    {prestadorProposta?.nome ?? "Montador"}
+                    {prestadorProposta?.selo_verificado && (
+                      <span className="ml-2 rounded-full bg-black px-2 py-0.5 text-xs font-bold text-white">
+                        Verificado
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-sm text-[#545454]">
+                    {prestadorProposta && prestadorProposta.total_avaliacoes > 0
+                      ? `★ ${Number(prestadorProposta.nota_media).toFixed(1)} · ${prestadorProposta.total_avaliacoes} avaliações`
+                      : "Novo na plataforma"}
+                  </p>
                   <p className="text-sm text-[#545454]">{formatBRL(proposta.valor)}</p>
                   {proposta.mensagem && (
                     <p className="text-sm text-[#545454]">&ldquo;{proposta.mensagem}&rdquo;</p>
@@ -202,9 +234,18 @@ export default async function ClientePedidoDetalhePage({
         <Card className="mb-4">
           <p className="mb-2 font-bold">Fotos do serviço</p>
           <div className="grid grid-cols-3 gap-2">
-            {(fotosConclusao ?? []).map((foto) => (
-              <div key={foto.url} className="aspect-square rounded-lg bg-[#F6F6F6]" />
-            ))}
+            {(fotosAssinadas ?? []).map((foto) =>
+              foto.signedUrl ? (
+                <a key={foto.path} href={foto.signedUrl} target="_blank" rel="noopener noreferrer">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={foto.signedUrl}
+                    alt="Foto do serviço concluído"
+                    className="aspect-square w-full rounded-lg bg-[#F6F6F6] object-cover"
+                  />
+                </a>
+              ) : null,
+            )}
           </div>
           {order.status === "concluido_prestador" && (
             <form
