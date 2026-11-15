@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+/*
+ * Tema do app (escuro). Para trocar a identidade visual edite só os valores
+ * abaixo; o app inteiro usa estes nomes (bg-surface, text-muted, bg-brand-gradient...).
+ * Mantenha src/lib/constants.ts (COLORS) alinhado: ele alimenta o manifest do PWA.
+ */
+@theme {
+  /* Estrutura */
+  --color-background: #16161a;
+  --color-surface: #1f1f26;
+  --color-surface-2: #272730;
+  --color-line: #2e2e38;
+
+  /* Texto */
+  --color-foreground: #fef8fb;
+  --color-muted: #a9a5b3;
+  --color-on-brand: #fef8fb;
+
+  /* Marca (degradê violeta → magenta → laranja) */
+  --color-brand-violet: #4b03cf;
+  --color-brand: #bb0189;
+  --color-brand-orange: #d2630d;
+  --color-brand-soft: #c99bff;
+
+  /* Estados */
+  --color-success: #2bb673;
+  --color-success-strong: #168a52;
+  --color-warning: #d2630d;
+  --color-warning-strong: #b85509;
+  --color-danger: #d33d3a;
+  --color-danger-strong: #b82e2c;
+  --color-danger-soft: #f0726e;
+
+  --font-sans: var(--font-inter);
+}
+
+@utility bg-brand-gradient {
+  background-image: linear-gradient(90deg, #4b03cf 0%, #bb0189 52%, #d2630d 100%);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+@layer base {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+  textarea,
+  select {
+    background-color: var(--color-surface-2);
+    color: var(--color-foreground);
+    min-width: 0;
+  }
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

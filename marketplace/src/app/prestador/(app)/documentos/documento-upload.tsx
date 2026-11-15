@@ -1,0 +1,76 @@
+"use client";
+
+import { useState, type ChangeEvent } from "react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Upload } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { compressImage } from "@/lib/compress-image";
+import { salvarDocumentoAction, type TipoDocumento } from "./actions";
+
+export function DocumentoUpload({
+  userId,
+  tipo,
+  titulo,
+  descricao,
+  enviado,
+}: {
+  userId: string;
+  tipo: TipoDocumento;
+  titulo: string;
+  descricao?: string;
+  enviado: boolean;
+}) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string>();
+
+  async function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    const original = event.target.files?.[0];
+    if (!original) return;
+    setPending(true);
+    setError(undefined);
+
+    try {
+      const file = await compressImage(original);
+      const supabase = createClient();
+      const path = `${userId}/${tipo}-${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("prestador-documentos")
+        .upload(path, file, { upsert: true });
+      if (uploadError) throw uploadError;
+
+      const result = await salvarDocumentoAction(tipo, path);
+      if (result?.error) throw new Error(result.error);
+      router.refresh();
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : "Falha no envio");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 border-b border-line py-4 last:border-b-0">
+      {enviado ? (
+        <CheckCircle2 className="shrink-0 text-success" size={24} />
+      ) : (
+        <Upload className="shrink-0 text-muted" size={24} />
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">{titulo}</p>
+        {descricao && <p className="text-sm text-muted">{descricao}</p>}
+        {error && <p className="text-sm text-danger-soft">{error}</p>}
+      </div>
+      <label className="shrink-0 cursor-pointer rounded-lg border border-line px-3 py-2 text-sm font-medium">
+        {pending ? "Enviando…" : enviado ? "Substituir" : "Enviar"}
+        <input
+          type="file"
+          accept="image/*,.pdf"
+          className="hidden"
+          onChange={handleChange}
+          disabled={pending}
+        />
+      </label>
+    </div>
+  );
+}
