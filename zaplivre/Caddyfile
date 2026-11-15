@@ -1,0 +1,29 @@
+# HTTPS automático: o Caddy pede e renova o certificado sozinho.
+# O domínio vem do .env (DOMINIO) e o e-mail de aviso, de EMAIL_HTTPS.
+{
+	email {$EMAIL_HTTPS}
+}
+
+{$DOMINIO} {
+	encode zstd gzip
+
+	# WebSocket do tempo real e o resto do aplicativo.
+	reverse_proxy zaplivre:3000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# O aplicativo precisa de microfone, câmera e localização; o resto fica fechado.
+		Permissions-Policy "geolocation=(self), microphone=(self), camera=(self), payment=()"
+		-Server
+	}
+
+	log {
+		output file /data/zaplivre.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+	}
+}
