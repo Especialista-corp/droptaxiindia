@@ -110,6 +110,13 @@ PORT=3000 DB_FILE=/var/lib/zaplivre/zaplivre.db SMS_WEBHOOK_URL=https://seu-prov
 | `PORT`                   | Porta HTTP (padrão 3000).                                                            |
 | `DB_FILE`                | Caminho do banco SQLite (padrão `data/zaplivre.db`).                                 |
 | `UPLOAD_DIR`             | Pasta dos arquivos enviados (padrão `data/uploads`).                                 |
+| `STORAGE_DRIVER`         | Onde gravar os arquivos novos: `local` (padrão) ou `s3`.                             |
+| `S3_BUCKET`              | Bucket de um serviço compatível com S3 (AWS, R2, B2, MinIO, Wasabi).                 |
+| `S3_ACCESS_KEY_ID`       | Chave de acesso do bucket. Vem com `S3_SECRET_ACCESS_KEY`.                           |
+| `S3_REGION`              | Região (padrão `us-east-1`; no Cloudflare R2, `auto`).                               |
+| `S3_ENDPOINT`            | Endereço do serviço, se não for a AWS. Usa o estilo `endpoint/bucket/arquivo`.       |
+| `S3_PATH_STYLE`          | `0` troca para `bucket.endpoint/arquivo`. Só vale com `S3_ENDPOINT`.                 |
+| `S3_PREFIX`              | Pasta dentro do bucket, para dividir o bucket com outros sistemas.                   |
 | `SMS_WEBHOOK_URL`        | URL que recebe `POST {"to": "+55...", "message": "..."}` e dispara o SMS.            |
 | `BILLING_WEBHOOK_SECRET` | Segredo do webhook do provedor de pagamento (`X-Billing-Secret`).                    |
 | `OPENAI_API_KEY`         | Ativa transcrição de áudio (Whisper) e, com `SUMMARY_MODEL`, o resumo em tópicos.    |

@@ -137,11 +137,29 @@ catálogo é nosso, e você sempre saberá exatamente o que tinha, quando, e se 
 
 ## 11. Etapas de execução
 
-**Etapa 0. Armazenamento trocável e impressão digital · 3 dias**
+**Etapa 0. Armazenamento trocável e impressão digital · 3 dias · ✅ ENTREGUE**
 Camada de armazenamento com driver local e driver compatível com S3. Impressão digital
 calculada em toda entrada. Exclusão suave, para que item guardado nunca suma por acidente.
 *Aceite:* trocar o destino por variável de ambiente sem tocar no código de negócio, e os
 arquivos já existentes continuarem abrindo.
+
+> **Como ficou.** `server/storage.js` define a interface (`put`, `read`, `stream`) e traz o
+> driver local e o driver S3, com assinatura AWS V4 própria em `node:crypto` e `fetch`, sem
+> dependência nova. A assinatura foi conferida contra os dois exemplos publicados pela AWS.
+> Cada arquivo registra em que destino mora (`attachments.storage`), então trocar
+> `STORAGE_DRIVER` só afeta os arquivos novos: os antigos continuam abrindo do destino onde
+> estão, inclusive os gravados antes desta etapa (a chave deles é o nome do arquivo em disco).
+> O SHA-256 é calculado em toda gravação e fica em `attachments.sha256`. Exclusão suave é
+> `deleted_at`: o arquivo some das telas, da abertura e da busca, os bytes e o hash ficam, e
+> `restore` desfaz. A transcrição passou a receber os bytes (`buffer`) em vez de um caminho
+> de disco. `save` agora é assíncrono, e a rota `/files` abre o fluxo antes de mandar os
+> cabeçalhos, o que também corrige um erro que derrubava o servidor quando o arquivo sumia
+> do disco.
+>
+> **Fora desta etapa, de propósito:** preencher o hash dos arquivos antigos (entra na
+> Etapa 5, com a verificação periódica), ligar a exclusão suave à exclusão de mensagem
+> (Etapa 5, regra "apagar contra guardar"), apagar bytes de verdade e a regra das duas
+> cópias (Etapa 6). Ver `docs/IMPLANTACAO.md` sobre o backup quando o destino é S3.
 
 **Etapa 1. Original preservado · 1 dia**
 Parar de comprimir no celular quando o item for marcado para guardar. Miniatura gerada à

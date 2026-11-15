@@ -275,6 +275,13 @@ function migrate(db) {
   addColumnIfMissing(db, 'chats', 'ephemeral_seconds', 'INTEGER NOT NULL DEFAULT 0');
   widenTypeChecks(db);
   migrateToTabs(db);
+
+  // Plano Baú, Etapa 0. Depois de widenTypeChecks, que pode reconstruir `attachments`.
+  // `storage` diz em que destino o arquivo mora; linhas antigas valem 'local'.
+  addColumnIfMissing(db, 'attachments', 'sha256', 'TEXT');
+  addColumnIfMissing(db, 'attachments', 'storage', "TEXT NOT NULL DEFAULT 'local'");
+  addColumnIfMissing(db, 'attachments', 'storage_key', 'TEXT');
+  addColumnIfMissing(db, 'attachments', 'deleted_at', 'INTEGER');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username)');
 
   buildSearchIndex(db);

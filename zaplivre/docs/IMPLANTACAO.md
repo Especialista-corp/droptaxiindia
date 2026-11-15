@@ -116,6 +116,12 @@ docker compose start zaplivre
 Restaurar **não apaga** o que estava no ar: guarda numa pasta `.antes-da-restauracao`
 antes de sobrescrever.
 
+**Com `STORAGE_DRIVER=s3`, o backup acima cobre o banco e os arquivos que ainda estão em
+disco, mas não o que já foi para o bucket.** Esses arquivos dependem da durabilidade do
+próprio serviço. Ligue o versionamento do bucket e, se puder, uma cópia em outra região. O
+banco guarda em que destino cada arquivo mora, então restaurar o banco sem o bucket deixa os
+arquivos de lá sem abrir.
+
 **Leve os backups para fora do servidor.** Um backup que mora no mesmo disco que o banco
 não protege contra o disco morrer. Uma vez por semana, do seu computador:
 

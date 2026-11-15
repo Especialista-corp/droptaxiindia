@@ -10,6 +10,7 @@ import { createAuth, httpError, publicUser, privateUser } from './auth.js';
 import { createChatService, TICKET_STATUSES } from './chats.js';
 import { createWorkspaceService, PLANS } from './workspaces.js';
 import { createFileService, buildTranscriber } from './files.js';
+import { buildStorage } from './storage.js';
 import { createPushService } from './push.js';
 import { createInviteService } from './invites.js';
 import { createTabService } from './tabs.js';
@@ -19,6 +20,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export function createApp({
   dbFile = process.env.DB_FILE || path.join(__dirname, '..', 'data', 'zaplivre.db'),
   uploadDir = process.env.UPLOAD_DIR || path.join(path.dirname(dbFile === ':memory:' ? path.join(__dirname, '..', 'data', 'x') : dbFile), 'uploads'),
+  storage = buildStorage(process.env, { uploadDir }),
   devShowOtp = process.env.DEV_SHOW_OTP === '1',
   smsWebhookUrl = process.env.SMS_WEBHOOK_URL || '',
   // 'invite' = piloto sem SMS contratado. 'open' = telefone + código por SMS.
@@ -36,7 +38,7 @@ export function createApp({
   const push = createPushService(db, { logger, send: pushSender });
   const bootstrapInvite = accessMode === 'invite' ? invites.bootstrap() : null;
   const workspaces = createWorkspaceService(db, { dnsResolver, logger });
-  const files = createFileService(db, { uploadDir, transcriber, logger });
+  const files = createFileService(db, { storage, transcriber, logger });
   const tabs = createTabService(db, { logger });
   const chats = createChatService(db, { workspaces, files, tabs });
 
@@ -283,21 +285,27 @@ export function createApp({
   // 61mb cobre o limite de vídeo (60 MB) com folga. O corte de verdade, por
   // tipo de arquivo, é feito em files.save com mensagem clara; este aqui só
   // impede que o corpo da requisição cresça sem limite.
-  app.post('/api/uploads', requireAuth, express.raw({ type: () => true, limit: '61mb' }), wrap((req, res) => {
+  app.post('/api/uploads', requireAuth, express.raw({ type: () => true, limit: '61mb' }), wrap(async (req, res) => {
     const name = decodeURIComponent(req.get('x-file-name') || 'arquivo');
-    const attachment = files.save(req.user.id, { buffer: req.body, mime: req.get('content-type'), name, duration: req.get('x-duration') });
+    const attachment = await files.save(req.user.id, { buffer: req.body, mime: req.get('content-type'), name, duration: req.get('x-duration') });
     res.status(201).json({ attachment });
   }));
-  app.get('/files/:id/:key', (req, res, next) => {
-    try {
-      const a = files.open(req.params.id, req.params.key);
-      res.setHeader('content-type', a.mime);
-      res.setHeader('content-length', a.size);
-      res.setHeader('cache-control', 'private, max-age=31536000, immutable');
-      res.setHeader('content-disposition', `${a.kind === 'document' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(a.name)}`);
-      a.stream().pipe(res);
-    } catch (err) { next(err); }
-  });
+  app.get('/files/:id/:key', wrap(async (req, res, next) => {
+    const a = files.open(req.params.id, req.params.key);
+    // O fluxo é aberto antes dos cabeçalhos: se o arquivo sumiu, a resposta é um erro limpo.
+    const stream = await a.stream();
+    res.setHeader('content-type', a.mime);
+    res.setHeader('content-length', a.size);
+    res.setHeader('cache-control', 'private, max-age=31536000, immutable');
+    res.setHeader('content-disposition', `${a.kind === 'document' ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(a.name)}`);
+    stream.once('error', (err) => {
+      if (res.headersSent) return res.destroy(err);
+      for (const h of ['content-type', 'content-length', 'cache-control', 'content-disposition']) res.removeHeader(h);
+      next(err);
+    });
+    res.once('close', () => stream.destroy());
+    stream.pipe(res);
+  }));
   app.get('/api/chats/:id/media', requireAuth, wrap((req, res) => { chats.access(req.params.id, req.user.id); res.json(files.mediaHub(req.params.id)); }));
   app.patch('/api/attachments/:id', requireAuth, wrap((req, res) => {
     const a = files.get(req.params.id);
