@@ -148,7 +148,14 @@ export async function createIdbDataLayer(options: IdbDataLayerOptions): Promise<
     now: options.now ?? (() => new Date()),
     newId: options.newId ?? newId,
   };
-  const nowIso = () => ctx.now().toISOString();
+  // Timestamps estritamente crescentes: garante ordenação estável mesmo com relógio fixo/empates de ms.
+  let lastStamp = 0;
+  const nowIso = () => {
+    let t = ctx.now().getTime();
+    if (t <= lastStamp) t = lastStamp + 1;
+    lastStamp = t;
+    return new Date(t).toISOString();
+  };
 
   // Registros padrão (somente se ainda não existirem).
   await run(ctx, ['kv'], async (tx) => {

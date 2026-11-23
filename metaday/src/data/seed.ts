@@ -215,7 +215,7 @@ export function buildDemoSnapshot(now: Date, timeZone = detectTimeZone()): Snaps
       const localDate = at(-back);
       if (!isScheduled(habit, localDate)) continue;
       // Padrão determinístico: cumpre a maioria dos dias; alguns dias ficam sem registro.
-      const skipped = (back * 7 + hIdx * 3) % 5 === 0;
+      const skipped = back >= 4 && (back * 7 + hIdx * 3) % 5 === 0;
       // Hoje: só o hábito da água já foi cumprido (os demais ficam como "ainda dá tempo").
       if (back === 0 && habit.id !== 'demo-habit-agua') continue;
       if (skipped && back !== 0) continue;
