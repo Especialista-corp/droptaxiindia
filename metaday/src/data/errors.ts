@@ -63,7 +63,16 @@ export function isDowngradeSelectionRequired(e: unknown): e is DowngradeSelectio
   return e instanceof DowngradeSelectionRequiredError;
 }
 
+/** Nomes de DOMException relevantes do IndexedDB que merecem uma mensagem própria. */
+const STORAGE_ERROR_NAMES = new Set(['QuotaExceededError', 'InvalidStateError', 'VersionError']);
+
 export function errorMessage(e: unknown): string {
+  if (e instanceof MetadayError) return e.message;
+  if (e instanceof DOMException && STORAGE_ERROR_NAMES.has(e.name)) {
+    return e.name === 'QuotaExceededError'
+      ? 'O armazenamento deste dispositivo está cheio. Libere espaço (ou exporte e apague dados antigos em Configurações) e tente de novo.'
+      : 'Não foi possível acessar o armazenamento local agora. Feche outras abas do METADAY e tente de novo.';
+  }
   if (e instanceof Error) return e.message;
   return 'Algo deu errado. Tente novamente.';
 }

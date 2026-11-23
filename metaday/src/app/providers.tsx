@@ -3,6 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { ClockProvider, type Clock } from './clock.tsx';
 import { DataProvider } from './data.tsx';
+import { ErrorBoundary } from './ErrorBoundary.tsx';
 import type { DataLayer } from '@/data/repositories.ts';
 
 export function makeQueryClient(): QueryClient {
@@ -23,7 +24,7 @@ export function AppProviders({ children, layer, clock, queryClient }: AppProvide
     <ClockProvider clock={clock}>
       <QueryClientProvider client={client}>
         <DataProvider layer={layer}>
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
           <Toaster
             theme="dark"
             position="top-center"
