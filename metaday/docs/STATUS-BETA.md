@@ -5,7 +5,7 @@
 
 | Situação | Quantidade |
 |---|---|
-| Funcional | 17 |
+| Funcional | 19 |
 | Demonstrativo | 3 |
 | Pendente | 15 |
 | Falhou | 0 |
@@ -30,7 +30,9 @@
 | Dados | Restaurar demonstração com confirmação (só dados demo); exportar JSON; apagar dados | demo-data.test.ts + app-flows.test.tsx (restaurar). Exportar JSON: gerado via exportJson() testado; download no navegador não testado |
 | Interface | Sem overflow horizontal em 320/360/390/412 px e desktop; nada sob a barra inferior; sem erros de console (13 telas) | tests/e2e/layout.e2e.mjs em Chromium (executado em 2026-11-23) |
 | PWA | Manifest, ícones, service worker com pré-cache versionado; abre offline após a 1ª visita | tests/e2e/offline.e2e.mjs em Chromium (executado em 2026-11-23). Não testado: instalação em Android real, atualização entre versões |
+| Acessibilidade | Varredura automatizada (axe-core, WCAG 2.1 A/AA) nas 13 telas; navegação só por teclado nos fluxos críticos | tests/e2e/a11y.e2e.mjs em Chromium (executado em 2026-11-23): 0 violações; skip-link, abrir/fechar "Mais" com teclado e criar objetivo via Tab/Enter verificados |
 | Configurações | Nome, início da semana e fuso horário persistidos | checkins-habits.test.ts (configurações) |
+| Robustez | Falha de renderização não derruba o app; falha de armazenamento tem tela explicativa | tests/smoke/robustness.test.tsx (ErrorBoundary, abertura do IndexedDB falhando); mensagens específicas para QuotaExceededError/InvalidStateError em src/data/errors.ts |
 
 ## Demonstrativo
 
@@ -44,7 +46,7 @@
 
 | Área | Recurso | Evidência / observação |
 |---|---|---|
-| Acessibilidade | Auditoria com leitor de tela, navegação só por teclado e contraste medido | Usamos rótulos/ARIA/Radix e áreas de toque ≥ 44px, mas não houve auditoria manual |
+| Acessibilidade | Auditoria manual com leitor de tela real (NVDA/VoiceOver/TalkBack) e contraste medido | Só foi feita auditoria automatizada (abaixo); leitura humana com leitor de tela ainda não ocorreu |
 | Interface | Fidelidade visual às capturas do protótipo Lovable | As capturas não estavam acessíveis ao agente; foi seguido o PRD. Falta comparação lado a lado |
 | Conta | Cadastro obrigatório, login (Google, e-mail, código, biometria), sessões | Entrega D. O beta é local, sem conta e sem falsa autenticação |
 | Backend | Supabase (Auth, Postgres, RLS), sincronização multidispositivo e backup em nuvem | Entrega D. Interfaces de repositório prontas para a troca |
