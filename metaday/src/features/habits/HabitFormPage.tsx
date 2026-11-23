@@ -177,7 +177,6 @@ function HabitForm({ existing }: { existing?: Habit }) {
                   key={d}
                   type="button"
                   aria-pressed={on}
-                  aria-label={WEEKDAY_LABELS_LONG[d]}
                   onClick={() => toggleDay(d)}
                   className={cn(
                     'min-h-11 rounded-xl border text-xs font-bold transition-colors',
@@ -185,6 +184,8 @@ function HabitForm({ existing }: { existing?: Habit }) {
                   )}
                 >
                   {WEEKDAY_LABELS_SHORT[d]}
+                  {/* O nome completo entra DEPOIS do texto visível, para o nome acessível começar com ele (WCAG 2.5.3). */}
+                  <span className="sr-only"> ({WEEKDAY_LABELS_LONG[d]})</span>
                 </button>
               );
             })}

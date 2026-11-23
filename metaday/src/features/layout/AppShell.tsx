@@ -12,11 +12,19 @@ export function AppShell() {
   const { mode } = useData();
   const { pathname } = useLocation();
   const mainRef = useRef<HTMLElement>(null);
+  const isFirstRender = useRef(true);
 
-  // A cada navegação: volta ao topo e move o foco para o conteúdo (leitores de tela).
+  // A cada NAVEGAÇÃO (não no carregamento inicial): volta ao topo e move o foco para o
+  // conteúdo, para leitores de tela anunciarem a troca de tela. No carregamento inicial o
+  // foco fica no topo do documento, para que o link "Ir para o conteúdo" seja alcançável
+  // pelo primeiro Tab (senão o auto-foco "rouba" esse primeiro Tab).
   useEffect(() => {
     const el = mainRef.current;
     if (!el) return;
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     el.scrollTo?.({ top: 0 });
     el.focus({ preventScroll: true });
   }, [pathname]);

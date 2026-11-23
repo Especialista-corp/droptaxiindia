@@ -1,5 +1,6 @@
 import * as AlertDialog from '@radix-ui/react-alert-dialog';
 import { useState, type ReactNode } from 'react';
+import { useRestoreFocusOnClose } from '@/lib/a11y.ts';
 import { Button } from './button.tsx';
 
 interface ConfirmDialogProps {
@@ -25,6 +26,7 @@ export function ConfirmDialog({
   onConfirm,
 }: ConfirmDialogProps) {
   const [busy, setBusy] = useState(false);
+  useRestoreFocusOnClose(open);
   return (
     <AlertDialog.Root open={open} onOpenChange={onOpenChange}>
       <AlertDialog.Portal>

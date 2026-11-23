@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge.tsx';
 
 export function Wordmark() {
   return (
-    <Link to="/" aria-label="METADAY — ir para o início" className="flex items-center gap-2 rounded-lg">
+    <Link to="/" className="flex items-center gap-2 rounded-lg">
       <span
         aria-hidden
         className="grid size-8 place-items-center rounded-lg bg-accent text-base font-black leading-none text-accent-foreground"
@@ -16,6 +16,8 @@ export function Wordmark() {
       <Badge tone="neutral" className="ml-1 text-[10px]">
         BETA 0.1
       </Badge>
+      {/* O nome visível (METADAY, BETA 0.1) já forma o nome acessível; isto só acrescenta a ação. */}
+      <span className="sr-only"> — ir para o início</span>
     </Link>
   );
 }

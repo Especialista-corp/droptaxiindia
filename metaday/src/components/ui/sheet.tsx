@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { useRestoreFocusOnClose } from '@/lib/a11y.ts';
 import { cn } from '@/lib/utils.ts';
 
 interface SheetProps {
@@ -14,6 +15,7 @@ interface SheetProps {
 
 /** Painel inferior no mobile e modal centralizado no desktop (Radix Dialog: foco preso, Esc fecha). */
 export function Sheet({ open, onOpenChange, title, description, children, className }: SheetProps) {
+  useRestoreFocusOnClose(open);
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
